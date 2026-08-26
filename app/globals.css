@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold-glow: rgba(212, 177, 94, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(212, 177, 94, 0.07), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 10%, rgba(63, 203, 130, 0.03), transparent 55%),
+    #080c14;
+  color: #f6f5f1;
+  min-height: 100vh;
+  letter-spacing: 0.01em;
+}
+
+.card {
+  background: linear-gradient(180deg, #0f1723, #0f1723 60%, #141e2e);
+  border: 1px solid #1c2534;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #d4b15e, #c9a84c);
+  color: #100c02;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 28px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.25s;
+  box-shadow: 0 8px 24px -8px rgba(212, 177, 94, 0.45);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px -8px rgba(212, 177, 94, 0.6);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.02);
+  color: #f6f5f1;
+  border: 1px solid #1c2534;
+  border-radius: 10px;
+  padding: 13px 24px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-ghost:hover {
+  border-color: #6b5a2e;
+  background: rgba(212, 177, 94, 0.05);
+}
+
+.eyebrow {
+  color: #d4b15e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.eyebrow::before {
+  content: '';
+  width: 16px;
+  height: 1px;
+  background: #d4b15e;
+}
+
+.coach-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, rgba(212, 177, 94, 0.16), rgba(212, 177, 94, 0.06));
+  border: 1px solid #6b5a2e;
+  color: #d4b15e;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: 'Cairo', sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
