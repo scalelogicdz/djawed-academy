@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import StudentNav from '@/components/StudentNav';
 import LessonBody from '@/components/LessonBody';
 
-export default async function LessonPage({ params }: { params: { id: string } }) {
+export default async function LessonPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,7 +20,7 @@ export default async function LessonPage({ params }: { params: { id: string } })
   const { data: lesson } = await supabase
     .from('lessons')
     .select('id, title, description, video_id, video_provider, resource_url, module_id, position')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   if (!lesson) notFound(); // RLS also blocks this server-side if the student isn't enrolled
