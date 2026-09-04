@@ -58,10 +58,12 @@ export default function LessonBody({
     router.refresh();
   }
 
+  const BUNNY_LIBRARY_ID = '744754';
+
   const embedUrl =
     lesson.video_provider === 'vimeo'
       ? `https://player.vimeo.com/video/${lesson.video_id}`
-      : `https://iframe.mediadelivery.net/embed/${lesson.video_id}`; // Bunny Stream pattern — adjust library ID as needed
+      : `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${lesson.video_id}`;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
