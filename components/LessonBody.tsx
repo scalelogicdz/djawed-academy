@@ -77,11 +77,26 @@ export default function LessonBody({
 
     function attachPlayer() {
       if (cancelled || !iframeRef.current || !window.playerjs) return;
-      player = new window.playerjs.Player(iframeRef.current);
-      player.on('ready', () => {
-        if (cancelled) return;
-        player.on('ended', () => setVideoEnded(true));
-      });
+      try {
+        player = new window.playerjs.Player(iframeRef.current);
+        player.on('ready', () => {
+          if (cancelled) return;
+          try {
+            player.on('ended', () => {
+              // Guard against a stray postMessage arriving after this lesson
+              // has already been navigated away from (the iframe/player may
+              // already be torn down at that point).
+              if (cancelled) return;
+              setVideoEnded(true);
+            });
+          } catch {
+            // Never let a Player.js callback wiring issue crash the page.
+          }
+        });
+      } catch {
+        // Player.js failing to initialize shouldn't break the lesson page —
+        // the student just won't get the auto-detected "watched" state.
+      }
     }
 
     if (window.playerjs) {
@@ -102,7 +117,12 @@ export default function LessonBody({
     return () => {
       cancelled = true;
       if (player && typeof player.off === 'function') {
-        player.off('ended');
+        try {
+          player.off('ended');
+          player.off('ready');
+        } catch {
+          // Tearing down a player that's already gone is fine to ignore.
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
