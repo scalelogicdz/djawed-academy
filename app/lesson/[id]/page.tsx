@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import StudentNav from '@/components/StudentNav';
 import LessonBody from '@/components/LessonBody';
+import { computeLockedLessonIds, findRequiredLesson } from '@/lib/lessonLocking';
 
 export default async function LessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -54,6 +55,12 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
   const prevLesson = currentIndex > 0 ? flatOrder[currentIndex - 1] : null;
   const nextLesson = currentIndex < flatOrder.length - 1 ? flatOrder[currentIndex + 1] : null;
 
+  // Sequential per-module locking: a lesson stays locked until every earlier
+  // lesson in the SAME module is completed. Modules never block each other.
+  const lockedIds = computeLockedLessonIds(flatOrder, completedIds);
+  const isCurrentLocked = lockedIds.has(lesson.id);
+  const requiredLesson = isCurrentLocked ? findRequiredLesson(lesson.id, flatOrder, completedIds) : null;
+
   return (
     <>
       <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
@@ -66,9 +73,13 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
           modules={allModules ?? []}
           lessons={flatOrder}
           completedIds={Array.from(completedIds)}
+          lockedIds={Array.from(lockedIds)}
           prevLessonId={prevLesson?.id ?? null}
           nextLessonId={nextLesson?.id ?? null}
           isCompleted={completedIds.has(lesson.id)}
+          isLocked={isCurrentLocked}
+          requiredLessonTitle={requiredLesson?.title ?? null}
+          requiredLessonId={requiredLesson?.id ?? null}
         />
       </section>
     </>
