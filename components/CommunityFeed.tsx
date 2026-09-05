@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 type Author = { display_name: string; is_admin: boolean } | null;
@@ -46,12 +47,28 @@ export default function CommunityFeed({
   initialReplies: Reply[];
 }) {
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const highlightedId = searchParams.get('q');
+  const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [justArrivedId, setJustArrivedId] = useState<string | null>(null);
   const [questions, setQuestions] = useState(initialQuestions);
   const [replies, setReplies] = useState(initialReplies);
   const [composing, setComposing] = useState(false);
   const [newQuestion, setNewQuestion] = useState('');
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [posting, setPosting] = useState(false);
+
+  useEffect(() => {
+    if (!highlightedId) return;
+    setJustArrivedId(highlightedId);
+    const el = questionRefs.current[highlightedId];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    const timeout = setTimeout(() => setJustArrivedId(null), 3000);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightedId, questions]);
 
   async function submitQuestion() {
     if (!newQuestion.trim()) return;
@@ -120,7 +137,13 @@ export default function CommunityFeed({
         const qReplies = replies.filter((r) => r.question_id === q.id);
         const isAdminAuthor = q.profiles?.is_admin;
         return (
-          <div key={q.id} className="card p-6 mb-4.5">
+          <div
+            key={q.id}
+            ref={(el) => { questionRefs.current[q.id] = el; }}
+            className={`card p-6 mb-4.5 transition-colors duration-700 ${
+              justArrivedId === q.id ? 'border-gold shadow-[0_0_0_1px_rgba(212,177,94,0.5),0_0_24px_rgba(212,177,94,0.25)]' : ''
+            }`}
+          >
             <div className="flex items-center gap-2.5 mb-3">
               <div
                 className={`w-10 h-10 rounded-full bg-surface2 border flex items-center justify-center font-cairo font-bold text-sm ${
