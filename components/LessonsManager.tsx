@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Course = { id: string; title: string };
-type ModuleRow = { id: string; course_id: string; title: string; position: number };
+type ModuleRow = { id: string; course_id: string; title: string; description: string | null; position: number };
 type LessonRow = {
   id: string;
   module_id: string;
@@ -15,31 +15,53 @@ type LessonRow = {
   resource_url: string | null;
   position: number;
 };
+type QuizQuestionRow = {
+  id: string;
+  lesson_id: string;
+  question: string;
+  options: string[];
+  correct_index: number;
+  position: number;
+};
 
-const emptyDraft = { title: '', description: '', videoId: '', videoProvider: 'bunny', resourceUrl: '' };
+const emptyLessonDraft = { title: '', description: '', videoId: '', videoProvider: 'bunny', resourceUrl: '' };
+const emptyModuleDraft = { title: '', description: '' };
+const emptyQuizDraft = { question: '', options: ['', ''], correctIndex: 0 };
 
 export default function LessonsManager({
   courses,
   initialModules,
   initialLessons,
+  initialQuizQuestions,
 }: {
   courses: Course[];
   initialModules: ModuleRow[];
   initialLessons: LessonRow[];
+  initialQuizQuestions: QuizQuestionRow[];
 }) {
   const router = useRouter();
   const [modules, setModules] = useState(initialModules);
   const [lessons, setLessons] = useState(initialLessons);
+  const [quizQuestions, setQuizQuestions] = useState(initialQuizQuestions);
   const [selectedCourse, setSelectedCourse] = useState(courses[0]?.id ?? '');
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [lessonForms, setLessonForms] = useState<Record<string, boolean>>({});
-  const [lessonDraft, setLessonDraft] = useState(emptyDraft);
+  const [lessonDraft, setLessonDraft] = useState(emptyLessonDraft);
 
-  // Editing state: which lesson id is currently being edited, and its draft values
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState(emptyDraft);
+  const [editLessonDraft, setEditLessonDraft] = useState(emptyLessonDraft);
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
+
+  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+  const [editModuleDraft, setEditModuleDraft] = useState(emptyModuleDraft);
+  const [savingModuleEdit, setSavingModuleEdit] = useState(false);
+
+  // Quiz panel: which lesson's quiz panel is open, and the "add question" draft per lesson
+  const [openQuizForLesson, setOpenQuizForLesson] = useState<string | null>(null);
+  const [quizDraft, setQuizDraft] = useState(emptyQuizDraft);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editQuizDraft, setEditQuizDraft] = useState(emptyQuizDraft);
 
   async function addModule() {
     if (!newModuleTitle.trim() || !selectedCourse) return;
@@ -57,6 +79,33 @@ export default function LessonsManager({
     if (res.ok) {
       setModules([...modules, data.module]);
       setNewModuleTitle('');
+      router.refresh();
+    }
+  }
+
+  function startEditingModule(m: ModuleRow) {
+    setEditingModuleId(m.id);
+    setEditModuleDraft({ title: m.title, description: m.description ?? '' });
+  }
+
+  async function saveModuleEdit(moduleId: string) {
+    if (!editModuleDraft.title.trim()) return;
+    setSavingModuleEdit(true);
+    const res = await fetch('/api/admin/content', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'module',
+        id: moduleId,
+        title: editModuleDraft.title.trim(),
+        description: editModuleDraft.description.trim() || null,
+      }),
+    });
+    const data = await res.json();
+    setSavingModuleEdit(false);
+    if (res.ok) {
+      setModules(modules.map((m) => (m.id === moduleId ? data.module : m)));
+      setEditingModuleId(null);
       router.refresh();
     }
   }
@@ -80,15 +129,15 @@ export default function LessonsManager({
     const data = await res.json();
     if (res.ok) {
       setLessons([...lessons, data.lesson]);
-      setLessonDraft(emptyDraft);
+      setLessonDraft(emptyLessonDraft);
       setLessonForms({ ...lessonForms, [moduleId]: false });
       router.refresh();
     }
   }
 
-  function startEditing(lesson: LessonRow) {
+  function startEditingLesson(lesson: LessonRow) {
     setEditingLessonId(lesson.id);
-    setEditDraft({
+    setEditLessonDraft({
       title: lesson.title,
       description: lesson.description ?? '',
       videoId: lesson.video_id ?? '',
@@ -97,13 +146,13 @@ export default function LessonsManager({
     });
   }
 
-  function cancelEditing() {
+  function cancelEditingLesson() {
     setEditingLessonId(null);
-    setEditDraft(emptyDraft);
+    setEditLessonDraft(emptyLessonDraft);
   }
 
-  async function saveEdit(lessonId: string) {
-    if (!editDraft.title.trim()) return;
+  async function saveLessonEdit(lessonId: string) {
+    if (!editLessonDraft.title.trim()) return;
     setSavingEdit(true);
     const res = await fetch('/api/admin/content', {
       method: 'PATCH',
@@ -111,11 +160,11 @@ export default function LessonsManager({
       body: JSON.stringify({
         type: 'lesson',
         id: lessonId,
-        title: editDraft.title.trim(),
-        description: editDraft.description.trim() || null,
-        videoId: editDraft.videoId.trim() || null,
-        videoProvider: editDraft.videoProvider,
-        resourceUrl: editDraft.resourceUrl.trim() || null,
+        title: editLessonDraft.title.trim(),
+        description: editLessonDraft.description.trim() || null,
+        videoId: editLessonDraft.videoId.trim() || null,
+        videoProvider: editLessonDraft.videoProvider,
+        resourceUrl: editLessonDraft.resourceUrl.trim() || null,
       }),
     });
     const data = await res.json();
@@ -123,7 +172,7 @@ export default function LessonsManager({
     if (res.ok) {
       setLessons(lessons.map((l) => (l.id === lessonId ? data.lesson : l)));
       setEditingLessonId(null);
-      setEditDraft(emptyDraft);
+      setEditLessonDraft(emptyLessonDraft);
       router.refresh();
     }
   }
@@ -141,6 +190,89 @@ export default function LessonsManager({
     setDeletingLessonId(null);
     if (res.ok) {
       setLessons(lessons.filter((l) => l.id !== lessonId));
+      router.refresh();
+    }
+  }
+
+  // --- Quiz question management ---
+
+  function updateDraftOption(draft: typeof quizDraft, setDraft: (d: typeof quizDraft) => void, index: number, value: string) {
+    const next = [...draft.options];
+    next[index] = value;
+    setDraft({ ...draft, options: next });
+  }
+
+  function addOptionField(draft: typeof quizDraft, setDraft: (d: typeof quizDraft) => void) {
+    setDraft({ ...draft, options: [...draft.options, ''] });
+  }
+
+  function removeOptionField(draft: typeof quizDraft, setDraft: (d: typeof quizDraft) => void, index: number) {
+    if (draft.options.length <= 2) return; // keep at least 2 options
+    const next = draft.options.filter((_, i) => i !== index);
+    const newCorrect = draft.correctIndex >= next.length ? 0 : draft.correctIndex;
+    setDraft({ ...draft, options: next, correctIndex: newCorrect });
+  }
+
+  async function addQuizQuestion(lessonId: string) {
+    const cleanOptions = quizDraft.options.map((o) => o.trim()).filter(Boolean);
+    if (!quizDraft.question.trim() || cleanOptions.length < 2) return;
+    const res = await fetch('/api/admin/content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'quizQuestion',
+        lessonId,
+        question: quizDraft.question.trim(),
+        options: cleanOptions,
+        correctIndex: quizDraft.correctIndex,
+        position: quizQuestions.filter((q) => q.lesson_id === lessonId).length,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setQuizQuestions([...quizQuestions, data.question]);
+      setQuizDraft(emptyQuizDraft);
+      router.refresh();
+    }
+  }
+
+  function startEditingQuestion(q: QuizQuestionRow) {
+    setEditingQuestionId(q.id);
+    setEditQuizDraft({ question: q.question, options: [...q.options], correctIndex: q.correct_index });
+  }
+
+  async function saveQuestionEdit(questionId: string) {
+    const cleanOptions = editQuizDraft.options.map((o) => o.trim()).filter(Boolean);
+    if (!editQuizDraft.question.trim() || cleanOptions.length < 2) return;
+    const res = await fetch('/api/admin/content', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'quizQuestion',
+        id: questionId,
+        question: editQuizDraft.question.trim(),
+        options: cleanOptions,
+        correctIndex: editQuizDraft.correctIndex,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setQuizQuestions(quizQuestions.map((q) => (q.id === questionId ? data.question : q)));
+      setEditingQuestionId(null);
+      router.refresh();
+    }
+  }
+
+  async function deleteQuizQuestion(questionId: string) {
+    const confirmed = window.confirm('هل أنت متأكد من حذف هذا السؤال؟');
+    if (!confirmed) return;
+    const res = await fetch('/api/admin/content', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'quizQuestion', id: questionId }),
+    });
+    if (res.ok) {
+      setQuizQuestions(quizQuestions.filter((q) => q.id !== questionId));
       router.refresh();
     }
   }
@@ -177,83 +309,254 @@ export default function LessonsManager({
 
       {courseModules.map((m) => (
         <div key={m.id} className="card p-6 mb-5">
-          <h3 className="font-cairo font-bold text-gold text-sm uppercase tracking-wide mb-4">{m.title}</h3>
+          {editingModuleId === m.id ? (
+            <div className="mb-4 space-y-3">
+              <input
+                value={editModuleDraft.title}
+                onChange={(e) => setEditModuleDraft({ ...editModuleDraft, title: e.target.value })}
+                placeholder="اسم الوحدة"
+                className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold font-cairo font-bold"
+              />
+              <textarea
+                value={editModuleDraft.description}
+                onChange={(e) => setEditModuleDraft({ ...editModuleDraft, description: e.target.value })}
+                placeholder="وصف الوحدة — ماذا سيتعلم الطالب هنا؟ (يظهر للطالب)"
+                rows={2}
+                className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold resize-none"
+              />
+              <div className="flex gap-2 justify-end">
+                <button className="btn-ghost !py-2 !px-4 text-xs" onClick={() => setEditingModuleId(null)}>
+                  إلغاء
+                </button>
+                <button
+                  className="btn-primary !py-2 !px-4 text-xs"
+                  onClick={() => saveModuleEdit(m.id)}
+                  disabled={savingModuleEdit}
+                >
+                  {savingModuleEdit ? 'جارٍ الحفظ...' : 'حفظ'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h3 className="font-cairo font-bold text-gold text-sm uppercase tracking-wide">{m.title}</h3>
+                {m.description && <p className="text-muted text-[13px] mt-1.5">{m.description}</p>}
+              </div>
+              <button
+                onClick={() => startEditingModule(m)}
+                className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-gold hover:border-goldDim transition flex-shrink-0"
+              >
+                ✏️ تعديل الوحدة
+              </button>
+            </div>
+          )}
 
           {lessons
             .filter((l) => l.module_id === m.id)
-            .map((l) =>
-              editingLessonId === l.id ? (
-                <div key={l.id} className="py-4 border-b border-border last:border-0 space-y-3">
-                  <input
-                    value={editDraft.title}
-                    onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })}
-                    placeholder="عنوان الدرس"
-                    className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
-                  />
-                  <textarea
-                    value={editDraft.description}
-                    onChange={(e) => setEditDraft({ ...editDraft, description: e.target.value })}
-                    placeholder="وصف الدرس (اختياري)"
-                    rows={2}
-                    className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold resize-none"
-                  />
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <select
-                      value={editDraft.videoProvider}
-                      onChange={(e) => setEditDraft({ ...editDraft, videoProvider: e.target.value })}
-                      className="bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
-                    >
-                      <option value="bunny">Bunny Stream</option>
-                      <option value="vimeo">Vimeo</option>
-                    </select>
-                    <input
-                      value={editDraft.videoId}
-                      onChange={(e) => setEditDraft({ ...editDraft, videoId: e.target.value })}
-                      placeholder="معرّف الفيديو (Video ID)"
-                      className="bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
-                    />
-                  </div>
-                  <input
-                    value={editDraft.resourceUrl}
-                    onChange={(e) => setEditDraft({ ...editDraft, resourceUrl: e.target.value })}
-                    placeholder="رابط الملف المرفق (اختياري)"
-                    className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <button className="btn-ghost !py-2 !px-4 text-xs" onClick={cancelEditing}>
-                      إلغاء
-                    </button>
-                    <button
-                      className="btn-primary !py-2 !px-4 text-xs"
-                      onClick={() => saveEdit(l.id)}
-                      disabled={savingEdit}
-                    >
-                      {savingEdit ? 'جارٍ الحفظ...' : 'حفظ التعديلات'}
-                    </button>
-                  </div>
+            .map((l) => {
+              const lessonQuestions = quizQuestions.filter((q) => q.lesson_id === l.id);
+              return (
+                <div key={l.id} className="border-b border-border last:border-0">
+                  {editingLessonId === l.id ? (
+                    <div className="py-4 space-y-3">
+                      <input
+                        value={editLessonDraft.title}
+                        onChange={(e) => setEditLessonDraft({ ...editLessonDraft, title: e.target.value })}
+                        placeholder="عنوان الدرس"
+                        className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+                      />
+                      <textarea
+                        value={editLessonDraft.description}
+                        onChange={(e) => setEditLessonDraft({ ...editLessonDraft, description: e.target.value })}
+                        placeholder="وصف الدرس (اختياري)"
+                        rows={2}
+                        className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold resize-none"
+                      />
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <select
+                          value={editLessonDraft.videoProvider}
+                          onChange={(e) => setEditLessonDraft({ ...editLessonDraft, videoProvider: e.target.value })}
+                          className="bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+                        >
+                          <option value="bunny">Bunny Stream</option>
+                          <option value="vimeo">Vimeo</option>
+                        </select>
+                        <input
+                          value={editLessonDraft.videoId}
+                          onChange={(e) => setEditLessonDraft({ ...editLessonDraft, videoId: e.target.value })}
+                          placeholder="معرّف الفيديو (Video ID)"
+                          className="bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+                        />
+                      </div>
+                      <input
+                        value={editLessonDraft.resourceUrl}
+                        onChange={(e) => setEditLessonDraft({ ...editLessonDraft, resourceUrl: e.target.value })}
+                        placeholder="رابط الملف المرفق (اختياري)"
+                        className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <button className="btn-ghost !py-2 !px-4 text-xs" onClick={cancelEditingLesson}>
+                          إلغاء
+                        </button>
+                        <button
+                          className="btn-primary !py-2 !px-4 text-xs"
+                          onClick={() => saveLessonEdit(l.id)}
+                          disabled={savingEdit}
+                        >
+                          {savingEdit ? 'جارٍ الحفظ...' : 'حفظ التعديلات'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                      <span className="flex-1">{l.title}</span>
+                      <span className="text-muted2 text-xs whitespace-nowrap">{l.video_id ? '🎬 فيديو مضاف' : 'بلا فيديو'}</span>
+                      <div className="flex gap-1.5 flex-shrink-0">
+                        <button
+                          onClick={() => setOpenQuizForLesson(openQuizForLesson === l.id ? null : l.id)}
+                          className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-gold hover:border-goldDim transition"
+                        >
+                          📝 الأسئلة ({lessonQuestions.length})
+                        </button>
+                        <button
+                          onClick={() => startEditingLesson(l)}
+                          className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-gold hover:border-goldDim transition"
+                        >
+                          ✏️ تعديل
+                        </button>
+                        <button
+                          onClick={() => deleteLesson(l.id, l.title)}
+                          disabled={deletingLessonId === l.id}
+                          className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-[#E4756A] hover:border-[#E4756A] transition"
+                        >
+                          {deletingLessonId === l.id ? '...' : '🗑️ حذف'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {openQuizForLesson === l.id && (
+                    <div className="bg-white/[0.015] rounded-lg p-4 mb-4 space-y-4">
+                      {lessonQuestions.map((q) =>
+                        editingQuestionId === q.id ? (
+                          <div key={q.id} className="space-y-2.5 pb-3 border-b border-border last:border-0">
+                            <input
+                              value={editQuizDraft.question}
+                              onChange={(e) => setEditQuizDraft({ ...editQuizDraft, question: e.target.value })}
+                              placeholder="نص السؤال"
+                              className="w-full bg-white/[0.02] border border-border rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:border-gold"
+                            />
+                            {editQuizDraft.options.map((opt, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  checked={editQuizDraft.correctIndex === i}
+                                  onChange={() => setEditQuizDraft({ ...editQuizDraft, correctIndex: i })}
+                                />
+                                <input
+                                  value={opt}
+                                  onChange={(e) => updateDraftOption(editQuizDraft, setEditQuizDraft, i, e.target.value)}
+                                  placeholder={`خيار ${i + 1}`}
+                                  className="flex-1 bg-white/[0.02] border border-border rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:border-gold"
+                                />
+                                <button
+                                  onClick={() => removeOptionField(editQuizDraft, setEditQuizDraft, i)}
+                                  className="text-muted2 text-xs px-1.5"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                            <div className="flex gap-2 justify-between items-center">
+                              <button
+                                onClick={() => addOptionField(editQuizDraft, setEditQuizDraft)}
+                                className="text-xs text-gold"
+                              >
+                                + إضافة خيار
+                              </button>
+                              <div className="flex gap-2">
+                                <button className="btn-ghost !py-1.5 !px-3 text-xs" onClick={() => setEditingQuestionId(null)}>
+                                  إلغاء
+                                </button>
+                                <button className="btn-primary !py-1.5 !px-3 text-xs" onClick={() => saveQuestionEdit(q.id)}>
+                                  حفظ
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div key={q.id} className="flex items-start justify-between gap-3 pb-3 border-b border-border last:border-0 text-sm">
+                            <div className="flex-1">
+                              <p className="font-semibold mb-1">{q.question}</p>
+                              <ul className="text-muted text-[12.5px] space-y-0.5">
+                                {q.options.map((opt, i) => (
+                                  <li key={i} className={i === q.correct_index ? 'text-success' : ''}>
+                                    {i === q.correct_index ? '✓ ' : '• '}
+                                    {opt}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="flex gap-1.5 flex-shrink-0">
+                              <button
+                                onClick={() => startEditingQuestion(q)}
+                                className="text-xs px-2 py-1 rounded-md border border-border text-muted hover:text-gold transition"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => deleteQuizQuestion(q.id)}
+                                className="text-xs px-2 py-1 rounded-md border border-border text-muted hover:text-[#E4756A] transition"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      )}
+
+                      {/* Add new question form */}
+                      <div className="space-y-2.5 pt-1">
+                        <input
+                          value={quizDraft.question}
+                          onChange={(e) => setQuizDraft({ ...quizDraft, question: e.target.value })}
+                          placeholder="سؤال جديد"
+                          className="w-full bg-white/[0.02] border border-border rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:border-gold"
+                        />
+                        {quizDraft.options.map((opt, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              checked={quizDraft.correctIndex === i}
+                              onChange={() => setQuizDraft({ ...quizDraft, correctIndex: i })}
+                            />
+                            <input
+                              value={opt}
+                              onChange={(e) => updateDraftOption(quizDraft, setQuizDraft, i, e.target.value)}
+                              placeholder={`خيار ${i + 1}`}
+                              className="flex-1 bg-white/[0.02] border border-border rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:border-gold"
+                            />
+                            <button onClick={() => removeOptionField(quizDraft, setQuizDraft, i)} className="text-muted2 text-xs px-1.5">
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                        <div className="flex justify-between items-center">
+                          <button onClick={() => addOptionField(quizDraft, setQuizDraft)} className="text-xs text-gold">
+                            + إضافة خيار
+                          </button>
+                          <button className="btn-primary !py-1.5 !px-3 text-xs" onClick={() => addQuizQuestion(l.id)}>
+                            + إضافة السؤال
+                          </button>
+                        </div>
+                        <p className="text-muted2 text-[11.5px]">حدد الدائرة بجانب الإجابة الصحيحة</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div key={l.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-border last:border-0 text-sm">
-                  <span className="flex-1">{l.title}</span>
-                  <span className="text-muted2 text-xs whitespace-nowrap">{l.video_id ? '🎬 فيديو مضاف' : 'بلا فيديو'}</span>
-                  <div className="flex gap-1.5 flex-shrink-0">
-                    <button
-                      onClick={() => startEditing(l)}
-                      className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-gold hover:border-goldDim transition"
-                    >
-                      ✏️ تعديل
-                    </button>
-                    <button
-                      onClick={() => deleteLesson(l.id, l.title)}
-                      disabled={deletingLessonId === l.id}
-                      className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-[#E4756A] hover:border-[#E4756A] transition"
-                    >
-                      {deletingLessonId === l.id ? '...' : '🗑️ حذف'}
-                    </button>
-                  </div>
-                </div>
-              )
-            )}
+              );
+            })}
 
           {lessonForms[m.id] ? (
             <div className="mt-4 space-y-3">
