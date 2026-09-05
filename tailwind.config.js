@@ -7,17 +7,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: '#080C14',
-        surface: '#0F1723',
-        surface2: '#141E2E',
+        bg: '#0E121B',
+        surface: '#161F2E',
+        surface2: '#1B2536',
         gold: '#D4B15E',
         goldSoft: '#C9A84C',
         goldDim: '#6B5A2E',
         text: '#F6F5F1',
-        muted: '#8B93A3',
+        muted: '#99A2B5',
         muted2: '#5B6478',
         success: '#3FCB82',
-        border: '#1C2534',
+        border: '#26324A',
       },
       fontFamily: {
         cairo: ['Cairo', 'sans-serif'],
