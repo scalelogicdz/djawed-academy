@@ -28,13 +28,13 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
 
   const { data: currentModule } = await supabase
     .from('modules')
-    .select('id, title, course_id')
+    .select('id, title, description, course_id')
     .eq('id', lesson.module_id)
     .single();
 
   const { data: allModules } = await supabase
     .from('modules')
-    .select('id, title, position')
+    .select('id, title, description, position')
     .eq('course_id', currentModule?.course_id)
     .order('position', { ascending: true });
 
@@ -49,6 +49,12 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
     .select('lesson_id')
     .eq('student_id', user.id);
   const completedIds = new Set((progressRows ?? []).map((p) => p.lesson_id));
+
+  const { data: quizQuestions } = await supabase
+    .from('quiz_questions')
+    .select('id, question, options, correct_index, position')
+    .eq('lesson_id', lesson.id)
+    .order('position', { ascending: true });
 
   const flatOrder = allLessons ?? [];
   const currentIndex = flatOrder.findIndex((l) => l.id === lesson.id);
@@ -69,6 +75,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
         <h1 className="font-cairo font-extrabold text-[23px] mb-6">{lesson.title}</h1>
 
         <LessonBody
+          key={lesson.id}
           lesson={lesson}
           modules={allModules ?? []}
           lessons={flatOrder}
@@ -80,6 +87,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
           isLocked={isCurrentLocked}
           requiredLessonTitle={requiredLesson?.title ?? null}
           requiredLessonId={requiredLesson?.id ?? null}
+          quizQuestions={quizQuestions ?? []}
         />
       </section>
     </>
