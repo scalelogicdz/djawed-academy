@@ -123,7 +123,7 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
       </button>
 
       {open && (
-        <div className="absolute left-0 mt-2 w-80 max-h-96 overflow-y-auto bg-surface2 border border-border rounded-xl shadow-2xl z-50">
+        <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-3.5rem)] max-h-96 overflow-y-auto bg-surface2 border border-border rounded-xl shadow-2xl z-50">
           {notifications.length === 0 ? (
             <div className="p-5 text-center text-muted text-sm">لا توجد إشعارات بعد</div>
           ) : (
