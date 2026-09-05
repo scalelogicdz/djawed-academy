@@ -19,7 +19,7 @@ export default async function AdminLessonsPage() {
 
   return (
     <>
-      <StudentNav isAdmin />
+      <StudentNav isAdmin currentUserId={user.id} />
       <section className="max-w-[1140px] mx-auto px-6 py-14">
         <div className="eyebrow">لوحة الإدارة</div>
         <h1 className="font-cairo font-extrabold text-[26px] mb-8">إدارة الدروس</h1>
