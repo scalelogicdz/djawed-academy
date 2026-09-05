@@ -56,7 +56,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
 
   return (
     <>
-      <StudentNav isAdmin={profile?.is_admin} />
+      <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
       <section className="max-w-[1140px] mx-auto px-6 py-14">
         <div className="eyebrow">{currentModule?.title}</div>
         <h1 className="font-cairo font-extrabold text-[23px] mb-6">{lesson.title}</h1>
