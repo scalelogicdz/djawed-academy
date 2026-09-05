@@ -30,8 +30,10 @@ export default async function DashboardPage() {
   const courseCards = await Promise.all(
     (enrollments ?? []).map(async (enr: any) => {
       const course = enr.courses;
+
       const { data: modules } = await supabase.from('modules').select('id').eq('course_id', course.id);
       const moduleIds = (modules ?? []).map((m) => m.id);
+      const moduleCount = moduleIds.length;
 
       const { data: lessonsInCourse } = await supabase
         .from('lessons')
@@ -45,24 +47,48 @@ export default async function DashboardPage() {
       const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
       // The actual next lesson to continue into: the first one NOT yet completed, in order.
-      // If everything is completed, fall back to the last lesson (so the button still goes somewhere sensible).
+      // If everything is completed, fall back to the last lesson so the button still goes somewhere.
       const nextLesson = lessons.find((l) => !completedIds.has(l.id)) ?? lessons[lessons.length - 1] ?? null;
       const isFullyCompleted = total > 0 && completed === total;
 
-      return { course, total, completed, pct, nextLesson, isFullyCompleted };
+      return { course, total, completed, pct, moduleCount, nextLesson, isFullyCompleted };
     })
   );
+
+  // Aggregate stats across every enrolled course, shown in the top stats row
+  const totalLessonsAll = courseCards.reduce((sum, c) => sum + c.total, 0);
+  const completedLessonsAll = courseCards.reduce((sum, c) => sum + c.completed, 0);
+  const overallPct = totalLessonsAll > 0 ? Math.round((completedLessonsAll / totalLessonsAll) * 100) : 0;
 
   return (
     <>
       <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
       <section className="max-w-[1140px] mx-auto px-6 py-14">
-        <div className="mb-9">
+        <div className="mb-7">
           <div className="eyebrow">مرحبًا بعودتك</div>
           <h1 className="font-cairo font-extrabold text-[28px] mb-1.5">
             أهلاً، {profile?.display_name ?? 'بك'}
           </h1>
-          <p className="text-muted">أكمل من حيث توقفت</p>
+          <p className="text-muted mb-6">أكمل من حيث توقفت</p>
+
+          {courseCards.length > 0 && (
+            <div className="flex items-center gap-10">
+              <div className="text-center sm:text-right">
+                <div className="font-cairo font-extrabold text-[26px]">{totalLessonsAll}</div>
+                <div className="text-muted text-[12.5px] mt-0.5">إجمالي الدروس</div>
+              </div>
+              <div className="text-center sm:text-right">
+                <div className="font-cairo font-extrabold text-[26px]">
+                  {String(completedLessonsAll).padStart(2, '0')}
+                </div>
+                <div className="text-muted text-[12.5px] mt-0.5">دروس مكتملة</div>
+              </div>
+              <div className="text-center sm:text-right">
+                <div className="font-cairo font-extrabold text-[26px] text-gold">{overallPct}%</div>
+                <div className="text-muted text-[12.5px] mt-0.5">التقدم</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {courseCards.length === 0 && (
@@ -71,74 +97,42 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {courseCards.map(({ course, pct, total, completed, nextLesson, isFullyCompleted }) => {
-          const radius = 34;
-          const circumference = 2 * Math.PI * radius;
-          const dashOffset = circumference * (1 - pct / 100);
-
-          return (
-            <div
-              key={course.id}
-              className="card p-7 mb-5 hover:border-goldDim transition"
-            >
-              <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
-                {/* Circular progress graph */}
-                <div className="relative w-[92px] h-[92px] flex-shrink-0">
-                  <svg width="92" height="92" viewBox="0 0 92 92">
-                    <circle cx="46" cy="46" r={radius} fill="none" stroke="#1c2534" strokeWidth="7" />
-                    <circle
-                      cx="46"
-                      cy="46"
-                      r={radius}
-                      fill="none"
-                      stroke="url(#progressGradient)"
-                      strokeWidth="7"
-                      strokeLinecap="round"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={dashOffset}
-                      transform="rotate(-90 46 46)"
-                      style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-                    />
-                    <defs>
-                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#d4b15e" />
-                        <stop offset="100%" stopColor="#c9a84c" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center font-cairo font-extrabold text-[17px]">
-                    {pct}%
-                  </div>
-                </div>
-
-                <div className="flex-1 text-center sm:text-right w-full">
-                  <h3 className="text-[19px] font-bold mb-1.5">{course.title}</h3>
-                  <p className="text-muted text-[13px] mb-3">
-                    {total} درس · {completed} مكتمل
-                  </p>
-
-                  {isFullyCompleted ? (
-                    <div className="inline-flex items-center gap-1.5 text-[13px] text-gold font-semibold">
-                      🎉 أكملت هذه الدورة بالكامل
-                    </div>
-                  ) : nextLesson ? (
-                    <div className="text-[13px] text-muted">
-                      الدرس القادم:{' '}
-                      <span className="text-text font-semibold">{nextLesson.title}</span>
-                    </div>
-                  ) : null}
-                </div>
-
-                <Link
-                  href={nextLesson ? `/lesson/${nextLesson.id}` : '#'}
-                  className="btn-primary whitespace-nowrap w-full sm:w-auto text-center"
-                >
-                  {isFullyCompleted ? 'مراجعة الدورة' : 'متابعة التعلم'}
-                </Link>
-              </div>
+        {courseCards.map(({ course, pct, total, completed, moduleCount, nextLesson, isFullyCompleted }) => (
+          <div key={course.id} className="card p-7 mb-5">
+            <div className="inline-block px-6 py-3.5 rounded-xl border border-goldDim text-center mb-6">
+              <span className="font-cairo font-bold text-gold text-[14.5px]">دورة السبونسور</span>
             </div>
-          );
-        })}
+
+            <h3 className="text-[20px] font-bold mb-2 leading-snug">{course.title}</h3>
+            <p className="text-muted text-[13.5px] mb-4">
+              {total} درس · {moduleCount} وحدات
+            </p>
+
+            <div className="h-[5px] bg-border rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-l from-goldDim to-gold rounded-full"
+                style={{ width: `${pct}%`, transition: 'width 0.6s ease' }}
+              />
+            </div>
+            <div className="text-[12.5px] text-muted mt-2 mb-1">{pct}% مكتمل</div>
+
+            {!isFullyCompleted && nextLesson && (
+              <p className="text-[13px] text-muted mb-5">
+                الدرس القادم: <span className="text-text font-semibold">{nextLesson.title}</span>
+              </p>
+            )}
+            {isFullyCompleted && (
+              <p className="text-[13px] text-gold font-semibold mb-5">🎉 أكملت هذه الدورة بالكامل</p>
+            )}
+
+            <Link
+              href={nextLesson ? `/lesson/${nextLesson.id}` : '#'}
+              className="btn-primary block text-center w-full"
+            >
+              {isFullyCompleted ? 'مراجعة الدورة' : 'متابعة التعلم'}
+            </Link>
+          </div>
+        ))}
       </section>
     </>
   );
