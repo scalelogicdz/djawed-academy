@@ -64,7 +64,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <StudentNav isAdmin={profile?.is_admin} />
+      <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
       <section className="max-w-[1140px] mx-auto px-6 py-14">
         <div className="mb-9">
           <div className="eyebrow">مرحبًا بعودتك</div>
