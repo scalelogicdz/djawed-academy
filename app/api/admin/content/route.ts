@@ -12,7 +12,7 @@ async function assertAdmin() {
   return profile?.is_admin ? user : null;
 }
 
-// body: { type: 'module' | 'lesson', ...fields }
+// body: { type: 'module' | 'lesson' | 'quizQuestion', ...fields }
 export async function POST(request: Request) {
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
@@ -23,7 +23,12 @@ export async function POST(request: Request) {
   if (body.type === 'module') {
     const { data, error } = await adminClient
       .from('modules')
-      .insert({ course_id: body.courseId, title: body.title, position: body.position ?? 0 })
+      .insert({
+        course_id: body.courseId,
+        title: body.title,
+        description: body.description ?? null,
+        position: body.position ?? 0,
+      })
       .select()
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
@@ -48,10 +53,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, lesson: data });
   }
 
+  if (body.type === 'quizQuestion') {
+    if (!body.lessonId || !body.question || !Array.isArray(body.options) || typeof body.correctIndex !== 'number') {
+      return NextResponse.json({ error: 'بيانات السؤال غير مكتملة' }, { status: 400 });
+    }
+    const { data, error } = await adminClient
+      .from('quiz_questions')
+      .insert({
+        lesson_id: body.lessonId,
+        question: body.question,
+        options: body.options,
+        correct_index: body.correctIndex,
+        position: body.position ?? 0,
+      })
+      .select()
+      .single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ ok: true, question: data });
+  }
+
   return NextResponse.json({ error: 'نوع غير معروف' }, { status: 400 });
 }
 
-// body: { type: 'lesson', id, title, description, videoId, videoProvider, resourceUrl }
+// body: { type: 'lesson' | 'module' | 'quizQuestion', id, ...fields }
 export async function PATCH(request: Request) {
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
@@ -77,10 +101,41 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ ok: true, lesson: data });
   }
 
+  if (body.type === 'module') {
+    if (!body.id) return NextResponse.json({ error: 'معرّف الوحدة مفقود' }, { status: 400 });
+    const { data, error } = await adminClient
+      .from('modules')
+      .update({
+        title: body.title,
+        description: body.description ?? null,
+      })
+      .eq('id', body.id)
+      .select()
+      .single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ ok: true, module: data });
+  }
+
+  if (body.type === 'quizQuestion') {
+    if (!body.id) return NextResponse.json({ error: 'معرّف السؤال مفقود' }, { status: 400 });
+    const { data, error } = await adminClient
+      .from('quiz_questions')
+      .update({
+        question: body.question,
+        options: body.options,
+        correct_index: body.correctIndex,
+      })
+      .eq('id', body.id)
+      .select()
+      .single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ ok: true, question: data });
+  }
+
   return NextResponse.json({ error: 'نوع غير معروف' }, { status: 400 });
 }
 
-// body: { type: 'lesson', id }
+// body: { type: 'lesson' | 'quizQuestion', id }
 export async function DELETE(request: Request) {
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
@@ -91,6 +146,13 @@ export async function DELETE(request: Request) {
   if (body.type === 'lesson') {
     if (!body.id) return NextResponse.json({ error: 'معرّف الدرس مفقود' }, { status: 400 });
     const { error } = await adminClient.from('lessons').delete().eq('id', body.id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.type === 'quizQuestion') {
+    if (!body.id) return NextResponse.json({ error: 'معرّف السؤال مفقود' }, { status: 400 });
+    const { error } = await adminClient.from('quiz_questions').delete().eq('id', body.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ ok: true });
   }
