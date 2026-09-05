@@ -252,13 +252,6 @@ export default function LessonBody({
               )}
             </div>
           )}
-          {nextLessonId ? (
-            <Link href={`/lesson/${nextLessonId}`} className="btn-ghost text-center">
-              الدرس التالي ←
-            </Link>
-          ) : (
-            <span />
-          )}
         </div>
       </div>
 
