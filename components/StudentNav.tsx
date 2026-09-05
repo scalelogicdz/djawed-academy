@@ -50,6 +50,8 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
         </div>
 
         <div className="order-1 md:order-3 flex items-center gap-1 flex-shrink-0">
+          <NotificationBell currentUserId={currentUserId} />
+
           {/* Mobile menu toggle — hidden on desktop */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
@@ -66,8 +68,6 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
               </svg>
             )}
           </button>
-
-          <NotificationBell currentUserId={currentUserId} />
 
           {/* Desktop logout — hidden on mobile, moved into the menu instead */}
           <button
