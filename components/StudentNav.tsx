@@ -50,16 +50,6 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
         </div>
 
         <div className="order-1 md:order-3 flex items-center gap-1 flex-shrink-0">
-          <NotificationBell currentUserId={currentUserId} />
-
-          {/* Desktop logout — hidden on mobile, moved into the menu instead */}
-          <button
-            onClick={handleLogout}
-            className="hidden md:inline-flex btn-ghost !py-2 !px-4 text-xs whitespace-nowrap"
-          >
-            تسجيل الخروج
-          </button>
-
           {/* Mobile menu toggle — hidden on desktop */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
@@ -75,6 +65,16 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
                 <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
               </svg>
             )}
+          </button>
+
+          <NotificationBell currentUserId={currentUserId} />
+
+          {/* Desktop logout — hidden on mobile, moved into the menu instead */}
+          <button
+            onClick={handleLogout}
+            className="hidden md:inline-flex btn-ghost !py-2 !px-4 text-xs whitespace-nowrap"
+          >
+            تسجيل الخروج
           </button>
         </div>
       </div>
