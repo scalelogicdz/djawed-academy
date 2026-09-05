@@ -57,15 +57,51 @@ export default function LessonBody({
   const [completed, setCompleted] = useState(isCompleted);
   const [saving, setSaving] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
+  const [tokenError, setTokenError] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const completedSet = new Set(completedIds);
   const lockedSet = new Set(lockedIds);
 
   const BUNNY_LIBRARY_ID = '744754';
-  const embedUrl =
-    lesson.video_provider === 'vimeo'
-      ? `https://player.vimeo.com/video/${lesson.video_id}`
-      : `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${lesson.video_id}`;
+
+  // Fetch a fresh, short-lived playback token for this specific lesson's video
+  // (server-side, since the signing key must never be exposed to the browser).
+  useEffect(() => {
+    let cancelled = false;
+    setEmbedUrl(null);
+    setTokenError(false);
+
+    if (!lesson.video_id) return;
+
+    if (lesson.video_provider === 'vimeo') {
+      setEmbedUrl(`https://player.vimeo.com/video/${lesson.video_id}`);
+      return;
+    }
+
+    fetch('/api/video-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lessonId: lesson.id }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('token request failed');
+        return res.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setEmbedUrl(
+          `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${lesson.video_id}?token=${data.token}&expires=${data.expires}`
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setTokenError(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lesson.id, lesson.video_id, lesson.video_provider]);
 
   // Load Bunny's Player.js library once, then attach an "ended" listener to this
   // lesson's iframe so we know for real that the student watched the video through.
@@ -126,7 +162,7 @@ export default function LessonBody({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lesson.id]);
+  }, [lesson.id, embedUrl]);
 
   function playCompletionSound() {
     try {
@@ -254,7 +290,20 @@ export default function LessonBody({
         ) : (
           <>
             <div className="aspect-video rounded-2xl border border-border overflow-hidden mb-5 bg-gradient-to-br from-surface2 to-[#070A10]">
-              {lesson.video_id ? (
+              {!lesson.video_id ? (
+                <div className="w-full h-full flex items-center justify-center text-muted text-sm">
+                  لم يتم إضافة الفيديو بعد
+                </div>
+              ) : tokenError ? (
+                <div className="w-full h-full flex flex-col items-center justify-center text-center px-6 gap-2">
+                  <span className="text-2xl">⚠️</span>
+                  <p className="text-muted text-sm">تعذر تحميل الفيديو، حاول إعادة تحميل الصفحة</p>
+                </div>
+              ) : !embedUrl ? (
+                <div className="w-full h-full flex items-center justify-center text-muted text-sm">
+                  جارٍ التحميل...
+                </div>
+              ) : (
                 <iframe
                   ref={iframeRef}
                   src={embedUrl}
@@ -262,10 +311,6 @@ export default function LessonBody({
                   allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
                   allowFullScreen
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted text-sm">
-                  لم يتم إضافة الفيديو بعد
-                </div>
               )}
             </div>
 
