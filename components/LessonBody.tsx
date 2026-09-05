@@ -108,6 +108,34 @@ export default function LessonBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id]);
 
+  function playCompletionSound() {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // A short, pleasant two-note rising chime
+      [523.25, 783.99].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const start = now + i * 0.11;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.18, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.4);
+      });
+
+      setTimeout(() => ctx.close(), 800);
+    } catch {
+      // Audio isn't critical — silently ignore if unsupported/blocked.
+    }
+  }
+
   async function toggleComplete() {
     setSaving(true);
     const {
@@ -121,6 +149,7 @@ export default function LessonBody({
     } else {
       await supabase.from('lesson_progress').insert({ lesson_id: lesson.id, student_id: user.id });
       setCompleted(true);
+      playCompletionSound();
     }
     setSaving(false);
     router.refresh();
@@ -234,24 +263,36 @@ export default function LessonBody({
           </>
         )}
 
-        <div className="flex flex-col sm:flex-row justify-between gap-2.5 mt-5">
-          {prevLessonId ? (
-            <Link href={`/lesson/${prevLessonId}`} className="btn-ghost text-center">
-              → الدرس السابق
-            </Link>
-          ) : (
-            <span />
-          )}
-          {!isLocked && (
-            <div className="flex flex-col items-center gap-1.5">
-              <button onClick={toggleComplete} disabled={saving || !canMarkComplete} className="btn-primary">
-                {completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
-              </button>
-              {!canMarkComplete && (
-                <span className="text-muted2 text-[11.5px]">شاهد الفيديو كاملاً لتتمكن من تحديد الدرس كمكتمل</span>
-              )}
-            </div>
-          )}
+        <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-2.5 mt-5">
+          <div className="justify-self-start">
+            {prevLessonId && (
+              <Link href={`/lesson/${prevLessonId}`} className="btn-ghost text-center inline-block">
+                → الدرس السابق
+              </Link>
+            )}
+          </div>
+
+          <div className="justify-self-center">
+            {!isLocked && (
+              <div className="flex flex-col items-center gap-1.5">
+                <button onClick={toggleComplete} disabled={saving || !canMarkComplete} className="btn-primary">
+                  {completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
+                </button>
+                {!canMarkComplete && (
+                  <span className="text-muted2 text-[11.5px]">شاهد الفيديو كاملاً لتتمكن من تحديد الدرس كمكتمل</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="justify-self-end">
+            {/* Only appears once the video has actually been watched through (or immediately if there's no video to gate on) */}
+            {nextLessonId && canMarkComplete && (
+              <Link href={`/lesson/${nextLessonId}`} className="btn-ghost text-center inline-block">
+                الدرس التالي ←
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
