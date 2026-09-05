@@ -18,15 +18,15 @@ body {
   background:
     radial-gradient(ellipse 900px 500px at 15% -10%, rgba(212, 177, 94, 0.07), transparent 60%),
     radial-gradient(ellipse 700px 500px at 100% 10%, rgba(63, 203, 130, 0.03), transparent 55%),
-    #080c14;
+    #0e121b;
   color: #f6f5f1;
   min-height: 100vh;
   letter-spacing: 0.01em;
 }
 
 .card {
-  background: linear-gradient(180deg, #131d2b, #131d2b 60%, #172236);
-  border: 1px solid #2a3650;
+  background: linear-gradient(180deg, #161f2e, #161f2e 60%, #1b2536);
+  border: 1px solid #26324a;
   border-radius: 16px;
   box-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.65);
 }
@@ -57,7 +57,7 @@ body {
 .btn-ghost {
   background: rgba(255, 255, 255, 0.02);
   color: #f6f5f1;
-  border: 1px solid #1c2534;
+  border: 1px solid #26324a;
   border-radius: 10px;
   padding: 13px 24px;
   font-family: 'Cairo', sans-serif;
