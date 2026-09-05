@@ -153,7 +153,7 @@ export default function CommunityFeed({
           <div
             key={q.id}
             ref={(el) => { questionRefs.current[q.id] = el; }}
-            className={`card p-6 mb-4.5 transition-shadow duration-700 ${
+            className={`card p-6 mb-6 transition-shadow duration-700 ${
               justArrivedId === q.id ? 'border-gold shadow-[0_0_0_1px_rgba(212,177,94,0.5),0_0_24px_rgba(212,177,94,0.25)]' : ''
             }`}
           >
