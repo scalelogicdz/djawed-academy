@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import QuizPanel from '@/components/QuizPanel';
 
 type Lesson = {
   id: string;
@@ -14,8 +15,15 @@ type Lesson = {
   resource_url: string | null;
   module_id: string;
 };
-type ModuleRow = { id: string; title: string; position: number };
+type ModuleRow = { id: string; title: string; description: string | null; position: number };
 type LessonListItem = { id: string; title: string; module_id: string; position: number };
+type QuizQuestion = { id: string; question: string; options: string[]; correct_index: number };
+
+declare global {
+  interface Window {
+    playerjs?: any;
+  }
+}
 
 export default function LessonBody({
   lesson,
@@ -29,6 +37,7 @@ export default function LessonBody({
   isLocked,
   requiredLessonTitle,
   requiredLessonId,
+  quizQuestions,
 }: {
   lesson: Lesson;
   modules: ModuleRow[];
@@ -41,13 +50,63 @@ export default function LessonBody({
   isLocked: boolean;
   requiredLessonTitle: string | null;
   requiredLessonId: string | null;
+  quizQuestions: QuizQuestion[];
 }) {
   const supabase = createClient();
   const router = useRouter();
   const [completed, setCompleted] = useState(isCompleted);
   const [saving, setSaving] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const completedSet = new Set(completedIds);
   const lockedSet = new Set(lockedIds);
+
+  const BUNNY_LIBRARY_ID = '744754';
+  const embedUrl =
+    lesson.video_provider === 'vimeo'
+      ? `https://player.vimeo.com/video/${lesson.video_id}`
+      : `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${lesson.video_id}`;
+
+  // Load Bunny's Player.js library once, then attach an "ended" listener to this
+  // lesson's iframe so we know for real that the student watched the video through.
+  useEffect(() => {
+    if (isLocked || !lesson.video_id || lesson.video_provider === 'vimeo') return;
+
+    let player: any;
+    let cancelled = false;
+
+    function attachPlayer() {
+      if (cancelled || !iframeRef.current || !window.playerjs) return;
+      player = new window.playerjs.Player(iframeRef.current);
+      player.on('ready', () => {
+        if (cancelled) return;
+        player.on('ended', () => setVideoEnded(true));
+      });
+    }
+
+    if (window.playerjs) {
+      attachPlayer();
+    } else {
+      const existingScript = document.getElementById('bunny-playerjs-script');
+      if (existingScript) {
+        existingScript.addEventListener('load', attachPlayer);
+      } else {
+        const script = document.createElement('script');
+        script.id = 'bunny-playerjs-script';
+        script.src = '//assets.mediadelivery.net/playerjs/playerjs-latest.min.js';
+        script.onload = attachPlayer;
+        document.body.appendChild(script);
+      }
+    }
+
+    return () => {
+      cancelled = true;
+      if (player && typeof player.off === 'function') {
+        player.off('ended');
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson.id]);
 
   async function toggleComplete() {
     setSaving(true);
@@ -67,12 +126,11 @@ export default function LessonBody({
     router.refresh();
   }
 
-  const BUNNY_LIBRARY_ID = '744754';
-
-  const embedUrl =
-    lesson.video_provider === 'vimeo'
-      ? `https://player.vimeo.com/video/${lesson.video_id}`
-      : `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${lesson.video_id}`;
+  // Only require watching the video through if a real video exists. Once marked
+  // complete, always allow un-marking freely without needing to rewatch.
+  const requiresWatch = !!lesson.video_id && lesson.video_provider !== 'vimeo';
+  const canMarkComplete = completed || !requiresWatch || videoEnded;
+  const showQuiz = quizQuestions.length > 0 && (!requiresWatch || videoEnded);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
@@ -97,6 +155,7 @@ export default function LessonBody({
             <div className="aspect-video rounded-2xl border border-border overflow-hidden mb-5 bg-gradient-to-br from-surface2 to-[#070A10]">
               {lesson.video_id ? (
                 <iframe
+                  ref={iframeRef}
                   src={embedUrl}
                   className="w-full h-full"
                   allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
@@ -118,6 +177,8 @@ export default function LessonBody({
                 📎 تحميل الملف المرفق
               </a>
             )}
+
+            {showQuiz && <QuizPanel questions={quizQuestions} />}
           </>
         )}
 
@@ -130,9 +191,14 @@ export default function LessonBody({
             <span />
           )}
           {!isLocked && (
-            <button onClick={toggleComplete} disabled={saving} className="btn-primary">
-              {completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
-            </button>
+            <div className="flex flex-col items-center gap-1.5">
+              <button onClick={toggleComplete} disabled={saving || !canMarkComplete} className="btn-primary">
+                {completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
+              </button>
+              {!canMarkComplete && (
+                <span className="text-muted2 text-[11.5px]">شاهد الفيديو كاملاً لتتمكن من تحديد الدرس كمكتمل</span>
+              )}
+            </div>
           )}
           {nextLessonId ? (
             <Link href={`/lesson/${nextLessonId}`} className="btn-ghost text-center">
@@ -147,8 +213,9 @@ export default function LessonBody({
       <div>
         {modules.map((m) => (
           <div key={m.id}>
-            <div className="font-cairo font-bold text-[12.5px] text-gold mt-5 mb-2.5 uppercase tracking-wide first:mt-0">
-              {m.title}
+            <div className="mt-5 mb-2.5 first:mt-0">
+              <div className="font-cairo font-bold text-[12.5px] text-gold uppercase tracking-wide">{m.title}</div>
+              {m.description && <p className="text-muted2 text-[12px] mt-1 leading-relaxed">{m.description}</p>}
             </div>
             {lessons
               .filter((l) => l.module_id === m.id)
