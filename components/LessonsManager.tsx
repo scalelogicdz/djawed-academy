@@ -16,6 +16,8 @@ type LessonRow = {
   position: number;
 };
 
+const emptyDraft = { title: '', description: '', videoId: '', videoProvider: 'bunny', resourceUrl: '' };
+
 export default function LessonsManager({
   courses,
   initialModules,
@@ -31,13 +33,13 @@ export default function LessonsManager({
   const [selectedCourse, setSelectedCourse] = useState(courses[0]?.id ?? '');
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [lessonForms, setLessonForms] = useState<Record<string, boolean>>({});
-  const [lessonDraft, setLessonDraft] = useState({
-    title: '',
-    description: '',
-    videoId: '',
-    videoProvider: 'bunny',
-    resourceUrl: '',
-  });
+  const [lessonDraft, setLessonDraft] = useState(emptyDraft);
+
+  // Editing state: which lesson id is currently being edited, and its draft values
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState(emptyDraft);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
 
   async function addModule() {
     if (!newModuleTitle.trim() || !selectedCourse) return;
@@ -78,8 +80,67 @@ export default function LessonsManager({
     const data = await res.json();
     if (res.ok) {
       setLessons([...lessons, data.lesson]);
-      setLessonDraft({ title: '', description: '', videoId: '', videoProvider: 'bunny', resourceUrl: '' });
+      setLessonDraft(emptyDraft);
       setLessonForms({ ...lessonForms, [moduleId]: false });
+      router.refresh();
+    }
+  }
+
+  function startEditing(lesson: LessonRow) {
+    setEditingLessonId(lesson.id);
+    setEditDraft({
+      title: lesson.title,
+      description: lesson.description ?? '',
+      videoId: lesson.video_id ?? '',
+      videoProvider: lesson.video_provider ?? 'bunny',
+      resourceUrl: lesson.resource_url ?? '',
+    });
+  }
+
+  function cancelEditing() {
+    setEditingLessonId(null);
+    setEditDraft(emptyDraft);
+  }
+
+  async function saveEdit(lessonId: string) {
+    if (!editDraft.title.trim()) return;
+    setSavingEdit(true);
+    const res = await fetch('/api/admin/content', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'lesson',
+        id: lessonId,
+        title: editDraft.title.trim(),
+        description: editDraft.description.trim() || null,
+        videoId: editDraft.videoId.trim() || null,
+        videoProvider: editDraft.videoProvider,
+        resourceUrl: editDraft.resourceUrl.trim() || null,
+      }),
+    });
+    const data = await res.json();
+    setSavingEdit(false);
+    if (res.ok) {
+      setLessons(lessons.map((l) => (l.id === lessonId ? data.lesson : l)));
+      setEditingLessonId(null);
+      setEditDraft(emptyDraft);
+      router.refresh();
+    }
+  }
+
+  async function deleteLesson(lessonId: string, lessonTitle: string) {
+    const confirmed = window.confirm(`هل أنت متأكد من حذف الدرس "${lessonTitle}"؟ لا يمكن التراجع عن هذا الإجراء.`);
+    if (!confirmed) return;
+
+    setDeletingLessonId(lessonId);
+    const res = await fetch('/api/admin/content', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'lesson', id: lessonId }),
+    });
+    setDeletingLessonId(null);
+    if (res.ok) {
+      setLessons(lessons.filter((l) => l.id !== lessonId));
       router.refresh();
     }
   }
@@ -120,12 +181,79 @@ export default function LessonsManager({
 
           {lessons
             .filter((l) => l.module_id === m.id)
-            .map((l) => (
-              <div key={l.id} className="flex items-center justify-between py-2.5 border-b border-border last:border-0 text-sm">
-                <span>{l.title}</span>
-                <span className="text-muted2 text-xs">{l.video_id ? '🎬 فيديو مضاف' : 'بلا فيديو'}</span>
-              </div>
-            ))}
+            .map((l) =>
+              editingLessonId === l.id ? (
+                <div key={l.id} className="py-4 border-b border-border last:border-0 space-y-3">
+                  <input
+                    value={editDraft.title}
+                    onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })}
+                    placeholder="عنوان الدرس"
+                    className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+                  />
+                  <textarea
+                    value={editDraft.description}
+                    onChange={(e) => setEditDraft({ ...editDraft, description: e.target.value })}
+                    placeholder="وصف الدرس (اختياري)"
+                    rows={2}
+                    className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold resize-none"
+                  />
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <select
+                      value={editDraft.videoProvider}
+                      onChange={(e) => setEditDraft({ ...editDraft, videoProvider: e.target.value })}
+                      className="bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+                    >
+                      <option value="bunny">Bunny Stream</option>
+                      <option value="vimeo">Vimeo</option>
+                    </select>
+                    <input
+                      value={editDraft.videoId}
+                      onChange={(e) => setEditDraft({ ...editDraft, videoId: e.target.value })}
+                      placeholder="معرّف الفيديو (Video ID)"
+                      className="bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+                    />
+                  </div>
+                  <input
+                    value={editDraft.resourceUrl}
+                    onChange={(e) => setEditDraft({ ...editDraft, resourceUrl: e.target.value })}
+                    placeholder="رابط الملف المرفق (اختياري)"
+                    className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button className="btn-ghost !py-2 !px-4 text-xs" onClick={cancelEditing}>
+                      إلغاء
+                    </button>
+                    <button
+                      className="btn-primary !py-2 !px-4 text-xs"
+                      onClick={() => saveEdit(l.id)}
+                      disabled={savingEdit}
+                    >
+                      {savingEdit ? 'جارٍ الحفظ...' : 'حفظ التعديلات'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div key={l.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-border last:border-0 text-sm">
+                  <span className="flex-1">{l.title}</span>
+                  <span className="text-muted2 text-xs whitespace-nowrap">{l.video_id ? '🎬 فيديو مضاف' : 'بلا فيديو'}</span>
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => startEditing(l)}
+                      className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-gold hover:border-goldDim transition"
+                    >
+                      ✏️ تعديل
+                    </button>
+                    <button
+                      onClick={() => deleteLesson(l.id, l.title)}
+                      disabled={deletingLessonId === l.id}
+                      className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-[#E4756A] hover:border-[#E4756A] transition"
+                    >
+                      {deletingLessonId === l.id ? '...' : '🗑️ حذف'}
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
 
           {lessonForms[m.id] ? (
             <div className="mt-4 space-y-3">
