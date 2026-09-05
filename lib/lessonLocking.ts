@@ -7,11 +7,11 @@ export type LockableLesson = { id: string; module_id: string; position: number }
  * of every module is always unlocked. Modules never block each other —
  * a student can jump straight into any module's first lesson at any time.
  */
-export function computeLockedLessonIds(
-  lessons: LockableLesson[],
+export function computeLockedLessonIds<T extends LockableLesson>(
+  lessons: T[],
   completedIds: Set<string>
 ): Set<string> {
-  const byModule = new Map<string, LockableLesson[]>();
+  const byModule = new Map<string, T[]>();
   for (const l of lessons) {
     const list = byModule.get(l.module_id) ?? [];
     list.push(l);
@@ -32,12 +32,16 @@ export function computeLockedLessonIds(
   return locked;
 }
 
-/** For a locked lesson, find the specific earlier lesson (same module) it's waiting on. */
-export function findRequiredLesson(
+/**
+ * For a locked lesson, find the specific earlier lesson (same module) it's waiting on.
+ * Generic so it returns the SAME shape you passed in (e.g. including `title`),
+ * not a stripped-down version.
+ */
+export function findRequiredLesson<T extends LockableLesson>(
   targetLessonId: string,
-  lessons: LockableLesson[],
+  lessons: T[],
   completedIds: Set<string>
-): LockableLesson | null {
+): T | null {
   const target = lessons.find((l) => l.id === targetLessonId);
   if (!target) return null;
   const sameModule = lessons
