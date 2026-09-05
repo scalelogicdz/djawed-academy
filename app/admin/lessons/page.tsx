@@ -11,10 +11,17 @@ export default async function AdminLessonsPage() {
   if (!user) redirect('/login');
 
   const { data: courses } = await supabase.from('courses').select('id, title').order('created_at');
-  const { data: modules } = await supabase.from('modules').select('id, course_id, title, position').order('position');
+  const { data: modules } = await supabase
+    .from('modules')
+    .select('id, course_id, title, description, position')
+    .order('position');
   const { data: lessons } = await supabase
     .from('lessons')
     .select('id, module_id, title, description, video_id, video_provider, resource_url, position')
+    .order('position');
+  const { data: quizQuestions } = await supabase
+    .from('quiz_questions')
+    .select('id, lesson_id, question, options, correct_index, position')
     .order('position');
 
   return (
@@ -28,6 +35,7 @@ export default async function AdminLessonsPage() {
           courses={courses ?? []}
           initialModules={modules ?? []}
           initialLessons={lessons ?? []}
+          initialQuizQuestions={quizQuestions ?? []}
         />
       </section>
     </>
