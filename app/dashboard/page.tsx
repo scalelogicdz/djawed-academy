@@ -21,44 +21,35 @@ export default async function DashboardPage() {
     .select('course_id, courses(id, title, description)')
     .eq('student_id', user.id);
 
-  // For each enrolled course, compute progress
+  const { data: progressRows } = await supabase
+    .from('lesson_progress')
+    .select('lesson_id')
+    .eq('student_id', user.id);
+  const completedIds = new Set((progressRows ?? []).map((p) => p.lesson_id));
+
   const courseCards = await Promise.all(
     (enrollments ?? []).map(async (enr: any) => {
       const course = enr.courses;
       const { data: modules } = await supabase.from('modules').select('id').eq('course_id', course.id);
       const moduleIds = (modules ?? []).map((m) => m.id);
 
-      const { count: totalLessons } = await supabase
-        .from('lessons')
-        .select('id', { count: 'exact', head: true })
-        .in('module_id', moduleIds.length ? moduleIds : ['00000000-0000-0000-0000-000000000000']);
-
       const { data: lessonsInCourse } = await supabase
         .from('lessons')
-        .select('id')
-        .in('module_id', moduleIds.length ? moduleIds : ['00000000-0000-0000-0000-000000000000']);
-      const lessonIds = (lessonsInCourse ?? []).map((l) => l.id);
+        .select('id, title, position')
+        .in('module_id', moduleIds.length ? moduleIds : ['00000000-0000-0000-0000-000000000000'])
+        .order('position', { ascending: true });
 
-      const { count: completedCount } = await supabase
-        .from('lesson_progress')
-        .select('id', { count: 'exact', head: true })
-        .eq('student_id', user.id)
-        .in('lesson_id', lessonIds.length ? lessonIds : ['00000000-0000-0000-0000-000000000000']);
-
-      const total = totalLessons ?? 0;
-      const completed = completedCount ?? 0;
+      const lessons = lessonsInCourse ?? [];
+      const total = lessons.length;
+      const completed = lessons.filter((l) => completedIds.has(l.id)).length;
       const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-      // find the first not-completed lesson to "continue" into, else the first lesson
-      const { data: firstLesson } = await supabase
-        .from('lessons')
-        .select('id')
-        .in('module_id', moduleIds.length ? moduleIds : ['00000000-0000-0000-0000-000000000000'])
-        .order('position', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+      // The actual next lesson to continue into: the first one NOT yet completed, in order.
+      // If everything is completed, fall back to the last lesson (so the button still goes somewhere sensible).
+      const nextLesson = lessons.find((l) => !completedIds.has(l.id)) ?? lessons[lessons.length - 1] ?? null;
+      const isFullyCompleted = total > 0 && completed === total;
 
-      return { course, total, completed, pct, continueLessonId: firstLesson?.id };
+      return { course, total, completed, pct, nextLesson, isFullyCompleted };
     })
   );
 
@@ -80,35 +71,74 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {courseCards.map(({ course, pct, total, completed, continueLessonId }) => (
-          <div
-            key={course.id}
-            className="flex gap-6 items-center card p-7 mb-5 hover:border-goldDim transition"
-          >
-            <div className="w-[140px] h-[94px] rounded-xl flex-shrink-0 flex items-center justify-center font-cairo font-bold text-gold text-[12.5px] text-center p-2 border border-goldDim bg-gradient-to-br from-[rgba(212,177,94,0.1)] to-[#070A10]">
-              {course.title}
-            </div>
-            <div className="flex-1">
-              <h3 className="text-[19px] font-bold mb-1.5">{course.title}</h3>
-              <p className="text-muted text-[13px]">
-                {total} درس · {completed} مكتمل
-              </p>
-              <div className="h-[5px] bg-border rounded-full mt-3.5 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-l from-goldDim to-gold rounded-full"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <div className="text-[12.5px] text-muted mt-2">{pct}% مكتمل</div>
-            </div>
-            <Link
-              href={continueLessonId ? `/lesson/${continueLessonId}` : '#'}
-              className="btn-primary whitespace-nowrap"
+        {courseCards.map(({ course, pct, total, completed, nextLesson, isFullyCompleted }) => {
+          const radius = 34;
+          const circumference = 2 * Math.PI * radius;
+          const dashOffset = circumference * (1 - pct / 100);
+
+          return (
+            <div
+              key={course.id}
+              className="card p-7 mb-5 hover:border-goldDim transition"
             >
-              متابعة التعلم
-            </Link>
-          </div>
-        ))}
+              <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
+                {/* Circular progress graph */}
+                <div className="relative w-[92px] h-[92px] flex-shrink-0">
+                  <svg width="92" height="92" viewBox="0 0 92 92">
+                    <circle cx="46" cy="46" r={radius} fill="none" stroke="#1c2534" strokeWidth="7" />
+                    <circle
+                      cx="46"
+                      cy="46"
+                      r={radius}
+                      fill="none"
+                      stroke="url(#progressGradient)"
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={dashOffset}
+                      transform="rotate(-90 46 46)"
+                      style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+                    />
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#d4b15e" />
+                        <stop offset="100%" stopColor="#c9a84c" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center font-cairo font-extrabold text-[17px]">
+                    {pct}%
+                  </div>
+                </div>
+
+                <div className="flex-1 text-center sm:text-right w-full">
+                  <h3 className="text-[19px] font-bold mb-1.5">{course.title}</h3>
+                  <p className="text-muted text-[13px] mb-3">
+                    {total} درس · {completed} مكتمل
+                  </p>
+
+                  {isFullyCompleted ? (
+                    <div className="inline-flex items-center gap-1.5 text-[13px] text-gold font-semibold">
+                      🎉 أكملت هذه الدورة بالكامل
+                    </div>
+                  ) : nextLesson ? (
+                    <div className="text-[13px] text-muted">
+                      الدرس القادم:{' '}
+                      <span className="text-text font-semibold">{nextLesson.title}</span>
+                    </div>
+                  ) : null}
+                </div>
+
+                <Link
+                  href={nextLesson ? `/lesson/${nextLesson.id}` : '#'}
+                  className="btn-primary whitespace-nowrap w-full sm:w-auto text-center"
+                >
+                  {isFullyCompleted ? 'مراجعة الدورة' : 'متابعة التعلم'}
+                </Link>
+              </div>
+            </div>
+          );
+        })}
       </section>
     </>
   );
