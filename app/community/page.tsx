@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import StudentNav from '@/components/StudentNav';
 import CommunityFeed from '@/components/CommunityFeed';
@@ -38,17 +39,19 @@ export default async function CommunityPage() {
 
   return (
     <>
-      <StudentNav isAdmin={profile?.is_admin} />
+      <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
       <section className="max-w-[1140px] mx-auto px-6 py-14">
         <div className="eyebrow">المجتمع</div>
         <h1 className="font-cairo font-extrabold text-[25px] mb-6">اسأل، شارك، وتعلم من الآخرين</h1>
 
-        <CommunityFeed
-          currentUserId={user.id}
-          currentUserDisplayName={profile?.display_name ?? ''}
-          initialQuestions={questions ?? []}
-          initialReplies={replies ?? []}
-        />
+        <Suspense fallback={null}>
+          <CommunityFeed
+            currentUserId={user.id}
+            currentUserDisplayName={profile?.display_name ?? ''}
+            initialQuestions={questions ?? []}
+            initialReplies={replies ?? []}
+          />
+        </Suspense>
       </section>
     </>
   );
