@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import NotificationBell from '@/components/NotificationBell';
 
 const links = [
   { href: '/dashboard', label: 'لوحة التحكم' },
   { href: '/community', label: 'المجتمع' },
 ];
 
-export default function StudentNav({ isAdmin }: { isAdmin?: boolean }) {
+export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boolean; currentUserId: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -52,9 +53,12 @@ export default function StudentNav({ isAdmin }: { isAdmin?: boolean }) {
           </Link>
         )}
       </div>
-      <button onClick={handleLogout} className="btn-ghost !py-2 !px-4 text-xs whitespace-nowrap">
-        تسجيل الخروج
-      </button>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <NotificationBell currentUserId={currentUserId} />
+        <button onClick={handleLogout} className="btn-ghost !py-2 !px-4 text-xs whitespace-nowrap">
+          تسجيل الخروج
+        </button>
+      </div>
     </nav>
   );
 }
