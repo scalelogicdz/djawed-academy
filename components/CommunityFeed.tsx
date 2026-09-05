@@ -157,7 +157,7 @@ export default function CommunityFeed({
               justArrivedId === q.id ? 'border-gold shadow-[0_0_0_1px_rgba(212,177,94,0.5),0_0_24px_rgba(212,177,94,0.25)]' : ''
             }`}
           >
-            <div className="flex items-center gap-2.5 mb-3">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mb-3">
               <div
                 className={`w-10 h-10 rounded-full bg-surface2 border flex items-center justify-center font-cairo font-bold text-sm ${
                   isAdminAuthor ? 'border-gold' : 'border-border'
@@ -165,7 +165,7 @@ export default function CommunityFeed({
               >
                 {isAdminAuthor ? 'DK' : initial(q.profiles?.display_name ?? '')}
               </div>
-              <span className="font-cairo font-bold text-[14.5px]">{q.profiles?.display_name}</span>
+              <span className="font-cairo font-bold text-[14.5px] whitespace-nowrap">{q.profiles?.display_name}</span>
               {isAdminAuthor && <span className="coach-badge">✓ المدرب</span>}
               <span className="text-xs text-muted2 mr-auto">{timeAgo(q.created_at)}</span>
             </div>
@@ -208,7 +208,7 @@ export default function CommunityFeed({
                             : 'border-border'
                         }`}
                       >
-                        <div className="flex items-center gap-2.5 mb-2">
+                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mb-2">
                           <div
                             className={`w-8 h-8 rounded-full bg-surface2 border flex items-center justify-center font-cairo font-bold text-[12.5px] ${
                               rIsAdmin ? 'border-gold' : 'border-border'
@@ -216,7 +216,7 @@ export default function CommunityFeed({
                           >
                             {rIsAdmin ? 'DK' : initial(r.profiles?.display_name ?? '')}
                           </div>
-                          <span className="font-cairo font-bold text-[13.5px]">{r.profiles?.display_name}</span>
+                          <span className="font-cairo font-bold text-[13.5px] whitespace-nowrap">{r.profiles?.display_name}</span>
                           {rIsAdmin && <span className="coach-badge">✓ المدرب</span>}
                           <span className="text-xs text-muted2 mr-auto">{timeAgo(r.created_at)}</span>
                         </div>
