@@ -57,10 +57,12 @@ export default function CommunityFeed({
   const [newQuestion, setNewQuestion] = useState('');
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [posting, setPosting] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!highlightedId) return;
     setJustArrivedId(highlightedId);
+    setExpandedIds((prev) => new Set(prev).add(highlightedId));
     const el = questionRefs.current[highlightedId];
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -69,6 +71,15 @@ export default function CommunityFeed({
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightedId, questions]);
+
+  function toggleExpanded(questionId: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(questionId)) next.delete(questionId);
+      else next.add(questionId);
+      return next;
+    });
+  }
 
   async function submitQuestion() {
     if (!newQuestion.trim()) return;
@@ -136,11 +147,13 @@ export default function CommunityFeed({
       {questions.map((q) => {
         const qReplies = replies.filter((r) => r.question_id === q.id);
         const isAdminAuthor = q.profiles?.is_admin;
+        const expanded = expandedIds.has(q.id);
+
         return (
           <div
             key={q.id}
             ref={(el) => { questionRefs.current[q.id] = el; }}
-            className={`card p-6 mb-4.5 transition-colors duration-700 ${
+            className={`card p-6 mb-4.5 transition-shadow duration-700 ${
               justArrivedId === q.id ? 'border-gold shadow-[0_0_0_1px_rgba(212,177,94,0.5),0_0_24px_rgba(212,177,94,0.25)]' : ''
             }`}
           >
@@ -156,45 +169,76 @@ export default function CommunityFeed({
               {isAdminAuthor && <span className="coach-badge">✓ المدرب</span>}
               <span className="text-xs text-muted2 mr-auto">{timeAgo(q.created_at)}</span>
             </div>
-            <p className="leading-relaxed">{q.body}</p>
+            <p className="leading-relaxed mb-4">{q.body}</p>
 
-            {qReplies.map((r) => {
-              const rIsAdmin = r.profiles?.is_admin;
-              return (
-                <div
-                  key={r.id}
-                  className={`mt-4 pr-5 border-r-2 pt-4 pb-0.5 ${
-                    rIsAdmin ? 'border-goldDim bg-gradient-to-l from-[rgba(212,177,94,0.04)] to-transparent rounded-l-lg' : 'border-border'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 mb-2">
-                    <div
-                      className={`w-8 h-8 rounded-full bg-surface2 border flex items-center justify-center font-cairo font-bold text-[12.5px] ${
-                        rIsAdmin ? 'border-gold' : 'border-border'
-                      }`}
-                    >
-                      {rIsAdmin ? 'DK' : initial(r.profiles?.display_name ?? '')}
-                    </div>
-                    <span className="font-cairo font-bold text-[13.5px]">{r.profiles?.display_name}</span>
-                    {rIsAdmin && <span className="coach-badge">✓ المدرب</span>}
-                    <span className="text-xs text-muted2 mr-auto">{timeAgo(r.created_at)}</span>
+            <button
+              onClick={() => toggleExpanded(q.id)}
+              className="flex items-center gap-1.5 text-[13px] text-muted hover:text-gold transition-colors py-1.5"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
+              >
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {qReplies.length > 0
+                ? `${qReplies.length} ${qReplies.length === 1 ? 'رد' : 'ردود'}`
+                : 'أضف ردًا'}
+            </button>
+
+            <div
+              className="grid transition-[grid-template-rows] duration-300 ease-out"
+              style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
+            >
+              <div className="overflow-hidden">
+                <div className="pt-2">
+                  {qReplies.map((r) => {
+                    const rIsAdmin = r.profiles?.is_admin;
+                    return (
+                      <div
+                        key={r.id}
+                        className={`mt-3 pr-5 border-r-2 pt-4 pb-0.5 ${
+                          rIsAdmin
+                            ? 'border-goldDim bg-gradient-to-l from-[rgba(212,177,94,0.04)] to-transparent rounded-l-lg'
+                            : 'border-border'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 mb-2">
+                          <div
+                            className={`w-8 h-8 rounded-full bg-surface2 border flex items-center justify-center font-cairo font-bold text-[12.5px] ${
+                              rIsAdmin ? 'border-gold' : 'border-border'
+                            }`}
+                          >
+                            {rIsAdmin ? 'DK' : initial(r.profiles?.display_name ?? '')}
+                          </div>
+                          <span className="font-cairo font-bold text-[13.5px]">{r.profiles?.display_name}</span>
+                          {rIsAdmin && <span className="coach-badge">✓ المدرب</span>}
+                          <span className="text-xs text-muted2 mr-auto">{timeAgo(r.created_at)}</span>
+                        </div>
+                        <p className="leading-relaxed text-[14.5px]">{r.body}</p>
+                      </div>
+                    );
+                  })}
+
+                  <div className="flex gap-2 mt-4">
+                    <input
+                      value={replyDrafts[q.id] ?? ''}
+                      onChange={(e) => setReplyDrafts({ ...replyDrafts, [q.id]: e.target.value })}
+                      onKeyDown={(e) => e.key === 'Enter' && submitReply(q.id)}
+                      placeholder="اكتب ردًا..."
+                      className="flex-1 bg-white/[0.02] border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-gold"
+                    />
+                    <button className="btn-ghost !py-2 !px-4 text-xs" onClick={() => submitReply(q.id)}>
+                      رد
+                    </button>
                   </div>
-                  <p className="leading-relaxed text-[14.5px]">{r.body}</p>
                 </div>
-              );
-            })}
-
-            <div className="flex gap-2 mt-4">
-              <input
-                value={replyDrafts[q.id] ?? ''}
-                onChange={(e) => setReplyDrafts({ ...replyDrafts, [q.id]: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && submitReply(q.id)}
-                placeholder="اكتب ردًا..."
-                className="flex-1 bg-white/[0.02] border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-gold"
-              />
-              <button className="btn-ghost !py-2 !px-4 text-xs" onClick={() => submitReply(q.id)}>
-                رد
-              </button>
+              </div>
             </div>
           </div>
         );
