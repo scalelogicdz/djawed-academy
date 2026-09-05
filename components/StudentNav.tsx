@@ -28,12 +28,12 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
   return (
     <nav className="sticky top-0 z-50 bg-bg/85 backdrop-blur-md border-b border-border">
       <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 sm:py-4">
-        <span className="font-cairo font-extrabold text-gold text-sm whitespace-nowrap">
+        <span className="order-2 md:order-1 font-cairo font-extrabold text-gold text-sm whitespace-nowrap">
           DK Academy
         </span>
 
         {/* Desktop nav links — hidden on mobile */}
-        <div className="hidden md:flex items-center gap-2 flex-1 mx-4 overflow-x-auto">
+        <div className="hidden md:flex md:order-2 items-center gap-2 flex-1 mx-4 overflow-x-auto">
           {allLinks.map((l) => (
             <Link
               key={l.href}
@@ -49,7 +49,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           ))}
         </div>
 
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="order-1 md:order-3 flex items-center gap-1 flex-shrink-0">
           <NotificationBell currentUserId={currentUserId} />
 
           {/* Desktop logout — hidden on mobile, moved into the menu instead */}
