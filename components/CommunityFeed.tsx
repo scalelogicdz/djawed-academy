@@ -35,6 +35,26 @@ function initial(name: string) {
   return name?.trim()?.[0] ?? '؟';
 }
 
+function ChatIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path
+        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#100C02" strokeWidth="2.2">
+      <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function CommunityFeed({
   currentUserId,
   currentUserDisplayName,
@@ -53,7 +73,6 @@ export default function CommunityFeed({
   const [justArrivedId, setJustArrivedId] = useState<string | null>(null);
   const [questions, setQuestions] = useState(initialQuestions);
   const [replies, setReplies] = useState(initialReplies);
-  const [composing, setComposing] = useState(false);
   const [newQuestion, setNewQuestion] = useState('');
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [posting, setPosting] = useState(false);
@@ -96,7 +115,6 @@ export default function CommunityFeed({
         ...questions,
       ]);
       setNewQuestion('');
-      setComposing(false);
     }
   }
 
@@ -116,32 +134,17 @@ export default function CommunityFeed({
 
   return (
     <div>
-      <div
-        className="card px-5 py-5 mb-7 cursor-text hover:border-goldDim transition"
-        onClick={() => setComposing(true)}
-      >
-        {!composing ? (
-          <span className="text-muted text-[15px]">✏️ اكتب سؤالك هنا...</span>
-        ) : (
-          <div>
-            <textarea
-              autoFocus
-              value={newQuestion}
-              onChange={(e) => setNewQuestion(e.target.value)}
-              placeholder="اكتب سؤالك هنا..."
-              rows={3}
-              className="w-full bg-transparent text-[15px] focus:outline-none resize-none placeholder:text-muted"
-            />
-            <div className="flex gap-2 justify-end mt-3">
-              <button className="btn-ghost !py-2 !px-4 text-xs" onClick={() => setComposing(false)}>
-                إلغاء
-              </button>
-              <button className="btn-primary !py-2 !px-4 text-xs" onClick={submitQuestion} disabled={posting}>
-                نشر السؤال
-              </button>
-            </div>
-          </div>
-        )}
+      <div className="compose-bar mb-8">
+        <input
+          value={newQuestion}
+          onChange={(e) => setNewQuestion(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && submitQuestion()}
+          placeholder="✏️ اكتب سؤالك هنا..."
+          className="compose-input"
+        />
+        <button className="compose-send" onClick={submitQuestion} disabled={posting || !newQuestion.trim()}>
+          <SendIcon />
+        </button>
       </div>
 
       {questions.map((q) => {
@@ -153,31 +156,30 @@ export default function CommunityFeed({
           <div
             key={q.id}
             ref={(el) => { questionRefs.current[q.id] = el; }}
-            className={`card p-6 mb-6 transition-shadow duration-700 ${
+            className={`card p-7 mb-6 transition-shadow duration-700 ${
               justArrivedId === q.id ? 'border-gold shadow-[0_0_0_1px_rgba(212,177,94,0.5),0_0_24px_rgba(212,177,94,0.25)]' : ''
             }`}
           >
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mb-3">
-              <div
-                className={`w-10 h-10 rounded-full bg-surface2 border flex items-center justify-center font-cairo font-bold text-sm ${
-                  isAdminAuthor ? 'border-gold' : 'border-border'
-                }`}
-              >
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`avatar-ring ${isAdminAuthor ? 'admin' : ''}`}>
                 {isAdminAuthor ? 'DK' : initial(q.profiles?.display_name ?? '')}
               </div>
-              <span className="font-cairo font-bold text-[14.5px] whitespace-nowrap">{q.profiles?.display_name}</span>
-              {isAdminAuthor && <span className="coach-badge">✓ المدرب</span>}
-              <span className="text-xs text-muted2 mr-auto">{timeAgo(q.created_at)}</span>
+              <div className="flex-1 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                <span className="font-heading font-bold text-[15px] whitespace-nowrap">{q.profiles?.display_name}</span>
+                {isAdminAuthor && <span className="coach-badge">✓ المدرب</span>}
+              </div>
+              <span className="text-xs text-muted2 whitespace-nowrap">{timeAgo(q.created_at)}</span>
             </div>
-            <p className="leading-relaxed mb-4">{q.body}</p>
+            <p className="leading-relaxed mb-4 text-[15px]">{q.body}</p>
 
-            <button
-              onClick={() => toggleExpanded(q.id)}
-              className="flex items-center gap-1.5 text-[13px] text-muted hover:text-gold transition-colors py-1.5"
-            >
+            <button onClick={() => toggleExpanded(q.id)} className="reply-toggle">
+              <ChatIcon />
+              {qReplies.length > 0
+                ? `${qReplies.length} ${qReplies.length === 1 ? 'رد' : 'ردود'}`
+                : 'أضف ردًا'}
               <svg
-                width="14"
-                height="14"
+                width="12"
+                height="12"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -186,9 +188,6 @@ export default function CommunityFeed({
               >
                 <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              {qReplies.length > 0
-                ? `${qReplies.length} ${qReplies.length === 1 ? 'رد' : 'ردود'}`
-                : 'أضف ردًا'}
             </button>
 
             <div
@@ -196,45 +195,40 @@ export default function CommunityFeed({
               style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
             >
               <div className="overflow-hidden">
-                <div className="pt-2">
+                <div className="pt-1">
                   {qReplies.map((r) => {
                     const rIsAdmin = r.profiles?.is_admin;
                     return (
-                      <div
-                        key={r.id}
-                        className={`mt-3 pr-5 border-r-2 pt-4 pb-0.5 ${
-                          rIsAdmin
-                            ? 'border-goldDim bg-gradient-to-l from-[rgba(212,177,94,0.04)] to-transparent rounded-l-lg'
-                            : 'border-border'
-                        }`}
-                      >
-                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mb-2">
-                          <div
-                            className={`w-8 h-8 rounded-full bg-surface2 border flex items-center justify-center font-cairo font-bold text-[12.5px] ${
-                              rIsAdmin ? 'border-gold' : 'border-border'
-                            }`}
-                          >
+                      <div key={r.id} className={`reply-card ${rIsAdmin ? 'admin' : ''}`}>
+                        <div className="flex items-center gap-2.5 mb-2">
+                          <div className={`avatar-ring ${rIsAdmin ? 'admin' : ''}`} style={{ width: 34, height: 34, fontSize: 13 }}>
                             {rIsAdmin ? 'DK' : initial(r.profiles?.display_name ?? '')}
                           </div>
-                          <span className="font-cairo font-bold text-[13.5px] whitespace-nowrap">{r.profiles?.display_name}</span>
-                          {rIsAdmin && <span className="coach-badge">✓ المدرب</span>}
-                          <span className="text-xs text-muted2 mr-auto">{timeAgo(r.created_at)}</span>
+                          <div className="flex-1 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                            <span className="font-heading font-bold text-[13.5px] whitespace-nowrap">{r.profiles?.display_name}</span>
+                            {rIsAdmin && <span className="coach-badge">✓ المدرب</span>}
+                          </div>
+                          <span className="text-xs text-muted2 whitespace-nowrap">{timeAgo(r.created_at)}</span>
                         </div>
                         <p className="leading-relaxed text-[14.5px]">{r.body}</p>
                       </div>
                     );
                   })}
 
-                  <div className="flex gap-2 mt-4">
+                  <div className="compose-bar mt-4">
                     <input
                       value={replyDrafts[q.id] ?? ''}
                       onChange={(e) => setReplyDrafts({ ...replyDrafts, [q.id]: e.target.value })}
                       onKeyDown={(e) => e.key === 'Enter' && submitReply(q.id)}
                       placeholder="اكتب ردًا..."
-                      className="flex-1 bg-white/[0.02] border border-border rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-gold"
+                      className="compose-input"
                     />
-                    <button className="btn-ghost !py-2 !px-4 text-xs" onClick={() => submitReply(q.id)}>
-                      رد
+                    <button
+                      className="compose-send"
+                      onClick={() => submitReply(q.id)}
+                      disabled={!(replyDrafts[q.id] ?? '').trim()}
+                    >
+                      <SendIcon />
                     </button>
                   </div>
                 </div>
