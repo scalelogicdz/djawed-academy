@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -19,11 +19,6 @@ type ModuleRow = { id: string; title: string; description: string | null; positi
 type LessonListItem = { id: string; title: string; module_id: string; position: number };
 type QuizQuestion = { id: string; question: string; options: string[]; correct_index: number };
 
-declare global {
-  interface Window {
-    playerjs?: any;
-  }
-}
 
 export default function LessonBody({
   lesson,
@@ -58,111 +53,18 @@ export default function LessonBody({
   const [saving, setSaving] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
-  const [tokenError, setTokenError] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const completedSet = new Set(completedIds);
   const lockedSet = new Set(lockedIds);
 
-  const BUNNY_LIBRARY_ID = '744754';
-
-  // Fetch a fresh, short-lived playback token for this specific lesson's video
-  // (server-side, since the signing key must never be exposed to the browser).
+  // Build the video embed URL directly.
   useEffect(() => {
-    let cancelled = false;
-    setEmbedUrl(null);
-    setTokenError(false);
-
-    if (!lesson.video_id) return;
-
-    if (lesson.video_provider === 'vimeo') {
-      setEmbedUrl(`https://player.vimeo.com/video/${lesson.video_id}`);
+    if (!lesson.video_id) {
+      setEmbedUrl(null);
       return;
     }
 
-    fetch('/api/video-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lessonId: lesson.id }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('token request failed');
-        return res.json();
-      })
-      .then((data) => {
-        if (cancelled) return;
-        setEmbedUrl(
-          `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${lesson.video_id}?token=${data.token}&expires=${data.expires}`
-        );
-      })
-      .catch(() => {
-        if (!cancelled) setTokenError(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [lesson.id, lesson.video_id, lesson.video_provider]);
-
-  // Load Bunny's Player.js library once, then attach an "ended" listener to this
-  // lesson's iframe so we know for real that the student watched the video through.
-  useEffect(() => {
-    if (isLocked || !lesson.video_id || lesson.video_provider === 'vimeo') return;
-
-    let player: any;
-    let cancelled = false;
-
-    function attachPlayer() {
-      if (cancelled || !iframeRef.current || !window.playerjs) return;
-      try {
-        player = new window.playerjs.Player(iframeRef.current);
-        player.on('ready', () => {
-          if (cancelled) return;
-          try {
-            player.on('ended', () => {
-              // Guard against a stray postMessage arriving after this lesson
-              // has already been navigated away from (the iframe/player may
-              // already be torn down at that point).
-              if (cancelled) return;
-              setVideoEnded(true);
-            });
-          } catch {
-            // Never let a Player.js callback wiring issue crash the page.
-          }
-        });
-      } catch {
-        // Player.js failing to initialize shouldn't break the lesson page —
-        // the student just won't get the auto-detected "watched" state.
-      }
-    }
-
-    if (window.playerjs) {
-      attachPlayer();
-    } else {
-      const existingScript = document.getElementById('bunny-playerjs-script');
-      if (existingScript) {
-        existingScript.addEventListener('load', attachPlayer);
-      } else {
-        const script = document.createElement('script');
-        script.id = 'bunny-playerjs-script';
-        script.src = '//assets.mediadelivery.net/playerjs/playerjs-latest.min.js';
-        script.onload = attachPlayer;
-        document.body.appendChild(script);
-      }
-    }
-
-    return () => {
-      cancelled = true;
-      if (player && typeof player.off === 'function') {
-        try {
-          player.off('ended');
-          player.off('ready');
-        } catch {
-          // Tearing down a player that's already gone is fine to ignore.
-        }
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lesson.id, embedUrl]);
+    setEmbedUrl(`https://player.vimeo.com/video/${lesson.video_id}`);
+  }, [lesson.video_id]);
 
   function playCompletionSound() {
     try {
@@ -294,18 +196,12 @@ export default function LessonBody({
                 <div className="w-full h-full flex items-center justify-center text-muted text-sm">
                   لم يتم إضافة الفيديو بعد
                 </div>
-              ) : tokenError ? (
-                <div className="w-full h-full flex flex-col items-center justify-center text-center px-6 gap-2">
-                  <span className="text-2xl">⚠️</span>
-                  <p className="text-muted text-sm">تعذر تحميل الفيديو، حاول إعادة تحميل الصفحة</p>
-                </div>
               ) : !embedUrl ? (
                 <div className="w-full h-full flex items-center justify-center text-muted text-sm">
                   جارٍ التحميل...
                 </div>
               ) : (
                 <iframe
-                  ref={iframeRef}
                   src={embedUrl}
                   className="w-full h-full"
                   allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
