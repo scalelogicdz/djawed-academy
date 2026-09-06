@@ -15,20 +15,47 @@ html {
 }
 
 body {
+  position: relative;
   background:
     radial-gradient(ellipse 900px 500px at 15% -10%, rgba(212, 177, 94, 0.07), transparent 60%),
     radial-gradient(ellipse 700px 500px at 100% 10%, rgba(63, 203, 130, 0.03), transparent 55%),
-    #0e121b;
+    #0a0d14;
   color: #f6f5f1;
   min-height: 100vh;
   letter-spacing: 0.01em;
 }
 
+/* Subtle background grid texture, matching the landing page's visual language */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.35;
+  background-image: url('/bg-texture.webp');
+  background-size: 700px auto;
+  background-repeat: repeat;
+}
+
+.glow-blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(110px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.font-heading {
+  font-family: 'El Messiri', 'Cairo', sans-serif;
+}
+
 .card {
-  background: linear-gradient(180deg, #161f2e, #161f2e 60%, #1b2536);
-  border: 1px solid #26324a;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.65);
+  background: linear-gradient(160deg, rgba(212, 177, 94, 0.07), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(212, 177, 94, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.65), 0 0 40px -10px rgba(212, 177, 94, 0.15);
+  backdrop-filter: blur(6px);
 }
 
 .btn-primary {
@@ -37,16 +64,16 @@ body {
   border: none;
   border-radius: 10px;
   padding: 14px 28px;
-  font-family: 'Cairo', sans-serif;
+  font-family: 'El Messiri', 'Cairo', sans-serif;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16.5px;
   cursor: pointer;
   transition: 0.25s;
-  box-shadow: 0 8px 24px -8px rgba(212, 177, 94, 0.45);
+  box-shadow: 0 0 30px -8px rgba(212, 177, 94, 0.5);
 }
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 28px -8px rgba(212, 177, 94, 0.6);
+  box-shadow: 0 0 36px -6px rgba(212, 177, 94, 0.65);
 }
 .btn-primary:disabled {
   opacity: 0.5;
@@ -60,9 +87,9 @@ body {
   border: 1px solid #26324a;
   border-radius: 10px;
   padding: 13px 24px;
-  font-family: 'Cairo', sans-serif;
+  font-family: 'El Messiri', 'Cairo', sans-serif;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
   transition: 0.2s;
 }
@@ -73,7 +100,7 @@ body {
 
 .eyebrow {
   color: #d4b15e;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
   margin-bottom: 12px;
