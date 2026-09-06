@@ -7,7 +7,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: '#0E121B',
+        bg: '#0A0D14',
         surface: '#161F2E',
         surface2: '#1B2536',
         gold: '#D4B15E',
@@ -18,9 +18,11 @@ module.exports = {
         muted2: '#5B6478',
         success: '#3FCB82',
         border: '#26324A',
+        track: '#3A3220',
       },
       fontFamily: {
         cairo: ['Cairo', 'sans-serif'],
+        heading: ['El Messiri', 'Cairo', 'sans-serif'],
         body: ['IBM Plex Sans Arabic', 'sans-serif'],
         mono: ['IBM Plex Mono', 'monospace'],
       },
