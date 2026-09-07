@@ -145,7 +145,7 @@ export default function LessonBody({
   const requiresWatch = !!lesson.video_id && lesson.video_provider !== 'vimeo';
   const canMarkComplete = completed || !requiresWatch || videoEnded;
   const navButtonClass =
-    'text-center inline-block px-6 py-3 rounded-xl bg-surface2 border border-border text-text font-semibold shadow-sm hover:bg-surface hover:border-gold/40 hover:text-gold transition';
+    'text-center inline-flex items-center justify-center min-h-12 px-5 py-3 rounded-xl bg-surface2 border border-border text-text font-semibold shadow-sm hover:bg-surface hover:border-gold/40 hover:text-gold transition';
 
   if (isLocked) {
     return (
@@ -180,28 +180,36 @@ export default function LessonBody({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-3 mt-6">
-        <div className="justify-self-start">
-          {prevLessonId && (
-            <Link href={`/lesson/${prevLessonId}`} className={navButtonClass}>→ الدرس السابق</Link>
+      <div className="mt-6 flex flex-col gap-4">
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            onClick={toggleComplete}
+            disabled={saving || !canMarkComplete}
+            className="btn-primary min-w-[210px] justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
+          </button>
+          {!canMarkComplete && (
+            <span className="text-muted2 text-[11.5px] text-center px-3">شاهد الفيديو كاملاً لتتمكن من تحديد الدرس كمكتمل</span>
           )}
         </div>
 
-        <div className="justify-self-center">
-          <div className="flex flex-col items-center gap-1.5">
-            <button onClick={toggleComplete} disabled={saving || !canMarkComplete} className="btn-primary">
-              {completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
-            </button>
-            {!canMarkComplete && (
-              <span className="text-muted2 text-[11.5px] text-center">شاهد الفيديو كاملاً لتتمكن من تحديد الدرس كمكتمل</span>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
+          <div className="flex justify-start">
+            {prevLessonId && (
+              <Link href={`/lesson/${prevLessonId}`} className={`${navButtonClass} w-full sm:w-auto`}>
+                → الدرس السابق
+              </Link>
             )}
           </div>
-        </div>
 
-        <div className="justify-self-end">
-          {nextLessonId && canMarkComplete && (
-            <Link href={`/lesson/${nextLessonId}`} className={navButtonClass}>الدرس التالي ←</Link>
-          )}
+          <div className="flex justify-end">
+            {nextLessonId && canMarkComplete && (
+              <Link href={`/lesson/${nextLessonId}`} className={`${navButtonClass} w-full sm:w-auto`}>
+                الدرس التالي ←
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </div>
