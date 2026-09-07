@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 type EditableProfile = {
   id: string;
@@ -94,7 +95,14 @@ export default function ProfileEditor({ profile }: { profile: EditableProfile })
       {saved && <p className="text-gold text-sm">تم حفظ التعديلات بنجاح.</p>}
 
       <div className="flex justify-start">
-        <button type="button" onClick={save} disabled={saving || displayName.trim().length < 2} className="px-5 py-2.5 rounded-xl bg-gradient-to-br from-gold to-goldSoft text-[#0A0F1A] font-bold text-sm disabled:opacity-50">
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving || displayName.trim().length < 2}
+          aria-busy={saving}
+          className="inline-flex min-w-[150px] items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-gold to-goldSoft text-[#0A0F1A] font-bold text-sm disabled:opacity-50 transition"
+        >
+          {saving && <LoadingSpinner size={15} />}
           {saving ? 'جارٍ الحفظ...' : 'حفظ التعديلات'}
         </button>
       </div>
