@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import StudentNav from '@/components/StudentNav';
+import AdminBackButton from '@/components/AdminBackButton';
 
 export default async function AdminSupportPage() {
   const supabase = await createClient();
@@ -28,14 +28,13 @@ export default async function AdminSupportPage() {
     <>
       <StudentNav isAdmin currentUserId={user.id} />
       <section className="max-w-[1050px] mx-auto px-5 sm:px-6 py-10 sm:py-14">
-        <div className="flex items-end justify-between gap-4 mb-8">
-          <div>
-            <div className="eyebrow">لوحة الإدارة</div>
-            <h1 className="font-cairo font-extrabold text-[27px] sm:text-[31px]">طلبات الدعم</h1>
-          </div>
-          <Link href="/admin" className="text-sm text-muted hover:text-gold transition whitespace-nowrap">
-            العودة للإدارة
-          </Link>
+        <div className="mb-5">
+          <AdminBackButton />
+        </div>
+
+        <div className="mb-8">
+          <div className="eyebrow">لوحة الإدارة</div>
+          <h1 className="font-cairo font-extrabold text-[27px] sm:text-[31px]">طلبات الدعم</h1>
         </div>
 
         {!requests?.length ? (
