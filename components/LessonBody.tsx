@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 type Lesson = {
   id: string;
@@ -156,6 +157,7 @@ export default function LessonBody({
   }
 
   async function toggleComplete() {
+    if (saving) return;
     setSaving(true);
     const {
       data: { user },
@@ -238,10 +240,11 @@ export default function LessonBody({
             type="button"
             onClick={togglePlayback}
             disabled={!playerReady}
-            className="min-w-[170px] inline-flex items-center justify-center gap-2 rounded-xl bg-surface2 border border-border px-5 py-3 text-text font-semibold shadow-sm hover:border-gold/40 hover:text-gold transition disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-busy={!playerReady}
+            className="min-w-[170px] inline-flex items-center justify-center gap-2 rounded-xl bg-surface2 border border-border px-5 py-3 text-text font-semibold shadow-sm hover:border-gold/40 hover:text-gold transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <span className="text-[17px]">{isPlaying ? 'Ⅱ' : '▶'}</span>
-            {isPlaying ? 'إيقاف مؤقت' : 'تشغيل'}
+            {!playerReady ? <LoadingSpinner size={16} /> : <span className="text-[17px]">{isPlaying ? 'Ⅱ' : '▶'}</span>}
+            {!playerReady ? 'جارٍ تجهيز الفيديو...' : isPlaying ? 'إيقاف مؤقت' : 'تشغيل'}
           </button>
         </div>
       )}
@@ -251,9 +254,11 @@ export default function LessonBody({
           <button
             onClick={toggleComplete}
             disabled={saving || !canMarkComplete}
-            className="min-w-[210px] inline-flex items-center justify-center rounded-xl bg-[#C9A84C] px-7 py-3.5 font-heading text-[16px] font-bold text-[#100C02] shadow-[0_8px_24px_rgba(201,168,76,0.22)] transition hover:bg-[#D4B15E] disabled:bg-[#C9A84C] disabled:text-[#100C02] disabled:cursor-not-allowed"
+            aria-busy={saving}
+            className="min-w-[210px] inline-flex items-center justify-center gap-2 rounded-xl bg-[#C9A84C] px-7 py-3.5 font-heading text-[16px] font-bold text-[#100C02] shadow-[0_8px_24px_rgba(201,168,76,0.22)] transition hover:bg-[#D4B15E] disabled:bg-[#C9A84C] disabled:text-[#100C02] disabled:cursor-not-allowed"
           >
-            {completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
+            {saving && <LoadingSpinner size={17} />}
+            {saving ? 'جارٍ الحفظ...' : completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
           </button>
           {!canMarkComplete && (
             <span className="text-muted2 text-[11.5px] text-center px-3">شاهد الفيديو كاملاً لتتمكن من تحديد الدرس كمكتمل</span>
