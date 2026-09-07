@@ -5,8 +5,11 @@ import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 type Author = { display_name: string; is_admin: boolean } | null;
-type Question = { id: string; body: string; created_at: string; student_id: string; profiles: Author };
+type Question = { id: string; body: string; image_url: string | null; created_at: string; student_id: string; profiles: Author };
 type Reply = { id: string; body: string; created_at: string; question_id: string; student_id: string; profiles: Author };
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 function timeAgo(iso: string) {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -24,6 +27,8 @@ function ChatIcon() {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 function SendIcon() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#100C02" strokeWidth="2.2"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
+function ImageIcon() { return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9" r="1.5" /><path d="m21 15-5-5L5 20" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
+function CloseIcon() { return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" /></svg>; }
 function MoreIcon() { return <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>; }
 function PencilIcon() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" strokeLinecap="round" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
 function TrashIcon() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" strokeLinecap="round" /><path d="M8 6V4h8v2" strokeLinecap="round" strokeLinejoin="round" /><path d="M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
@@ -33,10 +38,14 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
   const searchParams = useSearchParams();
   const highlightedId = searchParams.get('q');
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [justArrivedId, setJustArrivedId] = useState<string | null>(null);
   const [questions, setQuestions] = useState(initialQuestions);
   const [replies, setReplies] = useState(initialReplies);
   const [newQuestion, setNewQuestion] = useState('');
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
+  const [composerError, setComposerError] = useState('');
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [posting, setPosting] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -65,15 +74,52 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
     });
   }
 
+  function clearSelectedImage() {
+    if (selectedImagePreview) URL.revokeObjectURL(selectedImagePreview);
+    setSelectedImage(null);
+    setSelectedImagePreview(null);
+    if (imageInputRef.current) imageInputRef.current.value = '';
+  }
+
+  function chooseImage(file: File | null) {
+    setComposerError('');
+    if (!file) return;
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+      setComposerError('الصورة يجب أن تكون JPG أو PNG أو WEBP');
+      if (imageInputRef.current) imageInputRef.current.value = '';
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      setComposerError('حجم الصورة يجب ألا يتجاوز 5MB');
+      if (imageInputRef.current) imageInputRef.current.value = '';
+      return;
+    }
+    if (selectedImagePreview) URL.revokeObjectURL(selectedImagePreview);
+    setSelectedImage(file);
+    setSelectedImagePreview(URL.createObjectURL(file));
+  }
+
   async function submitQuestion() {
     if (!newQuestion.trim()) return;
     setPosting(true);
-    const { data, error } = await supabase.from('questions').insert({ body: newQuestion.trim(), student_id: currentUserId }).select('id, body, created_at, student_id').single();
+    setComposerError('');
+
+    const formData = new FormData();
+    formData.append('body', newQuestion.trim());
+    if (selectedImage) formData.append('image', selectedImage);
+
+    const res = await fetch('/api/community/posts', { method: 'POST', body: formData });
+    const data = await res.json();
     setPosting(false);
-    if (!error && data) {
-      setQuestions([{ ...data, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } }, ...questions]);
-      setNewQuestion('');
+
+    if (!res.ok) {
+      setComposerError(data.error ?? 'تعذر نشر المنشور');
+      return;
     }
+
+    setQuestions([{ ...data.post, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } }, ...questions]);
+    setNewQuestion('');
+    clearSelectedImage();
   }
 
   async function submitReply(questionId: string) {
@@ -117,9 +163,21 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
 
   return (
     <div>
-      <div className="compose-bar mb-8">
-        <input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitQuestion()} placeholder="✏️ اكتب سؤالك هنا..." className="compose-input" />
-        <button className="compose-send" onClick={submitQuestion} disabled={posting || !newQuestion.trim()}><SendIcon /></button>
+      <div className="mb-8">
+        <div className="compose-bar">
+          <input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !posting && submitQuestion()} placeholder="✏️ اكتب سؤالك هنا..." className="compose-input" />
+          <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => chooseImage(e.target.files?.[0] ?? null)} />
+          <button type="button" onClick={() => imageInputRef.current?.click()} className="w-10 h-10 rounded-full flex-shrink-0 inline-flex items-center justify-center text-muted hover:text-gold hover:bg-white/[0.05] transition" aria-label="إضافة صورة" title="إضافة صورة"><ImageIcon /></button>
+          <button className="compose-send" onClick={submitQuestion} disabled={posting || !newQuestion.trim()}><SendIcon /></button>
+        </div>
+
+        {selectedImagePreview && (
+          <div className="relative mt-3 w-fit max-w-full rounded-xl overflow-hidden border border-border bg-surface2">
+            <img src={selectedImagePreview} alt="معاينة الصورة" className="block max-h-[280px] max-w-full object-contain" />
+            <button type="button" onClick={clearSelectedImage} className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/70 text-white inline-flex items-center justify-center hover:bg-black/90 transition" aria-label="إزالة الصورة"><CloseIcon /></button>
+          </div>
+        )}
+        {composerError && <p className="text-[#E4756A] text-[12px] mt-2 text-right">{composerError}</p>}
       </div>
 
       {questions.map((q) => {
@@ -162,6 +220,12 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
                 <div className="flex gap-2 justify-start"><button type="button" onClick={cancelEditingQuestion} className="px-4 py-2 rounded-lg border border-border text-muted text-sm hover:text-text transition">إلغاء</button><button type="button" onClick={() => saveQuestionEdit(q.id)} disabled={savingEdit || !editDraft.trim()} className="px-4 py-2 rounded-lg bg-[#C9A84C] text-[#100C02] font-bold text-sm disabled:opacity-50">{savingEdit ? 'جارٍ الحفظ...' : 'حفظ التعديل'}</button></div>
               </div>
             ) : <p className="leading-relaxed mb-4 text-[15px] text-right">{q.body}</p>}
+
+            {q.image_url && (
+              <div className="mb-4 rounded-xl overflow-hidden border border-border bg-black/10">
+                <img src={q.image_url} alt="صورة المنشور" className="block w-full max-h-[560px] object-contain" loading="lazy" />
+              </div>
+            )}
 
             <div className="flex items-center justify-start"><button onClick={() => toggleExpanded(q.id)} className="reply-toggle"><ChatIcon />{qReplies.length > 0 ? `${qReplies.length} ${qReplies.length === 1 ? 'رد' : 'ردود'}` : 'أضف ردًا'}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}><path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg></button></div>
             {actionError[q.id] && <p className="text-[#E4756A] text-[12px] mt-2 text-right">{actionError[q.id]}</p>}
