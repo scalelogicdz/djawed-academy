@@ -185,7 +185,7 @@ export default function LessonBody({
           <button
             onClick={toggleComplete}
             disabled={saving || !canMarkComplete}
-            className="btn-primary min-w-[210px] justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+            className="min-w-[210px] inline-flex items-center justify-center rounded-xl bg-[#C9A84C] px-7 py-3.5 font-heading text-[16px] font-bold text-[#100C02] shadow-[0_8px_24px_rgba(201,168,76,0.22)] transition hover:bg-[#D4B15E] disabled:bg-[#C9A84C] disabled:text-[#100C02] disabled:cursor-not-allowed"
           >
             {completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
           </button>
