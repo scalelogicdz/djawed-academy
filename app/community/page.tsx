@@ -19,7 +19,7 @@ export default async function CommunityPage() {
 
   const { data: rawQuestions } = await supabase
     .from('questions')
-    .select('id, body, created_at, student_id, profiles(display_name, is_admin)')
+    .select('id, body, image_url, created_at, student_id, profiles(display_name, is_admin)')
     .order('created_at', { ascending: false });
 
   const { data: rawReplies } = await supabase
