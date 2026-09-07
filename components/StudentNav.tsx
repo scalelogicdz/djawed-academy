@@ -55,7 +55,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
   const profileHref = `/profile/${currentUserId}`;
 
   return (
-    <nav className="sticky top-0 z-50 bg-bg/85 backdrop-blur-md border-b border-border">
+    <nav className="sticky top-0 z-50 bg-bg/92 backdrop-blur-xl border-b border-white/[0.06] shadow-[0_10px_30px_-24px_rgba(0,0,0,0.9)]">
       <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 sm:py-4">
         <Link
           href="/dashboard"
@@ -66,15 +66,15 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           <img src="/djawed-logic-logo.png" alt="Djawed Logic" className="h-10 w-auto sm:h-11 block" />
         </Link>
 
-        <div className="hidden md:flex md:order-2 items-center gap-2 flex-1 mx-4 overflow-x-auto">
+        <div className="hidden md:flex md:order-2 items-center gap-1.5 flex-1 mx-4 overflow-x-auto">
           {allLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className={`font-cairo font-semibold text-[13.5px] px-4 py-2 rounded-lg whitespace-nowrap transition inline-flex items-center gap-2 ${
+              className={`font-cairo font-semibold text-[13.5px] px-4 py-2.5 rounded-xl whitespace-nowrap transition inline-flex items-center gap-2 border ${
                 pathname.startsWith(l.href)
-                  ? 'bg-gradient-to-br from-gold to-goldSoft text-[#0A0F1A]'
-                  : 'text-muted hover:text-text'
+                  ? 'bg-gold/[0.08] border-gold/30 text-gold shadow-[inset_0_1px_0_rgba(255,255,255,0.025)]'
+                  : 'border-transparent text-muted hover:text-text hover:bg-white/[0.025] hover:border-white/[0.05]'
               }`}
             >
               {l.support && <SupportIcon />}
@@ -83,10 +83,10 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           ))}
         </div>
 
-        <div className="order-1 md:order-3 flex items-center gap-1 flex-shrink-0">
+        <div className="order-1 md:order-3 flex items-center gap-1.5 flex-shrink-0">
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="md:hidden p-2 rounded-lg text-muted hover:text-text transition"
+            className="md:hidden p-2 rounded-xl text-muted border border-transparent hover:text-text hover:bg-white/[0.025] hover:border-white/[0.05] transition"
             aria-label="القائمة"
           >
             {menuOpen ? (
@@ -102,7 +102,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
 
           <Link
             href={profileHref}
-            className={`w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/profile') ? 'border-gold text-gold bg-gold/10' : 'border-border text-muted hover:text-gold hover:border-gold/40'}`}
+            className={`w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/profile') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
             aria-label="ملفي الشخصي"
             title="ملفي الشخصي"
           >
@@ -124,16 +124,16 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
       </div>
 
       {menuOpen && (
-        <div className="md:hidden border-t border-border px-4 py-3 flex flex-col gap-1 bg-bg/95">
+        <div className="md:hidden border-t border-white/[0.06] px-4 py-3 flex flex-col gap-1 bg-bg/98 shadow-[0_18px_30px_-24px_rgba(0,0,0,0.9)]">
           {allLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               onClick={() => setMenuOpen(false)}
-              className={`font-cairo font-semibold text-[14px] px-4 py-3 rounded-lg transition flex items-center gap-2 ${
+              className={`font-cairo font-semibold text-[14px] px-4 py-3 rounded-xl transition flex items-center gap-2 border ${
                 pathname.startsWith(l.href)
-                  ? 'bg-gradient-to-br from-gold to-goldSoft text-[#0A0F1A]'
-                  : 'text-muted hover:bg-white/[0.03] hover:text-text'
+                  ? 'bg-gold/[0.08] border-gold/30 text-gold'
+                  : 'border-transparent text-muted hover:bg-white/[0.025] hover:border-white/[0.05] hover:text-text'
               }`}
             >
               {l.support && <SupportIcon size={18} />}
@@ -143,10 +143,10 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           <Link
             href={profileHref}
             onClick={() => setMenuOpen(false)}
-            className={`font-cairo font-semibold text-[14px] px-4 py-3 rounded-lg transition ${
+            className={`font-cairo font-semibold text-[14px] px-4 py-3 rounded-xl transition border ${
               pathname.startsWith('/profile')
-                ? 'bg-gradient-to-br from-gold to-goldSoft text-[#0A0F1A]'
-                : 'text-muted hover:bg-white/[0.03] hover:text-text'
+                ? 'bg-gold/[0.08] border-gold/30 text-gold'
+                : 'border-transparent text-muted hover:bg-white/[0.025] hover:border-white/[0.05] hover:text-text'
             }`}
           >
             ملفي الشخصي
@@ -155,7 +155,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
             onClick={handleLogout}
             disabled={loggingOut}
             aria-busy={loggingOut}
-            className="flex items-center justify-start gap-2 text-right font-cairo font-semibold text-[14px] px-4 py-3 rounded-lg text-muted hover:bg-white/[0.03] hover:text-text transition"
+            className="flex items-center justify-start gap-2 text-right font-cairo font-semibold text-[14px] px-4 py-3 rounded-xl border border-transparent text-muted hover:bg-white/[0.025] hover:border-white/[0.05] hover:text-text transition"
           >
             {loggingOut && <LoadingSpinner size={15} />}
             {loggingOut ? 'جارٍ الخروج...' : 'تسجيل الخروج'}
