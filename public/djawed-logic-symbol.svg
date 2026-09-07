@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 531 629" role="img" aria-label="Djawed Logic">
+<defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#F4D786"/>
+    <stop offset="45%" stop-color="#D4B15E"/>
+    <stop offset="100%" stop-color="#A77A2F"/>
+  </linearGradient>
+</defs>
+<g fill="url(#gold)">
+<path d="M 39 134 L 219 134 L 219 82 L 264 53 L 264 180 L 329 180 L 483 252 L 483 420 L 329 493 L 264 493 L 264 576 L 486 576 L 486 601 L 239 601 L 239 493 L 219 493 L 219 531 L 148 531 L 148 207 L 39 207 Z"/>
+<path d="M 164 213 L 219 213 L 219 442 L 164 477 Z"/>
+<path d="M 284 194 L 317 194 L 459 260 L 459 412 L 317 478 L 284 478 Z"/>
+</g>
+</svg>
