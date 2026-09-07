@@ -55,6 +55,35 @@ function SendIcon() {
   );
 }
 
+function MoreIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="5" cy="12" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="19" cy="12" r="1.8" />
+    </svg>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 20h9" strokeLinecap="round" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 6h18" strokeLinecap="round" />
+      <path d="M8 6V4h8v2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function CommunityFeed({
   currentUserId,
   currentUserDisplayName,
@@ -83,6 +112,7 @@ export default function CommunityFeed({
   const [editDraft, setEditDraft] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -90,9 +120,7 @@ export default function CommunityFeed({
     setJustArrivedId(highlightedId);
     setExpandedIds((prev) => new Set(prev).add(highlightedId));
     const el = questionRefs.current[highlightedId];
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const timeout = setTimeout(() => setJustArrivedId(null), 3000);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,6 +168,7 @@ export default function CommunityFeed({
   }
 
   function startEditingQuestion(question: Question) {
+    setOpenMenuId(null);
     setEditingQuestionId(question.id);
     setEditDraft(question.body);
     setActionError((current) => ({ ...current, [question.id]: '' }));
@@ -153,7 +182,6 @@ export default function CommunityFeed({
   async function saveQuestionEdit(questionId: string) {
     const body = editDraft.trim();
     if (!body) return;
-
     setSavingEdit(true);
     setActionError((current) => ({ ...current, [questionId]: '' }));
 
@@ -176,6 +204,7 @@ export default function CommunityFeed({
   }
 
   async function deleteQuestion(questionId: string) {
+    setOpenMenuId(null);
     const confirmed = window.confirm('هل أنت متأكد من حذف هذا المنشور؟ سيتم حذف الردود التابعة له أيضًا.');
     if (!confirmed) return;
 
@@ -218,26 +247,75 @@ export default function CommunityFeed({
         const qReplies = replies.filter((r) => r.question_id === q.id);
         const isAdminAuthor = q.profiles?.is_admin;
         const expanded = expandedIds.has(q.id);
-        const canEdit = q.student_id === currentUserId;
+        const isOwner = q.student_id === currentUserId;
         const isEditing = editingQuestionId === q.id;
+        const canOpenMenu = isOwner || currentUserIsAdmin;
 
         return (
           <div
             key={q.id}
-            ref={(el) => { questionRefs.current[q.id] = el; }}
-            className={`card p-7 mb-6 transition-shadow duration-700 ${
+            ref={(el) => {
+              questionRefs.current[q.id] = el;
+            }}
+            dir="rtl"
+            className={`card p-7 mb-6 transition-shadow duration-700 text-right ${
               justArrivedId === q.id ? 'border-gold shadow-[0_0_0_1px_rgba(212,177,94,0.5),0_0_24px_rgba(212,177,94,0.25)]' : ''
             }`}
           >
-            <div className="flex items-center gap-3 mb-3">
+            <div className="relative flex items-start gap-3 mb-4">
+              {canOpenMenu && (
+                <div className="relative flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setOpenMenuId(openMenuId === q.id ? null : q.id)}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-muted hover:text-text hover:bg-white/[0.06] transition"
+                    aria-label="خيارات المنشور"
+                  >
+                    <MoreIcon />
+                  </button>
+
+                  {openMenuId === q.id && (
+                    <div className="absolute right-0 top-10 z-20 min-w-[132px] rounded-xl border border-border bg-[#151E2C] shadow-2xl p-1.5">
+                      {isOwner && (
+                        <button
+                          type="button"
+                          onClick={() => startEditingQuestion(q)}
+                          className="w-full flex items-center justify-center p-2.5 rounded-lg text-text hover:bg-white/[0.06] transition"
+                          aria-label="تعديل المنشور"
+                          title="تعديل المنشور"
+                        >
+                          <PencilIcon />
+                        </button>
+                      )}
+
+                      {(isOwner || currentUserIsAdmin) && (
+                        <button
+                          type="button"
+                          onClick={() => deleteQuestion(q.id)}
+                          disabled={deletingQuestionId === q.id}
+                          className="w-full flex items-center justify-center p-2.5 rounded-lg text-[#E4756A] hover:bg-[#E4756A]/10 transition disabled:opacity-50"
+                          aria-label="حذف المنشور"
+                          title="حذف المنشور"
+                        >
+                          <TrashIcon />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className={`avatar-ring ${isAdminAuthor ? 'admin' : ''}`}>
                 {isAdminAuthor ? 'DK' : initial(q.profiles?.display_name ?? '')}
               </div>
-              <div className="flex-1 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                <span className="font-heading font-bold text-[15px] whitespace-nowrap">{q.profiles?.display_name}</span>
-                {isAdminAuthor && <span className="coach-badge">✓ المدرب</span>}
+
+              <div className="flex-1 min-w-0 text-right">
+                <div className="flex flex-wrap items-center justify-start gap-x-2.5 gap-y-1">
+                  <span className="font-heading font-bold text-[15px] whitespace-nowrap">{q.profiles?.display_name}</span>
+                  {isAdminAuthor && <span className="coach-badge">✓ المدرب</span>}
+                </div>
+                <span className="text-xs text-muted2 whitespace-nowrap block mt-1">{timeAgo(q.created_at)}</span>
               </div>
-              <span className="text-xs text-muted2 whitespace-nowrap">{timeAgo(q.created_at)}</span>
             </div>
 
             {isEditing ? (
@@ -246,9 +324,9 @@ export default function CommunityFeed({
                   value={editDraft}
                   onChange={(e) => setEditDraft(e.target.value)}
                   rows={4}
-                  className="w-full bg-white/[0.02] border border-border rounded-xl px-4 py-3 text-[15px] leading-relaxed focus:outline-none focus:border-gold resize-y"
+                  className="w-full bg-white/[0.02] border border-border rounded-xl px-4 py-3 text-[15px] leading-relaxed focus:outline-none focus:border-gold resize-y text-right"
                 />
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-2 justify-start">
                   <button
                     type="button"
                     onClick={cancelEditingQuestion}
@@ -267,10 +345,10 @@ export default function CommunityFeed({
                 </div>
               </div>
             ) : (
-              <p className="leading-relaxed mb-4 text-[15px]">{q.body}</p>
+              <p className="leading-relaxed mb-4 text-[15px] text-right">{q.body}</p>
             )}
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center justify-start">
               <button onClick={() => toggleExpanded(q.id)} className="reply-toggle">
                 <ChatIcon />
                 {qReplies.length > 0
@@ -288,30 +366,9 @@ export default function CommunityFeed({
                   <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-
-              {canEdit && !isEditing && (
-                <button
-                  type="button"
-                  onClick={() => startEditingQuestion(q)}
-                  className="px-3.5 py-2 rounded-lg border border-border text-muted text-[12.5px] hover:text-gold hover:border-gold/40 transition"
-                >
-                  ✏️ تعديل
-                </button>
-              )}
-
-              {currentUserIsAdmin && (
-                <button
-                  type="button"
-                  onClick={() => deleteQuestion(q.id)}
-                  disabled={deletingQuestionId === q.id}
-                  className="px-3.5 py-2 rounded-lg border border-border text-muted text-[12.5px] hover:text-[#E4756A] hover:border-[#E4756A] transition disabled:opacity-50"
-                >
-                  {deletingQuestionId === q.id ? 'جارٍ الحذف...' : '🗑️ حذف'}
-                </button>
-              )}
             </div>
 
-            {actionError[q.id] && <p className="text-[#E4756A] text-[12px] mt-2">{actionError[q.id]}</p>}
+            {actionError[q.id] && <p className="text-[#E4756A] text-[12px] mt-2 text-right">{actionError[q.id]}</p>}
 
             <div
               className="grid transition-[grid-template-rows] duration-300 ease-out"
@@ -322,7 +379,7 @@ export default function CommunityFeed({
                   {qReplies.map((r) => {
                     const rIsAdmin = r.profiles?.is_admin;
                     return (
-                      <div key={r.id} className={`reply-card ${rIsAdmin ? 'admin' : ''}`}>
+                      <div key={r.id} className={`reply-card ${rIsAdmin ? 'admin' : ''} text-right`}>
                         <div className="flex items-center gap-2.5 mb-2">
                           <div className={`avatar-ring ${rIsAdmin ? 'admin' : ''}`} style={{ width: 34, height: 34, fontSize: 13 }}>
                             {rIsAdmin ? 'DK' : initial(r.profiles?.display_name ?? '')}
