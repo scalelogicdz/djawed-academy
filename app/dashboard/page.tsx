@@ -45,9 +45,6 @@ export default async function DashboardPage() {
       const total = lessons.length;
       const completed = lessons.filter((l) => completedIds.has(l.id)).length;
       const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-      // The actual next lesson to continue into: the first one NOT yet completed, in order.
-      // If everything is completed, fall back to the last lesson so the button still goes somewhere.
       const nextLesson = lessons.find((l) => !completedIds.has(l.id)) ?? lessons[lessons.length - 1] ?? null;
       const isFullyCompleted = total > 0 && completed === total;
 
@@ -55,7 +52,6 @@ export default async function DashboardPage() {
     })
   );
 
-  // Aggregate stats across every enrolled course, shown in the top stats row
   const totalLessonsAll = courseCards.reduce((sum, c) => sum + c.total, 0);
   const completedLessonsAll = courseCards.reduce((sum, c) => sum + c.completed, 0);
   const overallPct = totalLessonsAll > 0 ? Math.round((completedLessonsAll / totalLessonsAll) * 100) : 0;
@@ -66,9 +62,7 @@ export default async function DashboardPage() {
       <section className="max-w-[1140px] mx-auto px-6 py-14 relative">
         <div className="mb-8">
           <div className="eyebrow">مرحبًا بعودتك</div>
-          <h1 className="font-heading font-extrabold text-[34px] mb-2">
-            أهلاً، {profile?.display_name ?? 'بك'}
-          </h1>
+          <h1 className="font-heading font-extrabold text-[34px] mb-2">أهلاً، {profile?.display_name ?? 'بك'}</h1>
           <p className="text-muted text-[16px] mb-7">أكمل من حيث توقفت</p>
 
           {courseCards.length > 0 && (
@@ -78,9 +72,7 @@ export default async function DashboardPage() {
                 <div className="text-muted text-[12.5px] mt-1">التقدم</div>
               </div>
               <div className="stat-box text-center">
-                <div className="font-heading font-extrabold text-[26px]">
-                  {String(completedLessonsAll).padStart(2, '0')}
-                </div>
+                <div className="font-heading font-extrabold text-[26px]">{String(completedLessonsAll).padStart(2, '0')}</div>
                 <div className="text-muted text-[12.5px] mt-1">دروس مكتملة</div>
               </div>
               <div className="stat-box text-center">
@@ -92,9 +84,7 @@ export default async function DashboardPage() {
         </div>
 
         {courseCards.length === 0 && (
-          <div className="card p-8 text-muted text-sm">
-            لا يوجد لديك وصول لأي دورة حاليًا. تواصل مع الدعم إذا كنت قد أتممت الدفع.
-          </div>
+          <div className="card p-8 text-muted text-sm">لا يوجد لديك وصول لأي دورة حاليًا. تواصل مع الدعم إذا كنت قد أتممت الدفع.</div>
         )}
 
         {courseCards.map(({ course, pct, total, completed, moduleCount, nextLesson, isFullyCompleted }) => (
@@ -104,29 +94,20 @@ export default async function DashboardPage() {
             </div>
 
             <h3 className="font-heading text-[23px] font-bold mb-2.5 leading-snug">{course.title}</h3>
-            <p className="text-muted text-[15px] mb-5">
-              {total} درس · {moduleCount} وحدات
-            </p>
+            <p className="text-muted text-[15px] mb-5">{total} درس · {moduleCount} وحدات</p>
 
             <div className="h-1.5 bg-track rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-l from-goldDim to-gold rounded-full"
-                style={{ width: `${pct}%`, transition: 'width 0.6s ease' }}
-              />
+              <div className="h-full bg-gradient-to-l from-goldDim to-gold rounded-full" style={{ width: `${pct}%`, transition: 'width 0.6s ease' }} />
             </div>
             <div className="text-[14px] text-muted mt-2.5 mb-1.5">{pct}% مكتمل</div>
 
             {!isFullyCompleted && nextLesson && (
-              <p className="text-[15px] text-muted mb-6">
-                الدرس القادم: <span className="text-text font-semibold">{nextLesson.title}</span>
-              </p>
+              <p className="text-[15px] text-muted mb-6">الدرس القادم: <span className="text-text font-semibold">{nextLesson.title}</span></p>
             )}
-            {isFullyCompleted && (
-              <p className="text-[15px] text-gold font-semibold mb-6">🎉 أكملت هذه الدورة بالكامل</p>
-            )}
+            {isFullyCompleted && <p className="text-[15px] text-gold font-semibold mb-6">🎉 أكملت هذه الدورة بالكامل</p>}
 
             <Link
-              href={nextLesson ? `/lesson/${nextLesson.id}` : '#'}
+              href={nextLesson ? `/course-content?lesson=${nextLesson.id}` : '/course-content'}
               className="btn-primary block text-center w-full font-heading text-[16.5px]"
             >
               {isFullyCompleted ? 'مراجعة الدورة' : 'متابعة التعلم'}
