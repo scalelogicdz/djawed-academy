@@ -43,9 +43,6 @@ export default async function CourseContentPage({
   const course = enrollment.courses;
   const adminClient = createAdminClient();
 
-  // The enrollment above proves this student owns this course. We use the
-  // server-only admin client for the course structure so existing modules and
-  // lessons are never hidden by an accidental RLS/query mismatch.
   const { data: modules } = await adminClient
     .from('modules')
     .select('id, title, description, position')
@@ -56,10 +53,10 @@ export default async function CourseContentPage({
   const { data: lessons } = moduleIds.length
     ? await adminClient
         .from('lessons')
-        .select('id, title, module_id, position')
+        .select('id, title, module_id, position, thumbnail_url')
         .in('module_id', moduleIds)
         .order('position', { ascending: true })
-    : { data: [] as { id: string; title: string; module_id: string; position: number }[] };
+    : { data: [] as { id: string; title: string; module_id: string; position: number; thumbnail_url: string | null }[] };
 
   const { data: progressRows } = await supabase
     .from('lesson_progress')
