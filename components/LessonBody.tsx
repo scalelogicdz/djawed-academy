@@ -181,65 +181,27 @@ export default function LessonBody({
   const canMarkComplete = completed || !requiresWatch || videoEnded;
   const showQuiz = quizQuestions.length > 0 && (!requiresWatch || videoEnded);
 
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const currentModuleLessons = lessons.filter((l) => l.module_id === lesson.module_id);
-  const currentModuleTitle = modules.find((m) => m.id === lesson.module_id)?.title ?? '';
+  const [activeTabId, setActiveTabId] = useState(lesson.module_id);
+  const listRef = useRef<HTMLDivElement>(null);
+  const moduleHeaderRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  function scrollToModule(moduleId: string) {
+    setActiveTabId(moduleId);
+    const list = listRef.current;
+    const header = moduleHeaderRefs.current[moduleId];
+    if (!list || !header) return;
+    const listRect = list.getBoundingClientRect();
+    const headerRect = header.getBoundingClientRect();
+    list.scrollTo({ top: list.scrollTop + (headerRect.top - listRect.top), behavior: 'smooth' });
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
       <div>
-        {/* Mobile-only quick nav: jump between this module's lessons without scrolling
-            past the whole video to reach the full sidebar lower down the page. */}
-        <div className="lg:hidden mb-5">
-          <button
-            onClick={() => setMobileNavOpen((v) => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-border text-sm text-muted"
-          >
-            <span>📚 دروس {currentModuleTitle}</span>
-            <svg
-              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              className={`transition-transform duration-300 ${mobileNavOpen ? 'rotate-180' : ''}`}
-            >
-              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <div
-            className="grid transition-[grid-template-rows] duration-300 ease-out"
-            style={{ gridTemplateRows: mobileNavOpen ? '1fr' : '0fr' }}
-          >
-            <div className="overflow-hidden">
-              <div className="pt-2 space-y-0.5">
-                {currentModuleLessons.map((l) => {
-                  const done = completedSet.has(l.id);
-                  const active = l.id === lesson.id;
-                  const locked = lockedSet.has(l.id);
-                  return (
-                    <Link
-                      key={l.id}
-                      href={`/lesson/${l.id}`}
-                      className={`flex items-center gap-2.5 px-3.5 py-3 rounded-lg text-sm border transition ${
-                        active ? 'bg-surface2 border-goldDim' : 'border-transparent hover:bg-white/[0.02]'
-                      } ${(done || locked) && !active ? 'text-muted' : ''}`}
-                    >
-                      <span
-                        className={`w-[7px] h-[7px] rounded-full flex-shrink-0 ${
-                          active ? 'bg-gold shadow-[0_0_10px_rgba(212,177,94,0.6)]' : done ? 'bg-success' : 'bg-[#2A3444]'
-                        }`}
-                      />
-                      <span className="flex-1">{l.title}</span>
-                      {locked && !active && <span className="text-[12px] flex-shrink-0">🔒</span>}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {isLocked ? (
           <div className="aspect-video rounded-2xl border border-border overflow-hidden mb-5 bg-gradient-to-br from-surface2 to-[#070A10] flex flex-col items-center justify-center text-center px-8 gap-3">
             <span className="text-3xl">🔒</span>
-            <p className="font-cairo font-bold text-[16px]">هذا الدرس مغلق حاليًا</p>
+            <p className="font-heading font-bold text-[16px]">هذا الدرس مغلق حاليًا</p>
             {requiredLessonTitle && (
               <p className="text-muted text-[13.5px]">
                 أكمل درس <span className="text-text font-semibold">"{requiredLessonTitle}"</span> أولًا لفتح هذا الدرس
@@ -306,7 +268,6 @@ export default function LessonBody({
           </div>
 
           <div className="justify-self-end">
-            {/* Only appears once the video has actually been watched through (or immediately if there's no video to gate on) */}
             {nextLessonId && canMarkComplete && (
               <Link href={`/lesson/${nextLessonId}`} className="btn-ghost text-center inline-block">
                 الدرس التالي ←
@@ -316,41 +277,66 @@ export default function LessonBody({
         </div>
       </div>
 
-      <div>
-        {modules.map((m) => (
-          <div key={m.id}>
-            <div className="mt-5 mb-2.5 first:mt-0">
-              <div className="font-cairo font-bold text-[12.5px] text-gold uppercase tracking-wide">{m.title}</div>
-              {m.description && <p className="text-muted2 text-[12px] mt-1 leading-relaxed">{m.description}</p>}
+      {/* Sidebar: module tabs + scrollable lesson list, bounded on every screen size
+          so this never becomes a long scroll on mobile like it used to. */}
+      <div className="lg:sticky lg:top-20 max-h-[65vh] lg:max-h-[calc(100vh-6rem)] flex flex-col">
+        <div className="flex gap-2 overflow-x-auto pb-1 mb-4 flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
+          {modules.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => scrollToModule(m.id)}
+              className={`module-tab ${activeTabId === m.id ? 'active' : ''}`}
+            >
+              {m.title}
+            </button>
+          ))}
+        </div>
+
+        <div ref={listRef} className="overflow-y-auto flex-1 space-y-1 pr-0.5" style={{ scrollbarWidth: 'thin' }}>
+          {modules.map((m) => (
+            <div key={m.id}>
+              <div
+                ref={(el) => { moduleHeaderRefs.current[m.id] = el; }}
+                className="font-heading font-bold text-[13px] text-gold uppercase tracking-wide pt-4 pb-2 first:pt-0"
+              >
+                {m.title}
+              </div>
+              {m.description && (
+                <p className="text-muted2 text-[12px] mb-2 leading-relaxed">{m.description}</p>
+              )}
+              <div className="space-y-1.5">
+                {lessons
+                  .filter((l) => l.module_id === m.id)
+                  .map((l) => {
+                    const done = completedSet.has(l.id);
+                    const active = l.id === lesson.id;
+                    const locked = lockedSet.has(l.id);
+                    return (
+                      <Link
+                        key={l.id}
+                        href={`/lesson/${l.id}`}
+                        className={`list-item ${active ? 'active' : ''} flex items-center gap-2.5 px-4 py-3 text-sm ${
+                          (done || locked) && !active ? 'text-muted' : ''
+                        }`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                            active
+                              ? 'bg-gold shadow-[0_0_10px_rgba(212,177,94,0.6)]'
+                              : done
+                              ? 'bg-success'
+                              : 'bg-[#2A3444]'
+                          }`}
+                        />
+                        <span className="flex-1">{l.title}</span>
+                        {locked && !active && <span className="text-[12px] flex-shrink-0">🔒</span>}
+                      </Link>
+                    );
+                  })}
+              </div>
             </div>
-            {lessons
-              .filter((l) => l.module_id === m.id)
-              .map((l) => {
-                const done = completedSet.has(l.id);
-                const active = l.id === lesson.id;
-                const locked = lockedSet.has(l.id);
-                return (
-                  <Link
-                    key={l.id}
-                    href={`/lesson/${l.id}`}
-                    className={`flex items-center gap-2.5 px-3.5 py-3 rounded-lg text-sm mb-0.5 border transition ${
-                      active
-                        ? 'bg-surface2 border-goldDim'
-                        : 'border-transparent hover:bg-white/[0.02]'
-                    } ${(done || locked) && !active ? 'text-muted' : ''}`}
-                  >
-                    <span
-                      className={`w-[7px] h-[7px] rounded-full flex-shrink-0 ${
-                        active ? 'bg-gold shadow-[0_0_10px_rgba(212,177,94,0.6)]' : done ? 'bg-success' : 'bg-[#2A3444]'
-                      }`}
-                    />
-                    <span className="flex-1">{l.title}</span>
-                    {locked && !active && <span className="text-[12px] flex-shrink-0">🔒</span>}
-                  </Link>
-                );
-              })}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
