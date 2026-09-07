@@ -268,6 +268,39 @@ body::after {
   border: 1px solid rgba(212, 177, 94, 0.3);
 }
 
+button,
+a[role='button'],
+.btn-primary,
+.btn-ghost,
+.compose-send,
+.reply-toggle {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button:active:not(:disabled),
+a[role='button']:active,
+.btn-primary:active,
+.btn-ghost:active,
+.compose-send:active:not(:disabled),
+.reply-toggle:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+button:disabled,
+[aria-busy='true'] {
+  pointer-events: none;
+  user-select: none;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(212, 177, 94, 0.75);
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
