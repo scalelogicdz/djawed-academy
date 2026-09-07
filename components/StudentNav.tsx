@@ -66,6 +66,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
     .filter((link) => link.href !== '/community')
     .map((link) => (link.href === '/dashboard' ? { ...link, label: 'دوراتي' } : link));
   const profileHref = `/profile/${currentUserId}`;
+  const isAdminArea = pathname.startsWith('/admin');
 
   return (
     <nav className="sticky top-0 z-50 bg-bg/92 backdrop-blur-xl border-b border-white/[0.06] shadow-[0_10px_30px_-24px_rgba(0,0,0,0.9)]">
@@ -113,14 +114,16 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
             )}
           </button>
 
-          <Link
-            href={profileHref}
-            className={`w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/profile') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
-            aria-label="ملفي الشخصي"
-            title="ملفي الشخصي"
-          >
-            <UserIcon />
-          </Link>
+          {!isAdminArea && (
+            <Link
+              href={profileHref}
+              className={`w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/profile') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
+              aria-label="ملفي الشخصي"
+              title="ملفي الشخصي"
+            >
+              <UserIcon />
+            </Link>
+          )}
 
           <Link
             href="/community"
