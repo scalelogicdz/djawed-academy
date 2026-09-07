@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 type Author = { display_name: string; is_admin: boolean } | null;
 type Question = { id: string; body: string; image_url: string | null; created_at: string; student_id: string; profiles: Author };
@@ -40,6 +41,7 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
   const [newQuestion, setNewQuestion] = useState('');
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [posting, setPosting] = useState(false);
+  const [replyPostingId, setReplyPostingId] = useState<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
@@ -67,7 +69,7 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
   }
 
   async function submitQuestion() {
-    if (!newQuestion.trim()) return;
+    if (!newQuestion.trim() || posting) return;
     setPosting(true);
 
     const { data, error } = await supabase
@@ -86,8 +88,10 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
 
   async function submitReply(questionId: string) {
     const body = replyDrafts[questionId];
-    if (!body?.trim()) return;
+    if (!body?.trim() || replyPostingId === questionId) return;
+    setReplyPostingId(questionId);
     const { data, error } = await supabase.from('replies').insert({ body: body.trim(), question_id: questionId, student_id: currentUserId }).select('id, body, created_at, question_id, student_id').single();
+    setReplyPostingId(null);
     if (!error && data) {
       setReplies([...replies, { ...data, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } }]);
       setReplyDrafts({ ...replyDrafts, [questionId]: '' });
@@ -103,7 +107,7 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
   function cancelEditingQuestion() { setEditingQuestionId(null); setEditDraft(''); }
 
   async function saveQuestionEdit(questionId: string) {
-    const body = editDraft.trim(); if (!body) return;
+    const body = editDraft.trim(); if (!body || savingEdit) return;
     setSavingEdit(true);
     const res = await fetch('/api/community/posts', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: questionId, body }) });
     const data = await res.json(); setSavingEdit(false);
@@ -115,6 +119,7 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
   async function deleteQuestion(questionId: string) {
     setOpenMenuId(null);
     if (!window.confirm('هل أنت متأكد من حذف هذا المنشور؟ سيتم حذف الردود التابعة له أيضًا.')) return;
+    if (deletingQuestionId) return;
     setDeletingQuestionId(questionId);
     const res = await fetch('/api/community/posts', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: questionId }) });
     const data = await res.json(); setDeletingQuestionId(null);
@@ -127,7 +132,9 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
     <div>
       <div className="compose-bar mb-8">
         <input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !posting && submitQuestion()} placeholder="✏️ اكتب سؤالك هنا..." className="compose-input" />
-        <button className="compose-send" onClick={submitQuestion} disabled={posting || !newQuestion.trim()}><SendIcon /></button>
+        <button className="compose-send" onClick={submitQuestion} disabled={posting || !newQuestion.trim()} aria-busy={posting} aria-label="نشر السؤال">
+          {posting ? <LoadingSpinner size={17} className="text-[#100C02]" /> : <SendIcon />}
+        </button>
       </div>
 
       {questions.map((q) => {
@@ -161,7 +168,7 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
                   {openMenuId === q.id && (
                     <div className="absolute right-0 top-10 z-20 min-w-[90px] rounded-xl border border-border bg-[#151E2C] shadow-2xl p-1.5">
                       {isOwner && <button type="button" onClick={() => startEditingQuestion(q)} className="w-full flex items-center justify-center p-2.5 rounded-lg text-text hover:bg-white/[0.06] transition" aria-label="تعديل المنشور" title="تعديل المنشور"><PencilIcon /></button>}
-                      {(isOwner || currentUserIsAdmin) && <button type="button" onClick={() => deleteQuestion(q.id)} disabled={deletingQuestionId === q.id} className="w-full flex items-center justify-center p-2.5 rounded-lg text-[#E4756A] hover:bg-[#E4756A]/10 transition disabled:opacity-50" aria-label="حذف المنشور" title="حذف المنشور"><TrashIcon /></button>}
+                      {(isOwner || currentUserIsAdmin) && <button type="button" onClick={() => deleteQuestion(q.id)} disabled={deletingQuestionId === q.id} aria-busy={deletingQuestionId === q.id} className="w-full flex items-center justify-center p-2.5 rounded-lg text-[#E4756A] hover:bg-[#E4756A]/10 transition disabled:opacity-70" aria-label="حذف المنشور" title="حذف المنشور">{deletingQuestionId === q.id ? <LoadingSpinner size={17} /> : <TrashIcon />}</button>}
                     </div>
                   )}
                 </div>
@@ -171,7 +178,13 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
             {isEditing ? (
               <div className="mb-4 space-y-3">
                 <textarea value={editDraft} onChange={(e) => setEditDraft(e.target.value)} rows={4} className="w-full bg-white/[0.02] border border-border rounded-xl px-4 py-3 text-[15px] leading-relaxed focus:outline-none focus:border-gold resize-y text-right" />
-                <div className="flex gap-2 justify-start"><button type="button" onClick={cancelEditingQuestion} className="px-4 py-2 rounded-lg border border-border text-muted text-sm hover:text-text transition">إلغاء</button><button type="button" onClick={() => saveQuestionEdit(q.id)} disabled={savingEdit || !editDraft.trim()} className="px-4 py-2 rounded-lg bg-[#C9A84C] text-[#100C02] font-bold text-sm disabled:opacity-50">{savingEdit ? 'جارٍ الحفظ...' : 'حفظ التعديل'}</button></div>
+                <div className="flex gap-2 justify-start">
+                  <button type="button" onClick={cancelEditingQuestion} disabled={savingEdit} className="px-4 py-2 rounded-lg border border-border text-muted text-sm hover:text-text transition">إلغاء</button>
+                  <button type="button" onClick={() => saveQuestionEdit(q.id)} disabled={savingEdit || !editDraft.trim()} aria-busy={savingEdit} className="inline-flex min-w-[110px] items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#C9A84C] text-[#100C02] font-bold text-sm disabled:opacity-60">
+                    {savingEdit && <LoadingSpinner size={14} />}
+                    {savingEdit ? 'جارٍ الحفظ...' : 'حفظ التعديل'}
+                  </button>
+                </div>
               </div>
             ) : <p className="leading-relaxed mb-4 text-[15px] text-right">{q.body}</p>}
 
@@ -202,7 +215,12 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
                     <p className="leading-relaxed text-[14.5px] text-right" dir="rtl">{r.body}</p>
                   </div>;
                 })}
-                <div className="compose-bar mt-4"><input value={replyDrafts[q.id] ?? ''} onChange={(e) => setReplyDrafts({ ...replyDrafts, [q.id]: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && submitReply(q.id)} placeholder="اكتب ردًا..." className="compose-input" /><button className="compose-send" onClick={() => submitReply(q.id)} disabled={!(replyDrafts[q.id] ?? '').trim()}><SendIcon /></button></div>
+                <div className="compose-bar mt-4">
+                  <input value={replyDrafts[q.id] ?? ''} onChange={(e) => setReplyDrafts({ ...replyDrafts, [q.id]: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && replyPostingId !== q.id && submitReply(q.id)} placeholder="اكتب ردًا..." className="compose-input" />
+                  <button className="compose-send" onClick={() => submitReply(q.id)} disabled={replyPostingId === q.id || !(replyDrafts[q.id] ?? '').trim()} aria-busy={replyPostingId === q.id} aria-label="إرسال الرد">
+                    {replyPostingId === q.id ? <LoadingSpinner size={17} className="text-[#100C02]" /> : <SendIcon />}
+                  </button>
+                </div>
               </div></div>
             </div>
           </div>
