@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import StudentNav from '@/components/StudentNav';
 import LessonsManager from '@/components/LessonsManager';
+import AdminBackButton from '@/components/AdminBackButton';
 
 export default async function AdminLessonsPage() {
   const supabase = await createClient();
@@ -28,6 +29,9 @@ export default async function AdminLessonsPage() {
     <>
       <StudentNav isAdmin currentUserId={user.id} />
       <section className="max-w-[1140px] mx-auto px-6 py-14">
+        <div className="mb-5">
+          <AdminBackButton />
+        </div>
         <div className="eyebrow">لوحة الإدارة</div>
         <h1 className="font-cairo font-extrabold text-[26px] mb-8">إدارة الدروس</h1>
 
