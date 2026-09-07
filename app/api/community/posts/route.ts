@@ -39,7 +39,7 @@ function storagePathFromPublicUrl(url: string | null) {
   return decodeURIComponent(url.slice(index + marker.length));
 }
 
-async function moderateImage(imageUrl: string) {
+async function moderateImage(imageDataUrl: string) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return {
@@ -60,16 +60,23 @@ async function moderateImage(imageUrl: string) {
         input: [
           {
             type: 'image_url',
-            image_url: { url: imageUrl },
+            image_url: { url: imageDataUrl },
           },
         ],
       }),
     });
 
     if (!response.ok) {
+      const details = await response.text().catch(() => '');
+      console.error('OpenAI moderation failed', response.status, details);
       return {
         ok: false as const,
-        error: 'تعذر فحص الصورة حاليًا. حاول مرة أخرى بعد قليل.',
+        error:
+          response.status === 401
+            ? 'مفتاح فحص الصور غير صالح. تواصل مع إدارة المنصة.'
+            : response.status === 429
+              ? 'خدمة فحص الصور وصلت إلى حد الاستخدام مؤقتًا. حاول لاحقًا.'
+              : 'تعذر فحص الصورة حاليًا. حاول مرة أخرى بعد قليل.',
       };
     }
 
@@ -92,7 +99,8 @@ async function moderateImage(imageUrl: string) {
       ok: true as const,
       allowed: true as const,
     };
-  } catch {
+  } catch (error) {
+    console.error('OpenAI moderation request error', error);
     return {
       ok: false as const,
       error: 'تعذر فحص الصورة حاليًا. حاول مرة أخرى بعد قليل.',
@@ -122,11 +130,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'حجم الصورة يجب ألا يتجاوز 5MB' }, { status: 400 });
     }
 
+    const arrayBuffer = await image.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const imageDataUrl = `data:${image.type};base64,${buffer.toString('base64')}`;
+
+    const moderation = await moderateImage(imageDataUrl);
+
+    if (!moderation.ok) {
+      return NextResponse.json({ error: moderation.error }, { status: 503 });
+    }
+
+    if (!moderation.allowed) {
+      return NextResponse.json(
+        { error: 'تعذر نشر الصورة لأنها تخالف قواعد المنصة.' },
+        { status: 400 }
+      );
+    }
+
     uploadedPath = `${current.user.id}/${crypto.randomUUID()}.${extensionForType(image.type)}`;
-    const bytes = new Uint8Array(await image.arrayBuffer());
     const { error: uploadError } = await adminClient.storage
       .from(IMAGE_BUCKET)
-      .upload(uploadedPath, bytes, { contentType: image.type, upsert: false });
+      .upload(uploadedPath, buffer, { contentType: image.type, upsert: false });
 
     if (uploadError) {
       return NextResponse.json({ error: `تعذر رفع الصورة: ${uploadError.message}` }, { status: 400 });
@@ -134,21 +158,6 @@ export async function POST(request: Request) {
 
     const { data: publicUrlData } = adminClient.storage.from(IMAGE_BUCKET).getPublicUrl(uploadedPath);
     imageUrl = publicUrlData.publicUrl;
-
-    const moderation = await moderateImage(imageUrl);
-
-    if (!moderation.ok) {
-      await adminClient.storage.from(IMAGE_BUCKET).remove([uploadedPath]);
-      return NextResponse.json({ error: moderation.error }, { status: 503 });
-    }
-
-    if (!moderation.allowed) {
-      await adminClient.storage.from(IMAGE_BUCKET).remove([uploadedPath]);
-      return NextResponse.json(
-        { error: 'تعذر نشر الصورة لأنها تخالف قواعد المنصة.' },
-        { status: 400 }
-      );
-    }
   }
 
   const { data, error } = await adminClient
