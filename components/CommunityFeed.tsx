@@ -58,11 +58,13 @@ function SendIcon() {
 export default function CommunityFeed({
   currentUserId,
   currentUserDisplayName,
+  currentUserIsAdmin,
   initialQuestions,
   initialReplies,
 }: {
   currentUserId: string;
   currentUserDisplayName: string;
+  currentUserIsAdmin: boolean;
   initialQuestions: Question[];
   initialReplies: Reply[];
 }) {
@@ -77,6 +79,11 @@ export default function CommunityFeed({
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [posting, setPosting] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!highlightedId) return;
@@ -111,7 +118,7 @@ export default function CommunityFeed({
     setPosting(false);
     if (!error && data) {
       setQuestions([
-        { ...data, profiles: { display_name: currentUserDisplayName, is_admin: false } },
+        { ...data, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } },
         ...questions,
       ]);
       setNewQuestion('');
@@ -127,9 +134,69 @@ export default function CommunityFeed({
       .select('id, body, created_at, question_id, student_id')
       .single();
     if (!error && data) {
-      setReplies([...replies, { ...data, profiles: { display_name: currentUserDisplayName, is_admin: false } }]);
+      setReplies([...replies, { ...data, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } }]);
       setReplyDrafts({ ...replyDrafts, [questionId]: '' });
     }
+  }
+
+  function startEditingQuestion(question: Question) {
+    setEditingQuestionId(question.id);
+    setEditDraft(question.body);
+    setActionError((current) => ({ ...current, [question.id]: '' }));
+  }
+
+  function cancelEditingQuestion() {
+    setEditingQuestionId(null);
+    setEditDraft('');
+  }
+
+  async function saveQuestionEdit(questionId: string) {
+    const body = editDraft.trim();
+    if (!body) return;
+
+    setSavingEdit(true);
+    setActionError((current) => ({ ...current, [questionId]: '' }));
+
+    const res = await fetch('/api/community/posts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: questionId, body }),
+    });
+    const data = await res.json();
+    setSavingEdit(false);
+
+    if (!res.ok) {
+      setActionError((current) => ({ ...current, [questionId]: data.error ?? 'تعذر تعديل المنشور' }));
+      return;
+    }
+
+    setQuestions((current) => current.map((q) => (q.id === questionId ? { ...q, body: data.post.body } : q)));
+    setEditingQuestionId(null);
+    setEditDraft('');
+  }
+
+  async function deleteQuestion(questionId: string) {
+    const confirmed = window.confirm('هل أنت متأكد من حذف هذا المنشور؟ سيتم حذف الردود التابعة له أيضًا.');
+    if (!confirmed) return;
+
+    setDeletingQuestionId(questionId);
+    setActionError((current) => ({ ...current, [questionId]: '' }));
+
+    const res = await fetch('/api/community/posts', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: questionId }),
+    });
+    const data = await res.json();
+    setDeletingQuestionId(null);
+
+    if (!res.ok) {
+      setActionError((current) => ({ ...current, [questionId]: data.error ?? 'تعذر حذف المنشور' }));
+      return;
+    }
+
+    setQuestions((current) => current.filter((q) => q.id !== questionId));
+    setReplies((current) => current.filter((r) => r.question_id !== questionId));
   }
 
   return (
@@ -151,6 +218,8 @@ export default function CommunityFeed({
         const qReplies = replies.filter((r) => r.question_id === q.id);
         const isAdminAuthor = q.profiles?.is_admin;
         const expanded = expandedIds.has(q.id);
+        const canEdit = q.student_id === currentUserId;
+        const isEditing = editingQuestionId === q.id;
 
         return (
           <div
@@ -170,25 +239,79 @@ export default function CommunityFeed({
               </div>
               <span className="text-xs text-muted2 whitespace-nowrap">{timeAgo(q.created_at)}</span>
             </div>
-            <p className="leading-relaxed mb-4 text-[15px]">{q.body}</p>
 
-            <button onClick={() => toggleExpanded(q.id)} className="reply-toggle">
-              <ChatIcon />
-              {qReplies.length > 0
-                ? `${qReplies.length} ${qReplies.length === 1 ? 'رد' : 'ردود'}`
-                : 'أضف ردًا'}
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
-              >
-                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            {isEditing ? (
+              <div className="mb-4 space-y-3">
+                <textarea
+                  value={editDraft}
+                  onChange={(e) => setEditDraft(e.target.value)}
+                  rows={4}
+                  className="w-full bg-white/[0.02] border border-border rounded-xl px-4 py-3 text-[15px] leading-relaxed focus:outline-none focus:border-gold resize-y"
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={cancelEditingQuestion}
+                    className="px-4 py-2 rounded-lg border border-border text-muted text-sm hover:text-text transition"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => saveQuestionEdit(q.id)}
+                    disabled={savingEdit || !editDraft.trim()}
+                    className="px-4 py-2 rounded-lg bg-[#C9A84C] text-[#100C02] font-bold text-sm disabled:opacity-50"
+                  >
+                    {savingEdit ? 'جارٍ الحفظ...' : 'حفظ التعديل'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="leading-relaxed mb-4 text-[15px]">{q.body}</p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={() => toggleExpanded(q.id)} className="reply-toggle">
+                <ChatIcon />
+                {qReplies.length > 0
+                  ? `${qReplies.length} ${qReplies.length === 1 ? 'رد' : 'ردود'}`
+                  : 'أضف ردًا'}
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
+                >
+                  <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
+              {canEdit && !isEditing && (
+                <button
+                  type="button"
+                  onClick={() => startEditingQuestion(q)}
+                  className="px-3.5 py-2 rounded-lg border border-border text-muted text-[12.5px] hover:text-gold hover:border-gold/40 transition"
+                >
+                  ✏️ تعديل
+                </button>
+              )}
+
+              {currentUserIsAdmin && (
+                <button
+                  type="button"
+                  onClick={() => deleteQuestion(q.id)}
+                  disabled={deletingQuestionId === q.id}
+                  className="px-3.5 py-2 rounded-lg border border-border text-muted text-[12.5px] hover:text-[#E4756A] hover:border-[#E4756A] transition disabled:opacity-50"
+                >
+                  {deletingQuestionId === q.id ? 'جارٍ الحذف...' : '🗑️ حذف'}
+                </button>
+              )}
+            </div>
+
+            {actionError[q.id] && <p className="text-[#E4756A] text-[12px] mt-2">{actionError[q.id]}</p>}
 
             <div
               className="grid transition-[grid-template-rows] duration-300 ease-out"
