@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
-type ModuleRow = { id: string; title: string; description: string | null; position: number };
-type LessonRow = { id: string; title: string; module_id: string; position: number; thumbnail_url: string | null };
+type ModuleRow = { id: string; title: string; description: string | null; thumbnail_url: string | null; position: number };
+type LessonRow = { id: string; title: string; module_id: string; position: number };
 
 export default function CourseAccordion({
   modules,
@@ -101,9 +101,9 @@ export default function CourseAccordion({
                           } ${isHighlighted ? '!border-gold/50 !bg-gold/[0.08] shadow-[0_0_0_1px_rgba(212,177,94,0.08)]' : ''}`}
                         >
                           <div className="relative w-[92px] sm:w-[120px] aspect-video rounded-lg overflow-hidden bg-gradient-to-br from-surface2 to-[#070A10] border border-border flex-shrink-0">
-                            {lesson.thumbnail_url ? (
+                            {module.thumbnail_url ? (
                               <img
-                                src={lesson.thumbnail_url}
+                                src={module.thumbnail_url}
                                 alt=""
                                 className="absolute inset-0 w-full h-full object-cover"
                               />
