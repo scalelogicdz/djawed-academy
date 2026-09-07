@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -140,11 +141,15 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
         return (
           <div key={q.id} ref={(el) => { questionRefs.current[q.id] = el; }} dir="rtl" className={`card p-7 mb-6 transition-shadow duration-700 text-right ${justArrivedId === q.id ? 'border-gold shadow-[0_0_0_1px_rgba(212,177,94,0.5),0_0_24px_rgba(212,177,94,0.25)]' : ''}`}>
             <div className="relative flex items-start gap-3 mb-4" dir="ltr">
-              <div className={`avatar-ring ${isAdminAuthor ? 'admin' : ''} flex-shrink-0`}>{isAdminAuthor ? 'DK' : initial(q.profiles?.display_name ?? '')}</div>
+              <Link href={`/profile/${q.student_id}`} className={`avatar-ring ${isAdminAuthor ? 'admin' : ''} flex-shrink-0 hover:border-gold transition`} aria-label={`ملف ${q.profiles?.display_name ?? ''}`}>
+                {isAdminAuthor ? 'DK' : initial(q.profiles?.display_name ?? '')}
+              </Link>
 
               <div className="min-w-0 flex-1 text-left pt-0.5" dir="ltr">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="font-heading font-bold text-[15px] whitespace-nowrap">{q.profiles?.display_name}</span>
+                  <Link href={`/profile/${q.student_id}`} className="font-heading font-bold text-[15px] whitespace-nowrap hover:text-gold transition">
+                    {q.profiles?.display_name}
+                  </Link>
                   {isAdminAuthor && <span className="coach-badge">✓ المدرب</span>}
                 </div>
                 <span className="text-xs text-muted2 whitespace-nowrap block mt-1">{timeAgo(q.created_at)}</span>
@@ -185,8 +190,14 @@ export default function CommunityFeed({ currentUserId, currentUserDisplayName, c
                   const rIsAdmin = r.profiles?.is_admin;
                   return <div key={r.id} className={`reply-card ${rIsAdmin ? 'admin' : ''}`}>
                     <div className="flex items-center gap-2.5 mb-2" dir="ltr">
-                      <div className={`avatar-ring ${rIsAdmin ? 'admin' : ''}`} style={{ width: 34, height: 34, fontSize: 13 }}>{rIsAdmin ? 'DK' : initial(r.profiles?.display_name ?? '')}</div>
-                      <div className="flex-1 min-w-0 text-left"><span className="font-heading font-bold text-[13.5px] whitespace-nowrap">{r.profiles?.display_name}</span>{rIsAdmin && <span className="coach-badge ml-2">✓ المدرب</span>}<span className="text-xs text-muted2 whitespace-nowrap block mt-1">{timeAgo(r.created_at)}</span></div>
+                      <Link href={`/profile/${r.student_id}`} className={`avatar-ring ${rIsAdmin ? 'admin' : ''} hover:border-gold transition`} style={{ width: 34, height: 34, fontSize: 13 }}>
+                        {rIsAdmin ? 'DK' : initial(r.profiles?.display_name ?? '')}
+                      </Link>
+                      <div className="flex-1 min-w-0 text-left">
+                        <Link href={`/profile/${r.student_id}`} className="font-heading font-bold text-[13.5px] whitespace-nowrap hover:text-gold transition">{r.profiles?.display_name}</Link>
+                        {rIsAdmin && <span className="coach-badge ml-2">✓ المدرب</span>}
+                        <span className="text-xs text-muted2 whitespace-nowrap block mt-1">{timeAgo(r.created_at)}</span>
+                      </div>
                     </div>
                     <p className="leading-relaxed text-[14.5px] text-right" dir="rtl">{r.body}</p>
                   </div>;
