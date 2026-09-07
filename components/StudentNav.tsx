@@ -114,21 +114,21 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           </button>
 
           <Link
-            href="/community"
-            className={`md:hidden w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/community') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
-            aria-label="المجتمع"
-            title="المجتمع"
-          >
-            <CommunityIcon />
-          </Link>
-
-          <Link
             href={profileHref}
             className={`w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/profile') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
             aria-label="ملفي الشخصي"
             title="ملفي الشخصي"
           >
             <UserIcon />
+          </Link>
+
+          <Link
+            href="/community"
+            className={`md:hidden w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/community') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
+            aria-label="المجتمع"
+            title="المجتمع"
+          >
+            <CommunityIcon />
           </Link>
 
           <NotificationBell currentUserId={currentUserId} />
