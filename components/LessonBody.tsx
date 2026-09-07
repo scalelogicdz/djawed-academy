@@ -144,6 +144,8 @@ export default function LessonBody({
 
   const requiresWatch = !!lesson.video_id && lesson.video_provider !== 'vimeo';
   const canMarkComplete = completed || !requiresWatch || videoEnded;
+  const navButtonClass =
+    'text-center inline-block px-6 py-3 rounded-xl bg-surface2 border border-border text-text font-semibold shadow-sm hover:bg-surface hover:border-gold/40 hover:text-gold transition';
 
   if (isLocked) {
     return (
@@ -181,7 +183,7 @@ export default function LessonBody({
       <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-3 mt-6">
         <div className="justify-self-start">
           {prevLessonId && (
-            <Link href={`/lesson/${prevLessonId}`} className="btn-ghost text-center inline-block">→ الدرس السابق</Link>
+            <Link href={`/lesson/${prevLessonId}`} className={navButtonClass}>→ الدرس السابق</Link>
           )}
         </div>
 
@@ -198,7 +200,7 @@ export default function LessonBody({
 
         <div className="justify-self-end">
           {nextLessonId && canMarkComplete && (
-            <Link href={`/lesson/${nextLessonId}`} className="btn-ghost text-center inline-block">الدرس التالي ←</Link>
+            <Link href={`/lesson/${nextLessonId}`} className={navButtonClass}>الدرس التالي ←</Link>
           )}
         </div>
       </div>
