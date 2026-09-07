@@ -7,17 +7,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: '#0A0D14',
-        surface: '#161F2E',
-        surface2: '#1B2536',
+        bg: '#080B12',
+        surface: '#111827',
+        surface2: '#182234',
         gold: '#D4B15E',
         goldSoft: '#C9A84C',
         goldDim: '#6B5A2E',
-        text: '#F6F5F1',
-        muted: '#99A2B5',
-        muted2: '#5B6478',
+        text: '#F7F7F4',
+        muted: '#A6AEBD',
+        muted2: '#6E788A',
         success: '#3FCB82',
-        border: '#26324A',
+        border: '#27334A',
         track: '#3A3220',
       },
       fontFamily: {
