@@ -8,7 +8,7 @@ import NotificationBell from '@/components/NotificationBell';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 const links = [
-  { href: '/dashboard', label: 'لوحة التحكم' },
+  { href: '/dashboard', label: 'دوراتي' },
   { href: '/community', label: 'المجتمع' },
   { href: '/services', label: 'خدماتنا' },
   { href: '/support', label: 'تواصل مع الإدارة', support: true },
