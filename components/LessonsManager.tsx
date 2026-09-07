@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Course = { id: string; title: string };
-type ModuleRow = { id: string; course_id: string; title: string; description: string | null; position: number };
+type ModuleRow = { id: string; course_id: string; title: string; description: string | null; thumbnail_url: string | null; position: number };
 type LessonRow = {
   id: string;
   module_id: string;
@@ -25,7 +25,7 @@ type QuizQuestionRow = {
 };
 
 const emptyLessonDraft = { title: '', description: '', videoId: '', videoProvider: 'bunny', resourceUrl: '' };
-const emptyModuleDraft = { title: '', description: '' };
+const emptyModuleDraft = { title: '', description: '', thumbnailUrl: '' };
 const emptyQuizDraft = { question: '', options: ['', ''], correctIndex: 0 };
 
 export default function LessonsManager({
@@ -57,7 +57,6 @@ export default function LessonsManager({
   const [editModuleDraft, setEditModuleDraft] = useState(emptyModuleDraft);
   const [savingModuleEdit, setSavingModuleEdit] = useState(false);
 
-  // Quiz panel: which lesson's quiz panel is open, and the "add question" draft per lesson
   const [openQuizForLesson, setOpenQuizForLesson] = useState<string | null>(null);
   const [quizDraft, setQuizDraft] = useState(emptyQuizDraft);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
@@ -85,7 +84,11 @@ export default function LessonsManager({
 
   function startEditingModule(m: ModuleRow) {
     setEditingModuleId(m.id);
-    setEditModuleDraft({ title: m.title, description: m.description ?? '' });
+    setEditModuleDraft({
+      title: m.title,
+      description: m.description ?? '',
+      thumbnailUrl: m.thumbnail_url ?? '',
+    });
   }
 
   async function saveModuleEdit(moduleId: string) {
@@ -99,6 +102,7 @@ export default function LessonsManager({
         id: moduleId,
         title: editModuleDraft.title.trim(),
         description: editModuleDraft.description.trim() || null,
+        thumbnailUrl: editModuleDraft.thumbnailUrl.trim() || null,
       }),
     });
     const data = await res.json();
@@ -194,8 +198,6 @@ export default function LessonsManager({
     }
   }
 
-  // --- Quiz question management ---
-
   function updateDraftOption(draft: typeof quizDraft, setDraft: (d: typeof quizDraft) => void, index: number, value: string) {
     const next = [...draft.options];
     next[index] = value;
@@ -207,7 +209,7 @@ export default function LessonsManager({
   }
 
   function removeOptionField(draft: typeof quizDraft, setDraft: (d: typeof quizDraft) => void, index: number) {
-    if (draft.options.length <= 2) return; // keep at least 2 options
+    if (draft.options.length <= 2) return;
     const next = draft.options.filter((_, i) => i !== index);
     const newCorrect = draft.correctIndex >= next.length ? 0 : draft.correctIndex;
     setDraft({ ...draft, options: next, correctIndex: newCorrect });
@@ -324,6 +326,19 @@ export default function LessonsManager({
                 rows={2}
                 className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold resize-none"
               />
+              <input
+                type="url"
+                value={editModuleDraft.thumbnailUrl}
+                onChange={(e) => setEditModuleDraft({ ...editModuleDraft, thumbnailUrl: e.target.value })}
+                placeholder="رابط الصورة المصغرة للوحدة"
+                dir="ltr"
+                className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
+              />
+              {editModuleDraft.thumbnailUrl && (
+                <div className="w-[180px] aspect-video rounded-lg overflow-hidden border border-border bg-surface2">
+                  <img src={editModuleDraft.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
               <div className="flex gap-2 justify-end">
                 <button className="btn-ghost !py-2 !px-4 text-xs" onClick={() => setEditingModuleId(null)}>
                   إلغاء
@@ -516,7 +531,6 @@ export default function LessonsManager({
                         )
                       )}
 
-                      {/* Add new question form */}
                       <div className="space-y-2.5 pt-1">
                         <input
                           value={quizDraft.question}
