@@ -63,8 +63,6 @@ export default async function DashboardPage() {
   return (
     <>
       <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
-      <div className="glow-blob" style={{ width: 600, height: 600, top: -200, right: -150, background: 'rgba(212,177,94,0.12)' }} />
-      <div className="glow-blob" style={{ width: 500, height: 400, bottom: 0, left: -150, background: 'rgba(212,177,94,0.06)' }} />
       <section className="max-w-[1140px] mx-auto px-6 py-14 relative">
         <div className="mb-8">
           <div className="eyebrow">مرحبًا بعودتك</div>
@@ -74,20 +72,20 @@ export default async function DashboardPage() {
           <p className="text-muted text-[16px] mb-7">أكمل من حيث توقفت</p>
 
           {courseCards.length > 0 && (
-            <div className="flex items-center gap-10">
-              <div className="text-center sm:text-right">
-                <div className="font-heading font-extrabold text-[30px]">{totalLessonsAll}</div>
-                <div className="text-muted text-[13.5px] mt-1">إجمالي الدروس</div>
+            <div className="flex gap-3">
+              <div className="stat-box text-center">
+                <div className="font-heading font-extrabold text-[26px] text-gold">{overallPct}%</div>
+                <div className="text-muted text-[12.5px] mt-1">التقدم</div>
               </div>
-              <div className="text-center sm:text-right">
-                <div className="font-heading font-extrabold text-[30px]">
+              <div className="stat-box text-center">
+                <div className="font-heading font-extrabold text-[26px]">
                   {String(completedLessonsAll).padStart(2, '0')}
                 </div>
-                <div className="text-muted text-[13.5px] mt-1">دروس مكتملة</div>
+                <div className="text-muted text-[12.5px] mt-1">دروس مكتملة</div>
               </div>
-              <div className="text-center sm:text-right">
-                <div className="font-heading font-extrabold text-[30px] text-gold">{overallPct}%</div>
-                <div className="text-muted text-[13.5px] mt-1">التقدم</div>
+              <div className="stat-box text-center">
+                <div className="font-heading font-extrabold text-[26px]">{totalLessonsAll}</div>
+                <div className="text-muted text-[12.5px] mt-1">إجمالي الدروس</div>
               </div>
             </div>
           )}
