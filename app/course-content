@@ -1,0 +1,80 @@
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import StudentNav from '@/components/StudentNav';
+import { computeLockedLessonIds } from '@/lib/lessonLocking';
+import CourseAccordion from '@/components/CourseAccordion';
+
+export default async function CourseContentPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('display_name, is_admin')
+    .eq('id', user.id)
+    .single();
+
+  const { data: enrollments } = await supabase
+    .from('enrollments')
+    .select('course_id, courses(id, title)')
+    .eq('student_id', user.id);
+
+  const enrollment: any = (enrollments ?? [])[0];
+  if (!enrollment) {
+    return (
+      <>
+        <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
+        <section className="max-w-[900px] mx-auto px-6 py-14">
+          <div className="card p-8 text-muted text-sm">لا يوجد لديك وصول لأي دورة حاليًا.</div>
+        </section>
+      </>
+    );
+  }
+  const course = enrollment.courses;
+
+  const { data: modules } = await supabase
+    .from('modules')
+    .select('id, title, description, position')
+    .eq('course_id', course.id)
+    .order('position', { ascending: true });
+
+  const { data: lessons } = await supabase
+    .from('lessons')
+    .select('id, title, module_id, position')
+    .in('module_id', (modules ?? []).map((m) => m.id))
+    .order('position', { ascending: true });
+
+  const { data: progressRows } = await supabase
+    .from('lesson_progress')
+    .select('lesson_id')
+    .eq('student_id', user.id);
+  const completedIds = new Set((progressRows ?? []).map((p) => p.lesson_id));
+
+  const flatLessons = lessons ?? [];
+  const lockedIds = computeLockedLessonIds(flatLessons, completedIds);
+
+  // The lesson the student should continue into: the first one not yet completed, in order.
+  const nextLesson = flatLessons.find((l) => !completedIds.has(l.id)) ?? null;
+
+  return (
+    <>
+      <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
+      <section className="max-w-[900px] mx-auto px-6 py-14">
+        <div className="eyebrow">محتوى الدورة</div>
+        <h1 className="font-heading font-extrabold text-[28px] mb-8">{course.title}</h1>
+
+        <CourseAccordion
+          modules={modules ?? []}
+          lessons={flatLessons}
+          completedIds={Array.from(completedIds)}
+          lockedIds={Array.from(lockedIds)}
+          nextLessonId={nextLesson?.id ?? null}
+          defaultOpenModuleId={nextLesson?.module_id ?? modules?.[0]?.id ?? null}
+        />
+      </section>
+    </>
+  );
+}
