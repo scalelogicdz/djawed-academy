@@ -16,16 +16,12 @@ html {
 
 body {
   position: relative;
-  background:
-    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(212, 177, 94, 0.07), transparent 60%),
-    radial-gradient(ellipse 700px 500px at 100% 10%, rgba(63, 203, 130, 0.03), transparent 55%),
-    #0a0d14;
+  background: #0a0d14;
   color: #f6f5f1;
   min-height: 100vh;
   letter-spacing: 0.01em;
 }
 
-/* Subtle background grid texture, matching the landing page's visual language */
 body::after {
   content: '';
   position: fixed;
@@ -51,11 +47,57 @@ body::after {
 }
 
 .card {
-  background: linear-gradient(160deg, rgba(212, 177, 94, 0.07), rgba(255, 255, 255, 0.02));
-  border: 1px solid rgba(212, 177, 94, 0.35);
+  background: linear-gradient(180deg, #182131, #131b29);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
-  box-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.65), 0 0 40px -10px rgba(212, 177, 94, 0.15);
-  backdrop-filter: blur(6px);
+  box-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.stat-box {
+  background: linear-gradient(180deg, #182131, #131b29);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  flex: 1;
+}
+
+.list-item {
+  background: linear-gradient(180deg, #1b2536, #151e2c);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  box-shadow: 0 3px 10px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: 0.2s;
+}
+.list-item:hover {
+  border-color: rgba(212, 177, 94, 0.3);
+}
+.list-item.active {
+  background: linear-gradient(180deg, #23293a, #1a2130);
+  border: 1px solid rgba(212, 177, 94, 0.45);
+  box-shadow: 0 3px 14px -4px rgba(0, 0, 0, 0.5), 0 0 16px rgba(212, 177, 94, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.module-tab {
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: linear-gradient(180deg, #1b2536, #151e2c);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #99a2b5;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 3px 8px -3px rgba(0, 0, 0, 0.5);
+  transition: 0.2s;
+  font-family: 'Cairo', sans-serif;
+}
+.module-tab.active {
+  background: linear-gradient(180deg, #2b2416, #1f1a0f);
+  border-color: #d4b15e;
+  color: #d4b15e;
 }
 
 .btn-primary {
@@ -135,7 +177,7 @@ body::after {
   height: 44px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: linear-gradient(160deg, rgba(212, 177, 94, 0.18), rgba(255, 255, 255, 0.03));
+  background: linear-gradient(160deg, #23293a, #182131);
   border: 1.5px solid rgba(212, 177, 94, 0.4);
   display: flex;
   align-items: center;
@@ -143,10 +185,11 @@ body::after {
   font-weight: 700;
   font-size: 15px;
   font-family: 'Cairo', sans-serif;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .avatar-ring.admin {
   border-color: #d4b15e;
-  box-shadow: 0 0 14px rgba(212, 177, 94, 0.35);
+  box-shadow: 0 0 14px rgba(212, 177, 94, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .reply-toggle {
