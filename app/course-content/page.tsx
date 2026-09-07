@@ -45,7 +45,7 @@ export default async function CourseContentPage({
 
   const { data: modules } = await adminClient
     .from('modules')
-    .select('id, title, description, position')
+    .select('id, title, description, thumbnail_url, position')
     .eq('course_id', course.id)
     .order('position', { ascending: true });
 
@@ -53,10 +53,10 @@ export default async function CourseContentPage({
   const { data: lessons } = moduleIds.length
     ? await adminClient
         .from('lessons')
-        .select('id, title, module_id, position, thumbnail_url')
+        .select('id, title, module_id, position')
         .in('module_id', moduleIds)
         .order('position', { ascending: true })
-    : { data: [] as { id: string; title: string; module_id: string; position: number; thumbnail_url: string | null }[] };
+    : { data: [] as { id: string; title: string; module_id: string; position: number }[] };
 
   const { data: progressRows } = await supabase
     .from('lesson_progress')
