@@ -40,30 +40,50 @@ export default function LessonBody({
   const [completed, setCompleted] = useState(isCompleted);
   const [saving, setSaving] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const playerRef = useRef<any>(null);
 
   const BUNNY_LIBRARY_ID = '744754';
   const embedUrl =
     lesson.video_provider === 'vimeo'
-      ? `https://player.vimeo.com/video/${lesson.video_id}`
-      : `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${lesson.video_id}`;
+      ? `https://player.vimeo.com/video/${lesson.video_id}?autoplay=0`
+      : `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${lesson.video_id}?autoplay=false`;
 
   useEffect(() => {
-    if (isLocked || !lesson.video_id || lesson.video_provider === 'vimeo') return;
+    setHasStarted(false);
+    setPlayerReady(false);
+    setIsPlaying(false);
+    setVideoEnded(false);
+    playerRef.current = null;
+  }, [lesson.id]);
 
-    let player: any;
+  useEffect(() => {
+    if (!hasStarted || isLocked || !lesson.video_id || lesson.video_provider === 'vimeo') return;
+
     let cancelled = false;
 
     function attachPlayer() {
       if (cancelled || !iframeRef.current || !window.playerjs) return;
       try {
-        player = new window.playerjs.Player(iframeRef.current);
+        const player = new window.playerjs.Player(iframeRef.current);
+        playerRef.current = player;
+
         player.on('ready', () => {
           if (cancelled) return;
+          setPlayerReady(true);
           try {
+            player.on('play', () => !cancelled && setIsPlaying(true));
+            player.on('pause', () => !cancelled && setIsPlaying(false));
             player.on('ended', () => {
-              if (!cancelled) setVideoEnded(true);
+              if (!cancelled) {
+                setIsPlaying(false);
+                setVideoEnded(true);
+              }
             });
+            player.play();
           } catch {}
         });
       } catch {}
@@ -86,14 +106,31 @@ export default function LessonBody({
 
     return () => {
       cancelled = true;
+      const player = playerRef.current;
       if (player && typeof player.off === 'function') {
         try {
+          player.off('play');
+          player.off('pause');
           player.off('ended');
           player.off('ready');
         } catch {}
       }
+      playerRef.current = null;
+      setPlayerReady(false);
     };
-  }, [isLocked, lesson.id, lesson.video_id, lesson.video_provider]);
+  }, [hasStarted, isLocked, lesson.id, lesson.video_id, lesson.video_provider]);
+
+  function togglePlayback() {
+    const player = playerRef.current;
+    if (!playerReady || !player) return;
+    try {
+      if (isPlaying) {
+        player.pause();
+      } else {
+        player.play();
+      }
+    } catch {}
+  }
 
   function playCompletionSound() {
     try {
@@ -166,19 +203,48 @@ export default function LessonBody({
 
   return (
     <div>
-      <div className="aspect-video rounded-2xl border border-border overflow-hidden bg-gradient-to-br from-surface2 to-[#070A10]">
+      <div className="relative aspect-video rounded-2xl border border-border bg-gradient-to-br from-surface2 to-[#070A10]">
         {lesson.video_id ? (
-          <iframe
-            ref={iframeRef}
-            src={embedUrl}
-            className="w-full h-full"
-            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-          />
+          hasStarted ? (
+            <iframe
+              ref={iframeRef}
+              src={embedUrl}
+              className="w-full h-full rounded-2xl"
+              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setHasStarted(true)}
+              className="absolute inset-0 w-full h-full rounded-2xl flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-surface2 to-[#070A10] text-text"
+            >
+              <span className="w-16 h-16 rounded-full bg-[#C9A84C] text-[#100C02] flex items-center justify-center shadow-[0_8px_28px_rgba(201,168,76,0.28)]">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" className="translate-x-[1px]">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
+              <span className="font-heading font-bold text-[16px]">ابدأ الفيديو</span>
+            </button>
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted text-sm">لم يتم إضافة الفيديو بعد</div>
         )}
       </div>
+
+      {hasStarted && lesson.video_id && lesson.video_provider !== 'vimeo' && (
+        <div className="mt-3 flex justify-center">
+          <button
+            type="button"
+            onClick={togglePlayback}
+            disabled={!playerReady}
+            className="min-w-[170px] inline-flex items-center justify-center gap-2 rounded-xl bg-surface2 border border-border px-5 py-3 text-text font-semibold shadow-sm hover:border-gold/40 hover:text-gold transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="text-[17px]">{isPlaying ? 'Ⅱ' : '▶'}</span>
+            {isPlaying ? 'إيقاف مؤقت' : 'تشغيل'}
+          </button>
+        </div>
+      )}
 
       <div className="mt-6 flex flex-col gap-4">
         <div className="flex flex-col items-center gap-1.5">
