@@ -21,6 +21,7 @@ declare global {
 
 export default function LessonBody({
   lesson,
+  thumbnailUrl,
   prevLessonId,
   nextLessonId,
   isCompleted,
@@ -29,6 +30,7 @@ export default function LessonBody({
   requiredLessonId,
 }: {
   lesson: Lesson;
+  thumbnailUrl: string | null;
   prevLessonId: string | null;
   nextLessonId: string | null;
   isCompleted: boolean;
@@ -125,11 +127,7 @@ export default function LessonBody({
     const player = playerRef.current;
     if (!playerReady || !player) return;
     try {
-      if (isPlaying) {
-        player.pause();
-      } else {
-        player.play();
-      }
+      if (isPlaying) player.pause(); else player.play();
     } catch {}
   }
 
@@ -159,9 +157,7 @@ export default function LessonBody({
   async function toggleComplete() {
     if (saving) return;
     setSaving(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       setSaving(false);
@@ -192,20 +188,16 @@ export default function LessonBody({
         <span className="text-3xl">🔒</span>
         <p className="font-heading font-bold text-[16px]">هذا الدرس مغلق حاليًا</p>
         {requiredLessonTitle && (
-          <p className="text-muted text-[13.5px]">
-            أكمل درس <span className="text-text font-semibold">"{requiredLessonTitle}"</span> أولًا لفتح هذا الدرس
-          </p>
+          <p className="text-muted text-[13.5px]">أكمل درس <span className="text-text font-semibold">"{requiredLessonTitle}"</span> أولًا لفتح هذا الدرس</p>
         )}
-        {requiredLessonId && (
-          <Link href={`/lesson/${requiredLessonId}`} className="btn-primary mt-2">الذهاب إلى الدرس المطلوب</Link>
-        )}
+        {requiredLessonId && <Link href={`/lesson/${requiredLessonId}`} className="btn-primary mt-2">الذهاب إلى الدرس المطلوب</Link>}
       </div>
     );
   }
 
   return (
     <div>
-      <div className="relative aspect-video rounded-2xl border border-border bg-gradient-to-br from-surface2 to-[#070A10]">
+      <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface2 to-[#070A10]">
         {lesson.video_id ? (
           hasStarted ? (
             <iframe
@@ -219,14 +211,24 @@ export default function LessonBody({
             <button
               type="button"
               onClick={() => setHasStarted(true)}
-              className="absolute inset-0 w-full h-full rounded-2xl flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-surface2 to-[#070A10] text-text"
+              className="absolute inset-0 w-full h-full rounded-2xl flex flex-col items-center justify-center gap-3 overflow-hidden text-text group"
             >
-              <span className="w-16 h-16 rounded-full bg-[#C9A84C] text-[#100C02] flex items-center justify-center shadow-[0_8px_28px_rgba(201,168,76,0.28)]">
+              {thumbnailUrl ? (
+                <img
+                  src={thumbnailUrl}
+                  alt="صورة الدرس"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.015]"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-surface2 to-[#070A10]" />
+              )}
+              <div className="absolute inset-0 bg-black/35" />
+              <span className="relative z-10 w-16 h-16 rounded-full bg-[#C9A84C] text-[#100C02] flex items-center justify-center shadow-[0_8px_28px_rgba(201,168,76,0.35)] transition-transform duration-200 group-hover:scale-105">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" className="translate-x-[1px]">
                   <path d="M8 5v14l11-7z" />
                 </svg>
               </span>
-              <span className="font-heading font-bold text-[16px]">ابدأ الفيديو</span>
+              <span className="relative z-10 font-heading font-bold text-[16px] drop-shadow-md">ابدأ الفيديو</span>
             </button>
           )
         ) : (
@@ -260,26 +262,15 @@ export default function LessonBody({
             {saving && <LoadingSpinner size={17} />}
             {saving ? 'جارٍ الحفظ...' : completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
           </button>
-          {!canMarkComplete && (
-            <span className="text-muted2 text-[11.5px] text-center px-3">شاهد الفيديو كاملاً لتتمكن من تحديد الدرس كمكتمل</span>
-          )}
+          {!canMarkComplete && <span className="text-muted2 text-[11.5px] text-center px-3">شاهد الفيديو كاملاً لتتمكن من تحديد الدرس كمكتمل</span>}
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
           <div className="flex justify-start">
-            {prevLessonId && (
-              <Link href={`/lesson/${prevLessonId}`} className={`${navButtonClass} w-full sm:w-auto`}>
-                → الدرس السابق
-              </Link>
-            )}
+            {prevLessonId && <Link href={`/lesson/${prevLessonId}`} className={`${navButtonClass} w-full sm:w-auto`}>→ الدرس السابق</Link>}
           </div>
-
           <div className="flex justify-end">
-            {nextLessonId && canMarkComplete && (
-              <Link href={`/lesson/${nextLessonId}`} className={`${navButtonClass} w-full sm:w-auto`}>
-                الدرس التالي ←
-              </Link>
-            )}
+            {nextLessonId && canMarkComplete && <Link href={`/lesson/${nextLessonId}`} className={`${navButtonClass} w-full sm:w-auto`}>الدرس التالي ←</Link>}
           </div>
         </div>
       </div>
