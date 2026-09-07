@@ -53,7 +53,7 @@ export default async function ServicesPage() {
           {services.map((service) => (
             <article
               key={service.title}
-              className="group overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#111925] shadow-[0_20px_45px_-28px_rgba(0,0,0,0.85)] transition duration-300 hover:-translate-y-1 hover:border-gold/30"
+              className="group overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#111925] shadow-[0_20px_45px_-28px_rgba(0,0,0,0.85)] transition duration-300 hover:-translate-y-1 hover:border-gold/30 flex flex-col"
             >
               <div className="aspect-[4/3] bg-[#F6F0E7] overflow-hidden">
                 <img
@@ -63,7 +63,7 @@ export default async function ServicesPage() {
                 />
               </div>
 
-              <div className="p-5 sm:p-6">
+              <div className="p-5 sm:p-6 flex flex-col flex-1">
                 <h2 className="font-heading font-bold text-[20px] sm:text-[21px] mb-3">
                   {service.title}
                 </h2>
@@ -71,11 +71,14 @@ export default async function ServicesPage() {
                   {service.description}
                 </p>
 
-                <div className="mt-5 rounded-xl bg-gradient-to-br from-gold to-goldSoft px-4 py-3.5 flex items-center justify-between gap-3 text-[#0A0F1A] shadow-[0_10px_24px_-12px_rgba(212,177,94,0.65)] transition duration-200 group-hover:shadow-[0_12px_28px_-10px_rgba(212,177,94,0.78)] group-hover:brightness-105">
-                  <span className="text-[14px] sm:text-[14.5px] font-bold font-cairo">اكتشف الخدمة</span>
-                  <span className="w-8 h-8 rounded-full bg-[#0A0F1A]/10 border border-[#0A0F1A]/10 inline-flex items-center justify-center text-[18px] font-bold transition duration-200 group-hover:-translate-x-1">
-                    ←
-                  </span>
+                <div className="mt-auto pt-6 flex justify-center">
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center gap-2 min-w-[170px] rounded-xl border border-gold/45 bg-gold/[0.08] px-5 py-3 text-[14px] font-bold font-cairo text-gold transition duration-200 hover:bg-gold hover:text-[#0A0F1A] hover:border-gold"
+                  >
+                    <span>اكتشف الخدمة</span>
+                    <span className="text-[16px]">←</span>
+                  </button>
                 </div>
               </div>
             </article>
