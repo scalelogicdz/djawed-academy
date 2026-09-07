@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 type ModuleRow = { id: string; title: string; description: string | null; position: number };
-type LessonRow = { id: string; title: string; module_id: string; position: number };
+type LessonRow = { id: string; title: string; module_id: string; position: number; thumbnail_url: string | null };
 
 export default function CourseAccordion({
   modules,
@@ -101,8 +101,15 @@ export default function CourseAccordion({
                           } ${isHighlighted ? '!border-gold/50 !bg-gold/[0.08] shadow-[0_0_0_1px_rgba(212,177,94,0.08)]' : ''}`}
                         >
                           <div className="relative w-[92px] sm:w-[120px] aspect-video rounded-lg overflow-hidden bg-gradient-to-br from-surface2 to-[#070A10] border border-border flex-shrink-0">
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-8 h-8 rounded-full bg-black/35 border border-white/15 flex items-center justify-center">
+                            {lesson.thumbnail_url ? (
+                              <img
+                                src={lesson.thumbnail_url}
+                                alt=""
+                                className="absolute inset-0 w-full h-full object-cover"
+                              />
+                            ) : null}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                              <div className="w-8 h-8 rounded-full bg-black/40 border border-white/15 flex items-center justify-center">
                                 {locked ? (
                                   <span className="text-[13px]">🔒</span>
                                 ) : (
@@ -112,7 +119,7 @@ export default function CourseAccordion({
                                 )}
                               </div>
                             </div>
-                            <span className="absolute bottom-1.5 right-2 text-[10px] text-muted2">درس {lessonIndex + 1}</span>
+                            <span className="absolute bottom-1.5 right-2 text-[10px] text-white/80 drop-shadow">درس {lessonIndex + 1}</span>
                           </div>
 
                           <div className="flex-1 min-w-0">
