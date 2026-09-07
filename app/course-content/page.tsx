@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import StudentNav from '@/components/StudentNav';
 import { computeLockedLessonIds } from '@/lib/lessonLocking';
 import CourseAccordion from '@/components/CourseAccordion';
@@ -40,19 +41,25 @@ export default async function CourseContentPage({
   }
 
   const course = enrollment.courses;
+  const adminClient = createAdminClient();
 
-  const { data: modules } = await supabase
+  // The enrollment above proves this student owns this course. We use the
+  // server-only admin client for the course structure so existing modules and
+  // lessons are never hidden by an accidental RLS/query mismatch.
+  const { data: modules } = await adminClient
     .from('modules')
     .select('id, title, description, position')
     .eq('course_id', course.id)
     .order('position', { ascending: true });
 
   const moduleIds = (modules ?? []).map((module) => module.id);
-  const { data: lessons } = await supabase
-    .from('lessons')
-    .select('id, title, module_id, position')
-    .in('module_id', moduleIds.length ? moduleIds : ['00000000-0000-0000-0000-000000000000'])
-    .order('position', { ascending: true });
+  const { data: lessons } = moduleIds.length
+    ? await adminClient
+        .from('lessons')
+        .select('id, title, module_id, position')
+        .in('module_id', moduleIds)
+        .order('position', { ascending: true })
+    : { data: [] as { id: string; title: string; module_id: string; position: number }[] };
 
   const { data: progressRows } = await supabase
     .from('lesson_progress')
