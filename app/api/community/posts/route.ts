@@ -60,7 +60,6 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const current = await getCurrentUser();
   if (!current) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 });
-  if (!current.isAdmin) return NextResponse.json({ error: 'الحذف متاح للإدارة فقط' }, { status: 403 });
 
   const body = await request.json();
   const postId = typeof body.id === 'string' ? body.id : '';
@@ -68,6 +67,20 @@ export async function DELETE(request: Request) {
   if (!postId) return NextResponse.json({ error: 'معرّف المنشور مفقود' }, { status: 400 });
 
   const adminClient = createAdminClient();
+  const { data: post, error: readError } = await adminClient
+    .from('questions')
+    .select('id, student_id')
+    .eq('id', postId)
+    .single();
+
+  if (readError || !post) {
+    return NextResponse.json({ error: 'المنشور غير موجود' }, { status: 404 });
+  }
+
+  if (!current.isAdmin && post.student_id !== current.user.id) {
+    return NextResponse.json({ error: 'يمكنك حذف منشوراتك فقط' }, { status: 403 });
+  }
+
   const { error } = await adminClient.from('questions').delete().eq('id', postId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
