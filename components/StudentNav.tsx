@@ -9,6 +9,7 @@ import NotificationBell from '@/components/NotificationBell';
 const links = [
   { href: '/dashboard', label: 'لوحة التحكم' },
   { href: '/community', label: 'المجتمع' },
+  { href: '/guidelines', label: 'قواعد وإرشادات المنصة' },
 ];
 
 function UserIcon() {
@@ -42,7 +43,6 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           DK Academy
         </span>
 
-        {/* Desktop nav links — hidden on mobile */}
         <div className="hidden md:flex md:order-2 items-center gap-2 flex-1 mx-4 overflow-x-auto">
           {allLinks.map((l) => (
             <Link
@@ -60,7 +60,6 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
         </div>
 
         <div className="order-1 md:order-3 flex items-center gap-1 flex-shrink-0">
-          {/* Mobile menu toggle — hidden on desktop */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="md:hidden p-2 rounded-lg text-muted hover:text-text transition"
@@ -88,7 +87,6 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
 
           <NotificationBell currentUserId={currentUserId} />
 
-          {/* Desktop logout — hidden on mobile, moved into the menu instead */}
           <button
             onClick={handleLogout}
             className="hidden md:inline-flex btn-ghost !py-2 !px-4 text-xs whitespace-nowrap"
@@ -98,7 +96,6 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
         </div>
       </div>
 
-      {/* Mobile dropdown menu */}
       {menuOpen && (
         <div className="md:hidden border-t border-border px-4 py-3 flex flex-col gap-1 bg-bg/95">
           {allLinks.map((l) => (
