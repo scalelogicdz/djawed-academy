@@ -29,6 +29,7 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
   const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [open, setOpen] = useState(false);
+  const [markingAllRead, setMarkingAllRead] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -98,6 +99,23 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
     router.push(`/community?q=${n.question_id}`);
   }
 
+  async function handleMarkAllRead() {
+    if (unreadCount === 0 || markingAllRead) return;
+
+    setMarkingAllRead(true);
+    const previous = notifications;
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('recipient_id', currentUserId)
+      .eq('is_read', false);
+
+    if (error) setNotifications(previous);
+    setMarkingAllRead(false);
+  }
+
   function messageFor(n: NotificationRow) {
     const name = n.actor_display_name ?? 'شخص ما';
     if (n.type === 'new_question') return `${name} طرح سؤالًا جديدًا`;
@@ -124,6 +142,22 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
 
       {open && (
         <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-3.5rem)] max-h-96 overflow-y-auto bg-surface2 border border-border rounded-xl shadow-2xl z-50">
+          {notifications.length > 0 && (
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3 bg-surface2/95 backdrop-blur border-b border-border">
+              <span className="font-cairo font-bold text-sm">الإشعارات</span>
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMarkAllRead}
+                  disabled={markingAllRead}
+                  className="text-[12px] font-cairo text-gold hover:text-text transition disabled:opacity-50"
+                >
+                  {markingAllRead ? 'جارٍ التحديد...' : 'تحديد الكل كمقروء'}
+                </button>
+              )}
+            </div>
+          )}
+
           {notifications.length === 0 ? (
             <div className="p-5 text-center text-muted text-sm">لا توجد إشعارات بعد</div>
           ) : (
