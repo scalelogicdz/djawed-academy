@@ -27,7 +27,6 @@ export default async function CommunityPage() {
     .select('id, body, created_at, question_id, student_id, profiles(display_name, is_admin)')
     .order('created_at', { ascending: true });
 
-  // Supabase's foreign-key select returns `profiles` as an array; normalize to a single object.
   const questions = (rawQuestions ?? []).map((q: any) => ({
     ...q,
     profiles: Array.isArray(q.profiles) ? q.profiles[0] ?? null : q.profiles,
@@ -48,6 +47,7 @@ export default async function CommunityPage() {
           <CommunityFeed
             currentUserId={user.id}
             currentUserDisplayName={profile?.display_name ?? ''}
+            currentUserIsAdmin={!!profile?.is_admin}
             initialQuestions={questions ?? []}
             initialReplies={replies ?? []}
           />
