@@ -22,7 +22,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
 
   const { data: currentModule } = await supabase
     .from('modules')
-    .select('id, title, course_id')
+    .select('id, title, course_id, thumbnail_url')
     .eq('id', lesson.module_id)
     .single();
 
@@ -74,6 +74,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
       <LessonBody
         key={lesson.id}
         lesson={lesson}
+        thumbnailUrl={currentModule?.thumbnail_url ?? null}
         prevLessonId={prevLesson?.id ?? null}
         nextLessonId={nextLesson?.id ?? null}
         isCompleted={completedIds.has(lesson.id)}
