@@ -301,6 +301,16 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
+@keyframes delayedPageLoadingIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.delayed-page-loading {
+  opacity: 0;
+  animation: delayedPageLoadingIn 160ms ease 320ms forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
