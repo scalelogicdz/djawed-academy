@@ -11,6 +11,15 @@ const links = [
   { href: '/community', label: 'المجتمع' },
 ];
 
+function UserIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boolean; currentUserId: string }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -24,6 +33,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
   }
 
   const allLinks = isAdmin ? [...links, { href: '/admin', label: 'لوحة الإدارة' }] : links;
+  const profileHref = `/profile/${currentUserId}`;
 
   return (
     <nav className="sticky top-0 z-50 bg-bg/85 backdrop-blur-md border-b border-border">
@@ -67,6 +77,15 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
             )}
           </button>
 
+          <Link
+            href={profileHref}
+            className={`w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/profile') ? 'border-gold text-gold bg-gold/10' : 'border-border text-muted hover:text-gold hover:border-gold/40'}`}
+            aria-label="ملفي الشخصي"
+            title="ملفي الشخصي"
+          >
+            <UserIcon />
+          </Link>
+
           <NotificationBell currentUserId={currentUserId} />
 
           {/* Desktop logout — hidden on mobile, moved into the menu instead */}
@@ -96,6 +115,17 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
               {l.label}
             </Link>
           ))}
+          <Link
+            href={profileHref}
+            onClick={() => setMenuOpen(false)}
+            className={`font-cairo font-semibold text-[14px] px-4 py-3 rounded-lg transition ${
+              pathname.startsWith('/profile')
+                ? 'bg-gradient-to-br from-gold to-goldSoft text-[#0A0F1A]'
+                : 'text-muted hover:bg-white/[0.03] hover:text-text'
+            }`}
+          >
+            ملفي الشخصي
+          </Link>
           <button
             onClick={handleLogout}
             className="text-right font-cairo font-semibold text-[14px] px-4 py-3 rounded-lg text-muted hover:bg-white/[0.03] hover:text-text transition"
