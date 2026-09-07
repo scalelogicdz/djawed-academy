@@ -27,6 +27,7 @@ export async function POST(request: Request) {
         course_id: body.courseId,
         title: body.title,
         description: body.description ?? null,
+        thumbnail_url: body.thumbnailUrl ?? null,
         position: body.position ?? 0,
       })
       .select()
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
   return NextResponse.json({ error: 'نوع غير معروف' }, { status: 400 });
 }
 
-// body: { type: 'lesson' | 'lessonThumbnail' | 'module' | 'quizQuestion', id, ...fields }
+// body: { type: 'lesson' | 'module' | 'quizQuestion', id, ...fields }
 export async function PATCH(request: Request) {
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
@@ -101,26 +102,15 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ ok: true, lesson: data });
   }
 
-  if (body.type === 'lessonThumbnail') {
-    if (!body.id) return NextResponse.json({ error: 'معرّف الدرس مفقود' }, { status: 400 });
-    const thumbnailUrl = typeof body.thumbnailUrl === 'string' && body.thumbnailUrl.trim() ? body.thumbnailUrl.trim() : null;
-    const { data, error } = await adminClient
-      .from('lessons')
-      .update({ thumbnail_url: thumbnailUrl })
-      .eq('id', body.id)
-      .select('id, thumbnail_url')
-      .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-    return NextResponse.json({ ok: true, lesson: data });
-  }
-
   if (body.type === 'module') {
     if (!body.id) return NextResponse.json({ error: 'معرّف الوحدة مفقود' }, { status: 400 });
+    const thumbnailUrl = typeof body.thumbnailUrl === 'string' && body.thumbnailUrl.trim() ? body.thumbnailUrl.trim() : null;
     const { data, error } = await adminClient
       .from('modules')
       .update({
         title: body.title,
         description: body.description ?? null,
+        thumbnail_url: thumbnailUrl,
       })
       .eq('id', body.id)
       .select()
