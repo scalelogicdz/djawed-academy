@@ -31,21 +31,19 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isProtected =
     path.startsWith('/dashboard') ||
+    path.startsWith('/course-content') ||
     path.startsWith('/lesson') ||
     path.startsWith('/community') ||
     path.startsWith('/admin');
 
-  // Not logged in → send to login
   if (isProtected && !user) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Logged in but visiting /login → send to dashboard
   if (path.startsWith('/login') && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Admin-only area: verify is_admin on the server before allowing through
   if (path.startsWith('/admin') && user) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -62,5 +60,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/lesson/:path*', '/community/:path*', '/admin/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/course-content/:path*', '/lesson/:path*', '/community/:path*', '/admin/:path*', '/login'],
 };
