@@ -71,9 +71,9 @@ export default async function ServicesPage() {
                   {service.description}
                 </p>
 
-                <div className="mt-5 pt-4 border-t border-white/[0.06] flex items-center justify-between gap-3">
-                  <span className="text-[13px] font-semibold text-gold">اكتشف الخدمة</span>
-                  <span className="w-9 h-9 rounded-full border border-gold/25 bg-gold/[0.07] text-gold inline-flex items-center justify-center transition group-hover:bg-gold/10 group-hover:border-gold/40">
+                <div className="mt-5 rounded-xl bg-gradient-to-br from-gold to-goldSoft px-4 py-3.5 flex items-center justify-between gap-3 text-[#0A0F1A] shadow-[0_10px_24px_-12px_rgba(212,177,94,0.65)] transition duration-200 group-hover:shadow-[0_12px_28px_-10px_rgba(212,177,94,0.78)] group-hover:brightness-105">
+                  <span className="text-[14px] sm:text-[14.5px] font-bold font-cairo">اكتشف الخدمة</span>
+                  <span className="w-8 h-8 rounded-full bg-[#0A0F1A]/10 border border-[#0A0F1A]/10 inline-flex items-center justify-center text-[18px] font-bold transition duration-200 group-hover:-translate-x-1">
                     ←
                   </span>
                 </div>
