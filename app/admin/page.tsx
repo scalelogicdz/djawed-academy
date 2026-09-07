@@ -43,7 +43,7 @@ export default async function AdminOverview() {
           ))}
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link href="/admin/students" className="card p-6 hover:border-goldDim transition">
             <h3 className="font-bold text-lg mb-1.5">إدارة الطلاب</h3>
             <p className="text-muted text-sm">إضافة طالب، منح الوصول للدورة، إزالة الوصول</p>
@@ -55,6 +55,10 @@ export default async function AdminOverview() {
           <Link href="/admin/support" className="card p-6 hover:border-goldDim transition">
             <h3 className="font-bold text-lg mb-1.5">طلبات الدعم</h3>
             <p className="text-muted text-sm">مراجعة رسائل الطلاب والتواصل معهم عبر البريد الإلكتروني</p>
+          </Link>
+          <Link href="/admin/site-content" className="card p-6 hover:border-goldDim transition">
+            <h3 className="font-bold text-lg mb-1.5">إدارة المحتوى</h3>
+            <p className="text-muted text-sm">تعديل نصوص صفحة الخدمات والقواعد والإرشادات</p>
           </Link>
         </div>
       </section>
