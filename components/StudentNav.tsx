@@ -24,6 +24,15 @@ function UserIcon() {
   );
 }
 
+function CommunityIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path d="M7.5 18.5 4 20l1-3.6A7.2 7.2 0 0 1 3 11.5C3 7.9 6.4 5 10.5 5S18 7.9 18 11.5 14.6 18 10.5 18c-1 0-2-.2-3-.5Z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16.5 8.2c2.6.5 4.5 2.4 4.5 4.8 0 1.5-.8 2.9-2.1 3.8l.7 2.7-2.7-1.2c-.7.2-1.4.3-2.2.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function SupportIcon({ size = 17 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
@@ -53,6 +62,9 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
     ? links.filter((link) => !link.support && link.href !== '/dashboard')
     : links;
   const allLinks = isAdmin ? [...baseLinks, { href: '/admin', label: 'لوحة الإدارة', support: false }] : baseLinks;
+  const mobileLinks = allLinks
+    .filter((link) => link.href !== '/community')
+    .map((link) => (link.href === '/dashboard' ? { ...link, label: 'دوراتي' } : link));
   const profileHref = `/profile/${currentUserId}`;
 
   return (
@@ -102,6 +114,15 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           </button>
 
           <Link
+            href="/community"
+            className={`md:hidden w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/community') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
+            aria-label="المجتمع"
+            title="المجتمع"
+          >
+            <CommunityIcon />
+          </Link>
+
+          <Link
             href={profileHref}
             className={`w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/profile') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
             aria-label="ملفي الشخصي"
@@ -126,7 +147,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
 
       {menuOpen && (
         <div className="md:hidden border-t border-white/[0.06] px-4 py-3 flex flex-col gap-1 bg-bg/98 shadow-[0_18px_30px_-24px_rgba(0,0,0,0.9)]">
-          {allLinks.map((l) => (
+          {mobileLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}
@@ -141,17 +162,6 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
               {l.label}
             </Link>
           ))}
-          <Link
-            href={profileHref}
-            onClick={() => setMenuOpen(false)}
-            className={`font-cairo font-semibold text-[14px] px-4 py-3 rounded-xl transition border ${
-              pathname.startsWith('/profile')
-                ? 'bg-gold/[0.08] border-gold/30 text-gold'
-                : 'border-transparent text-muted hover:bg-white/[0.025] hover:border-white/[0.05] hover:text-text'
-            }`}
-          >
-            ملفي الشخصي
-          </Link>
           <button
             onClick={handleLogout}
             disabled={loggingOut}
