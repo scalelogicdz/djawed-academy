@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 const links = [
   { href: '/dashboard', label: 'لوحة التحكم' },
   { href: '/community', label: 'المجتمع' },
+  { href: '/services', label: 'خدماتنا' },
   { href: '/support', label: 'تواصل مع الإدارة', support: true },
   { href: '/guidelines', label: 'قواعد وإرشادات المنصة' },
 ];
