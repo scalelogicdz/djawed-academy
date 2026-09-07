@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import NotificationBell from '@/components/NotificationBell';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const links = [
   { href: '/dashboard', label: 'لوحة التحكم' },
@@ -26,8 +27,11 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
   const router = useRouter();
   const supabase = createClient();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();
@@ -89,9 +93,12 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
 
           <button
             onClick={handleLogout}
-            className="hidden md:inline-flex btn-ghost !py-2 !px-4 text-xs whitespace-nowrap"
+            disabled={loggingOut}
+            aria-busy={loggingOut}
+            className="hidden md:inline-flex items-center gap-2 btn-ghost !py-2 !px-4 text-xs whitespace-nowrap"
           >
-            تسجيل الخروج
+            {loggingOut && <LoadingSpinner size={14} />}
+            {loggingOut ? 'جارٍ الخروج...' : 'تسجيل الخروج'}
           </button>
         </div>
       </div>
@@ -125,9 +132,12 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           </Link>
           <button
             onClick={handleLogout}
-            className="text-right font-cairo font-semibold text-[14px] px-4 py-3 rounded-lg text-muted hover:bg-white/[0.03] hover:text-text transition"
+            disabled={loggingOut}
+            aria-busy={loggingOut}
+            className="flex items-center justify-start gap-2 text-right font-cairo font-semibold text-[14px] px-4 py-3 rounded-lg text-muted hover:bg-white/[0.03] hover:text-text transition"
           >
-            تسجيل الخروج
+            {loggingOut && <LoadingSpinner size={15} />}
+            {loggingOut ? 'جارٍ الخروج...' : 'تسجيل الخروج'}
           </button>
         </div>
       )}
