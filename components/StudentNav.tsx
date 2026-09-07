@@ -22,33 +22,6 @@ function UserIcon() {
   );
 }
 
-function DjawedLogicMark() {
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      className="h-9 w-9 sm:h-10 sm:w-10"
-      role="img"
-      aria-label="Djawed Logic"
-    >
-      <defs>
-        <linearGradient id="djawedLogicGold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#F0D58A" />
-          <stop offset="52%" stopColor="#D4B15E" />
-          <stop offset="100%" stopColor="#A9802F" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M9 10H31C45 10 55 19.5 55 32S45 54 31 54H20V44H31C39.2 44 45 39.2 45 32S39.2 20 31 20H19V54H9V10Z"
-        fill="url(#djawedLogicGold)"
-      />
-      <path
-        d="M18 5H28V44H47V54H18V5Z"
-        fill="url(#djawedLogicGold)"
-      />
-    </svg>
-  );
-}
-
 export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boolean; currentUserId: string }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -76,7 +49,11 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           aria-label="Djawed Logic"
           title="Djawed Logic"
         >
-          <DjawedLogicMark />
+          <img
+            src="/djawed-logic-symbol.svg"
+            alt="Djawed Logic"
+            className="h-10 w-auto sm:h-11 block"
+          />
         </Link>
 
         <div className="hidden md:flex md:order-2 items-center gap-2 flex-1 mx-4 overflow-x-auto">
