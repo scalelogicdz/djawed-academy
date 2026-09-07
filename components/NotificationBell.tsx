@@ -29,6 +29,7 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
   const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [open, setOpen] = useState(false);
+  const [renderDropdown, setRenderDropdown] = useState(false);
   const [markingAllRead, setMarkingAllRead] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -83,6 +84,16 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
   }, [currentUserId]);
 
   useEffect(() => {
+    if (open) {
+      setRenderDropdown(true);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setRenderDropdown(false), 180);
+    return () => window.clearTimeout(timeout);
+  }, [open]);
+
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     }
@@ -126,8 +137,9 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
     <div className="relative" ref={wrapRef}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="relative p-2 rounded-lg text-muted hover:text-text transition"
+        className={`relative p-2 rounded-lg transition duration-200 ${open ? 'text-gold bg-gold/[0.07]' : 'text-muted hover:text-text hover:bg-white/[0.025]'}`}
         aria-label="الإشعارات"
+        aria-expanded={open}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" strokeLinecap="round" strokeLinejoin="round" />
@@ -140,8 +152,14 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
         )}
       </button>
 
-      {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-3.5rem)] max-h-96 overflow-y-auto bg-surface2 border border-border rounded-xl shadow-2xl z-50">
+      {renderDropdown && (
+        <div
+          className={`absolute right-0 mt-2 w-80 max-w-[calc(100vw-3.5rem)] max-h-96 overflow-y-auto bg-surface2 border border-border rounded-xl shadow-2xl z-50 origin-top-right transition-all duration-200 ease-out will-change-transform ${
+            open
+              ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
+              : 'opacity-0 -translate-y-1.5 scale-[0.985] pointer-events-none'
+          }`}
+        >
           {notifications.length > 0 && (
             <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3 bg-surface2/95 backdrop-blur border-b border-border">
               <span className="font-cairo font-bold text-sm">الإشعارات</span>
