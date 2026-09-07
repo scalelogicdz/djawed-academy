@@ -39,6 +39,67 @@ function storagePathFromPublicUrl(url: string | null) {
   return decodeURIComponent(url.slice(index + marker.length));
 }
 
+async function moderateImage(imageUrl: string) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return {
+      ok: false as const,
+      error: 'ميزة فحص الصور غير مهيأة حاليًا. تواصل مع إدارة المنصة.',
+    };
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/moderations', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'omni-moderation-latest',
+        input: [
+          {
+            type: 'image_url',
+            image_url: { url: imageUrl },
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      return {
+        ok: false as const,
+        error: 'تعذر فحص الصورة حاليًا. حاول مرة أخرى بعد قليل.',
+      };
+    }
+
+    const moderation = await response.json();
+    const result = moderation?.results?.[0];
+    const categories = result?.categories ?? {};
+
+    const sexual = !!categories.sexual;
+    const sexualMinors = !!categories['sexual/minors'];
+    const flagged = !!result?.flagged;
+
+    if (sexual || sexualMinors || flagged) {
+      return {
+        ok: true as const,
+        allowed: false as const,
+      };
+    }
+
+    return {
+      ok: true as const,
+      allowed: true as const,
+    };
+  } catch {
+    return {
+      ok: false as const,
+      error: 'تعذر فحص الصورة حاليًا. حاول مرة أخرى بعد قليل.',
+    };
+  }
+}
+
 export async function POST(request: Request) {
   const current = await getCurrentUser();
   if (!current) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 });
@@ -73,6 +134,21 @@ export async function POST(request: Request) {
 
     const { data: publicUrlData } = adminClient.storage.from(IMAGE_BUCKET).getPublicUrl(uploadedPath);
     imageUrl = publicUrlData.publicUrl;
+
+    const moderation = await moderateImage(imageUrl);
+
+    if (!moderation.ok) {
+      await adminClient.storage.from(IMAGE_BUCKET).remove([uploadedPath]);
+      return NextResponse.json({ error: moderation.error }, { status: 503 });
+    }
+
+    if (!moderation.allowed) {
+      await adminClient.storage.from(IMAGE_BUCKET).remove([uploadedPath]);
+      return NextResponse.json(
+        { error: 'تعذر نشر الصورة لأنها تخالف قواعد المنصة.' },
+        { status: 400 }
+      );
+    }
   }
 
   const { data, error } = await adminClient
