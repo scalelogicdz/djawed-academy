@@ -48,7 +48,9 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
     router.refresh();
   }
 
-  const baseLinks = isAdmin ? links.filter((link) => !link.support) : links;
+  const baseLinks = isAdmin
+    ? links.filter((link) => !link.support && link.href !== '/dashboard')
+    : links;
   const allLinks = isAdmin ? [...baseLinks, { href: '/admin', label: 'لوحة الإدارة', support: false }] : baseLinks;
   const profileHref = `/profile/${currentUserId}`;
 
