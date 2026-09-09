@@ -1,7 +1,14 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import StudentNav from '@/components/StudentNav';
 import { getServicesContent } from '@/lib/siteContent';
+
+const serviceRoutes = [
+  '/services/coaching',
+  '/services/marketing-consultation',
+  '/services/store-building',
+];
 
 export default async function ServicesPage() {
   const supabase = await createClient();
@@ -41,7 +48,7 @@ export default async function ServicesPage() {
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
-          {content.services.map((service) => (
+          {content.services.map((service, index) => (
             <article
               key={service.image}
               className="group overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#111925] shadow-[0_20px_45px_-28px_rgba(0,0,0,0.85)] transition duration-300 hover:-translate-y-1 hover:border-gold/30 flex flex-col"
@@ -63,13 +70,13 @@ export default async function ServicesPage() {
                 </p>
 
                 <div className="mt-auto pt-6 flex justify-center">
-                  <button
-                    type="button"
+                  <Link
+                    href={serviceRoutes[index] ?? '/services'}
                     className="inline-flex items-center justify-center gap-2 min-w-[170px] rounded-xl border border-gold/45 bg-gold/[0.08] px-5 py-3 text-[14px] font-bold font-cairo text-gold transition duration-200 hover:bg-gold hover:text-[#0A0F1A] hover:border-gold"
                   >
                     <span>{content.cta}</span>
                     <span className="text-[16px]">←</span>
-                  </button>
+                  </Link>
                 </div>
               </div>
             </article>
