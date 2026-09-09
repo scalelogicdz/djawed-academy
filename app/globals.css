@@ -6,6 +6,10 @@
   --gold-glow: rgba(212, 177, 94, 0.1);
   --surface-border: rgba(255, 255, 255, 0.075);
   --surface-highlight: rgba(255, 255, 255, 0.035);
+  --interaction-fast: 150ms;
+  --interaction-base: 190ms;
+  --interaction-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --focus-ring: rgba(212, 177, 94, 0.62);
 }
 
 * {
@@ -300,14 +304,55 @@ body::after {
   border: 1px solid rgba(212, 177, 94, 0.2);
 }
 
+/* Platform-wide interaction system */
+a,
 button,
-a[role='button'],
+input,
+textarea,
+select,
+summary,
+[role='button'] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a[href],
+button:not(:disabled),
+summary,
+[role='button']:not([aria-disabled='true']) {
+  cursor: pointer;
+}
+
+a[href] {
+  transition:
+    color var(--interaction-fast) var(--interaction-ease),
+    opacity var(--interaction-fast) var(--interaction-ease),
+    background-color var(--interaction-base) var(--interaction-ease),
+    border-color var(--interaction-base) var(--interaction-ease),
+    box-shadow var(--interaction-base) var(--interaction-ease),
+    transform var(--interaction-fast) var(--interaction-ease);
+}
+
+button,
+[role='button'],
 .btn-primary,
 .btn-ghost,
 .compose-send,
-.reply-toggle {
-  -webkit-tap-highlight-color: transparent;
+.reply-toggle,
+.module-tab {
   touch-action: manipulation;
+  user-select: none;
+}
+
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']) {
+  transition:
+    color var(--interaction-fast) var(--interaction-ease),
+    background-color var(--interaction-base) var(--interaction-ease),
+    border-color var(--interaction-base) var(--interaction-ease),
+    box-shadow var(--interaction-base) var(--interaction-ease),
+    opacity var(--interaction-fast) var(--interaction-ease),
+    filter var(--interaction-fast) var(--interaction-ease),
+    transform var(--interaction-fast) var(--interaction-ease);
 }
 
 button:active:not(:disabled),
@@ -315,12 +360,34 @@ a[role='button']:active,
 .btn-primary:active,
 .btn-ghost:active,
 .compose-send:active:not(:disabled),
-.reply-toggle:active:not(:disabled) {
+.reply-toggle:active:not(:disabled),
+.module-tab:active {
   transform: scale(0.975);
 }
 
+nav a:active,
+nav button:active:not(:disabled),
+a:has(> article):active {
+  transform: scale(0.985);
+}
+
+a[href]:active:not(:has(> article)) {
+  opacity: 0.86;
+}
+
+input,
+textarea,
+select {
+  transition:
+    border-color var(--interaction-base) var(--interaction-ease),
+    background-color var(--interaction-base) var(--interaction-ease),
+    box-shadow var(--interaction-base) var(--interaction-ease);
+}
+
 button:disabled,
+[aria-disabled='true'],
 [aria-busy='true'] {
+  cursor: not-allowed;
   pointer-events: none;
   user-select: none;
 }
@@ -328,9 +395,23 @@ button:disabled,
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid rgba(212, 177, 94, 0.65);
-  outline-offset: 2px;
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[role='button']:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  a[href]:not(.btn-primary):not(.btn-ghost):hover {
+    text-decoration-thickness: from-font;
+  }
+
+  nav a:hover,
+  nav button:not(:disabled):hover {
+    will-change: transform;
+  }
 }
 
 @keyframes delayedPageLoadingIn {
@@ -358,5 +439,6 @@ textarea:focus-visible {
   * {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
