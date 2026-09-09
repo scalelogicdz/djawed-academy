@@ -52,7 +52,6 @@ export default function ServiceComingSoonPage({ title, description, image, whats
             </p>
 
             <div className="rounded-2xl border border-gold/20 bg-gold/[0.045] p-5 sm:p-6 mb-7">
-              <div className="text-gold text-[12px] font-bold mb-2">قريبًا</div>
               <h2 className="font-cairo font-bold text-[17px] sm:text-[18px] mb-2">هذه الخدمة لم تُفتح بعد</h2>
               <p className="text-muted text-[13.5px] leading-7">
                 يمكنك التواصل الآن إذا أردت الاستفسار عنها أو تسجيل اهتمامك قبل إطلاقها.
