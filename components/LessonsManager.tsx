@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Course = { id: string; title: string };
@@ -61,6 +62,11 @@ export default function LessonsManager({
   const [quizDraft, setQuizDraft] = useState(emptyQuizDraft);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editQuizDraft, setEditQuizDraft] = useState(emptyQuizDraft);
+
+  const [draggingModuleId, setDraggingModuleId] = useState<string | null>(null);
+  const [draggingLessonId, setDraggingLessonId] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [orderMessage, setOrderMessage] = useState('');
 
   async function addModule() {
     if (!newModuleTitle.trim() || !selectedCourse) return;
@@ -198,6 +204,92 @@ export default function LessonsManager({
     }
   }
 
+  function handleModuleDragOver(event: DragEvent<HTMLDivElement>, targetId: string) {
+    event.preventDefault();
+    if (!draggingModuleId || draggingModuleId === targetId || savingOrder) return;
+
+    const ordered = modules
+      .filter((m) => m.course_id === selectedCourse)
+      .sort((a, b) => a.position - b.position);
+    const fromIndex = ordered.findIndex((m) => m.id === draggingModuleId);
+    const toIndex = ordered.findIndex((m) => m.id === targetId);
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const next = [...ordered];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    const positions = new Map(next.map((m, index) => [m.id, index]));
+    setModules((current) => current.map((m) => positions.has(m.id) ? { ...m, position: positions.get(m.id)! } : m));
+  }
+
+  async function handleModuleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    if (!draggingModuleId || savingOrder) return;
+
+    const ordered = modules
+      .filter((m) => m.course_id === selectedCourse)
+      .sort((a, b) => a.position - b.position);
+
+    setSavingOrder(true);
+    setOrderMessage('');
+    const res = await fetch('/api/admin/modules/reorder', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId: selectedCourse, moduleIds: ordered.map((m) => m.id) }),
+    });
+    const data = await res.json();
+    setSavingOrder(false);
+    setDraggingModuleId(null);
+    setOrderMessage(res.ok ? 'تم حفظ الترتيب' : (data.error || 'تعذر حفظ الترتيب'));
+    if (res.ok) router.refresh();
+  }
+
+  function handleLessonDragOver(event: DragEvent<HTMLDivElement>, moduleId: string, targetId: string) {
+    event.preventDefault();
+    if (!draggingLessonId || draggingLessonId === targetId || savingOrder) return;
+
+    const dragged = lessons.find((l) => l.id === draggingLessonId);
+    if (!dragged || dragged.module_id !== moduleId) return;
+
+    const ordered = lessons
+      .filter((l) => l.module_id === moduleId)
+      .sort((a, b) => a.position - b.position);
+    const fromIndex = ordered.findIndex((l) => l.id === draggingLessonId);
+    const toIndex = ordered.findIndex((l) => l.id === targetId);
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const next = [...ordered];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    const positions = new Map(next.map((l, index) => [l.id, index]));
+    setLessons((current) => current.map((l) => positions.has(l.id) ? { ...l, position: positions.get(l.id)! } : l));
+  }
+
+  async function handleLessonDrop(event: DragEvent<HTMLDivElement>, moduleId: string) {
+    event.preventDefault();
+    if (!draggingLessonId || savingOrder) return;
+
+    const dragged = lessons.find((l) => l.id === draggingLessonId);
+    if (!dragged || dragged.module_id !== moduleId) return;
+
+    const ordered = lessons
+      .filter((l) => l.module_id === moduleId)
+      .sort((a, b) => a.position - b.position);
+
+    setSavingOrder(true);
+    setOrderMessage('');
+    const res = await fetch('/api/admin/lessons/reorder', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ moduleId, lessonIds: ordered.map((l) => l.id) }),
+    });
+    const data = await res.json();
+    setSavingOrder(false);
+    setDraggingLessonId(null);
+    setOrderMessage(res.ok ? 'تم حفظ الترتيب' : (data.error || 'تعذر حفظ الترتيب'));
+    if (res.ok) router.refresh();
+  }
+
   function updateDraftOption(draft: typeof quizDraft, setDraft: (d: typeof quizDraft) => void, index: number, value: string) {
     const next = [...draft.options];
     next[index] = value;
@@ -279,7 +371,9 @@ export default function LessonsManager({
     }
   }
 
-  const courseModules = modules.filter((m) => m.course_id === selectedCourse);
+  const courseModules = modules
+    .filter((m) => m.course_id === selectedCourse)
+    .sort((a, b) => a.position - b.position);
 
   return (
     <div>
@@ -309,8 +403,19 @@ export default function LessonsManager({
         </button>
       </div>
 
+      {(savingOrder || orderMessage) && (
+        <div className={`text-xs mb-4 ${savingOrder ? 'text-gold' : orderMessage.startsWith('تم ') ? 'text-success' : 'text-[#E4756A]'}`}>
+          {savingOrder ? 'جارٍ حفظ الترتيب...' : orderMessage}
+        </div>
+      )}
+
       {courseModules.map((m) => (
-        <div key={m.id} className="card p-6 mb-5">
+        <div
+          key={m.id}
+          className={`card p-6 mb-5 transition ${draggingModuleId === m.id ? 'opacity-60 border-gold/50' : ''}`}
+          onDragOver={(e) => handleModuleDragOver(e, m.id)}
+          onDrop={handleModuleDrop}
+        >
           {editingModuleId === m.id ? (
             <div className="mb-4 space-y-3">
               <input
@@ -354,8 +459,24 @@ export default function LessonsManager({
             </div>
           ) : (
             <div className="flex items-start justify-between gap-3 mb-4">
-              <div>
-                <h3 className="font-cairo font-bold text-gold text-sm uppercase tracking-wide">{m.title}</h3>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span
+                    draggable={!savingOrder}
+                    onDragStart={() => {
+                      setDraggingModuleId(m.id);
+                      setDraggingLessonId(null);
+                      setOrderMessage('');
+                    }}
+                    onDragEnd={() => setDraggingModuleId(null)}
+                    className="text-muted2 hover:text-gold cursor-grab active:cursor-grabbing text-lg leading-none select-none"
+                    title="اسحب لتغيير ترتيب الوحدة"
+                    aria-label="اسحب لتغيير ترتيب الوحدة"
+                  >
+                    ⋮⋮
+                  </span>
+                  <h3 className="font-cairo font-bold text-gold text-sm uppercase tracking-wide">{m.title}</h3>
+                </div>
                 {m.description && <p className="text-muted text-[13px] mt-1.5">{m.description}</p>}
               </div>
               <button
@@ -369,10 +490,16 @@ export default function LessonsManager({
 
           {lessons
             .filter((l) => l.module_id === m.id)
+            .sort((a, b) => a.position - b.position)
             .map((l) => {
               const lessonQuestions = quizQuestions.filter((q) => q.lesson_id === l.id);
               return (
-                <div key={l.id} className="border-b border-border last:border-0">
+                <div
+                  key={l.id}
+                  className={`border-b border-border last:border-0 transition ${draggingLessonId === l.id ? 'opacity-60 bg-gold/[0.03]' : ''}`}
+                  onDragOver={(e) => handleLessonDragOver(e, m.id, l.id)}
+                  onDrop={(e) => handleLessonDrop(e, m.id)}
+                >
                   {editingLessonId === l.id ? (
                     <div className="py-4 space-y-3">
                       <input
@@ -425,7 +552,23 @@ export default function LessonsManager({
                     </div>
                   ) : (
                     <div className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                      <span className="flex-1">{l.title}</span>
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span
+                          draggable={!savingOrder}
+                          onDragStart={() => {
+                            setDraggingLessonId(l.id);
+                            setDraggingModuleId(null);
+                            setOrderMessage('');
+                          }}
+                          onDragEnd={() => setDraggingLessonId(null)}
+                          className="text-muted2 hover:text-gold cursor-grab active:cursor-grabbing text-base leading-none select-none flex-shrink-0"
+                          title="اسحب لتغيير ترتيب الدرس"
+                          aria-label="اسحب لتغيير ترتيب الدرس"
+                        >
+                          ⋮⋮
+                        </span>
+                        <span className="truncate">{l.title}</span>
+                      </div>
                       <span className="text-muted2 text-xs whitespace-nowrap">{l.video_id ? '🎬 فيديو مضاف' : 'بلا فيديو'}</span>
                       <div className="flex gap-1.5 flex-shrink-0">
                         <button
