@@ -14,6 +14,12 @@ type NotificationRow = {
   actor_display_name?: string | null;
 };
 
+type PanelPosition = {
+  top: number;
+  left: number;
+  width: number;
+};
+
 function timeAgo(iso: string) {
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
@@ -30,7 +36,9 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [open, setOpen] = useState(false);
   const [renderDropdown, setRenderDropdown] = useState(false);
+  const [animatedOpen, setAnimatedOpen] = useState(false);
   const [markingAllRead, setMarkingAllRead] = useState(false);
+  const [panelPosition, setPanelPosition] = useState<PanelPosition>({ top: 68, left: 16, width: 320 });
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -83,14 +91,53 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId]);
 
+  function updatePanelPosition() {
+    const trigger = wrapRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const safeMargin = 16;
+    const width = Math.min(320, window.innerWidth - safeMargin * 2);
+    const preferredLeft = rect.left;
+    const maxLeft = window.innerWidth - width - safeMargin;
+    const left = Math.max(safeMargin, Math.min(preferredLeft, maxLeft));
+
+    setPanelPosition({
+      top: rect.bottom + 8,
+      left,
+      width,
+    });
+  }
+
   useEffect(() => {
     if (open) {
+      updatePanelPosition();
       setRenderDropdown(true);
-      return;
+      setAnimatedOpen(false);
+
+      const frame = window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => setAnimatedOpen(true));
+      });
+
+      return () => window.cancelAnimationFrame(frame);
     }
 
-    const timeout = window.setTimeout(() => setRenderDropdown(false), 240);
+    setAnimatedOpen(false);
+    const timeout = window.setTimeout(() => setRenderDropdown(false), 220);
     return () => window.clearTimeout(timeout);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleViewportChange() {
+      updatePanelPosition();
+    }
+    window.addEventListener('resize', handleViewportChange);
+    window.addEventListener('scroll', handleViewportChange, true);
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('scroll', handleViewportChange, true);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -154,10 +201,11 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
 
       {renderDropdown && (
         <div
-          className={`fixed top-[68px] right-4 left-4 sm:left-auto sm:w-80 max-h-[min(24rem,calc(100vh-5.5rem))] overflow-y-auto overflow-x-hidden bg-surface2 border border-border rounded-2xl shadow-[0_22px_55px_-18px_rgba(0,0,0,0.72)] z-[80] origin-top-right transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
-            open
+          style={{ top: panelPosition.top, left: panelPosition.left, width: panelPosition.width }}
+          className={`fixed max-h-[min(24rem,calc(100vh-5.5rem))] overflow-y-auto overflow-x-hidden bg-surface2 border border-border rounded-2xl shadow-[0_22px_55px_-18px_rgba(0,0,0,0.72)] z-[80] origin-top-left transition-[opacity,transform] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            animatedOpen
               ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
-              : 'opacity-0 -translate-y-2 scale-[0.985] pointer-events-none'
+              : 'opacity-0 -translate-y-2 scale-[0.975] pointer-events-none'
           }`}
         >
           {notifications.length > 0 && (
