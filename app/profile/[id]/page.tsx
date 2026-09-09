@@ -11,8 +11,14 @@ function initial(name: string) {
 function SocialLink({ href, label }: { href: string | null; label: string }) {
   if (!href) return null;
   return (
-    <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-xl border border-border bg-white/[0.02] px-4 py-2.5 text-sm font-semibold text-muted hover:text-gold hover:border-gold/40 transition">
-      {label}
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.025] px-4 py-2.5 text-[13px] font-semibold text-muted hover:text-gold hover:border-gold/35 hover:bg-gold/[0.04] transition"
+    >
+      <span>{label}</span>
+      <span className="text-[11px] opacity-70">↗</span>
     </a>
   );
 }
@@ -44,42 +50,62 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
     <>
       <StudentNav isAdmin={!!viewer?.is_admin} currentUserId={user.id} />
 
-      <section className="max-w-[900px] mx-auto px-5 sm:px-6 py-10 sm:py-14">
+      <section className="max-w-[900px] mx-auto px-5 sm:px-6 py-9 sm:py-12">
         <div className="mb-5">
-          <Link href="/community" className="text-sm text-muted hover:text-gold transition">← العودة إلى المجتمع</Link>
+          <Link href="/community" className="inline-flex items-center gap-2 text-sm text-muted hover:text-gold transition">
+            <span>→</span>
+            <span>العودة إلى المجتمع</span>
+          </Link>
         </div>
 
-        <div className="card p-6 sm:p-8 mb-7" dir="rtl">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-            <div className={`avatar-ring ${profile.is_admin ? 'admin' : ''} flex-shrink-0`} style={{ width: 76, height: 76, fontSize: 24 }}>
-              {profile.is_admin ? 'DK' : initial(profile.display_name)}
-            </div>
+        <div className="overflow-hidden rounded-[24px] border border-white/[0.07] bg-gradient-to-br from-[#111925] to-[#0D141F] shadow-[0_24px_54px_-34px_rgba(0,0,0,0.9)] mb-8" dir="rtl">
+          <div className="h-1 bg-gradient-to-l from-gold/20 via-gold/70 to-transparent" />
 
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <h1 className="font-cairo font-extrabold text-[24px] sm:text-[28px]">{profile.display_name}</h1>
-                {profile.is_admin && <span className="coach-badge">✓ المدرب</span>}
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6">
+              <div className={`avatar-ring ${profile.is_admin ? 'admin' : ''} flex-shrink-0 shadow-[0_12px_30px_-18px_rgba(0,0,0,0.85)]`} style={{ width: 82, height: 82, fontSize: 26 }}>
+                {profile.is_admin ? 'DK' : initial(profile.display_name)}
               </div>
-              <p className="text-muted leading-7 whitespace-pre-wrap">
-                {profile.bio?.trim() || (isOwnProfile ? 'أضف نبذة قصيرة عنك ليعرفك أعضاء المجتمع أكثر.' : 'لم يضف هذا المستخدم نبذة بعد.')}
-              </p>
-            </div>
-          </div>
 
-          {hasSocialLinks && (
-            <div className="flex flex-wrap gap-2.5 mt-6 pt-5 border-t border-border">
-              <SocialLink href={profile.instagram_url} label="Instagram" />
-              <SocialLink href={profile.facebook_url} label="Facebook" />
-              <SocialLink href={profile.tiktok_url} label="TikTok" />
-              <SocialLink href={profile.linkedin_url} label="LinkedIn" />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <h1 className="font-cairo font-extrabold text-[24px] sm:text-[29px] leading-tight">{profile.display_name}</h1>
+                  {profile.is_admin && <span className="coach-badge">✓ المدرب</span>}
+                  {isOwnProfile && (
+                    <span className="rounded-full border border-white/[0.07] bg-white/[0.025] px-2.5 py-1 text-[10.5px] font-semibold text-muted2">ملفك الشخصي</span>
+                  )}
+                </div>
+
+                <p className="text-muted text-[13.5px] sm:text-[14.5px] leading-7 whitespace-pre-wrap max-w-[700px]">
+                  {profile.bio?.trim() || (isOwnProfile ? 'أضف نبذة قصيرة عنك ليعرفك أعضاء المجتمع أكثر.' : 'لم يضف هذا المستخدم نبذة بعد.')}
+                </p>
+              </div>
             </div>
-          )}
+
+            {hasSocialLinks ? (
+              <div className="flex flex-wrap gap-2.5 mt-6 pt-5 border-t border-white/[0.06]">
+                <SocialLink href={profile.instagram_url} label="Instagram" />
+                <SocialLink href={profile.facebook_url} label="Facebook" />
+                <SocialLink href={profile.tiktok_url} label="TikTok" />
+                <SocialLink href={profile.linkedin_url} label="LinkedIn" />
+              </div>
+            ) : isOwnProfile ? (
+              <div className="mt-6 pt-5 border-t border-white/[0.06] text-[12.5px] text-muted2">
+                يمكنك إضافة روابط حساباتك الاجتماعية من قسم التعديل بالأسفل.
+              </div>
+            ) : null}
+          </div>
         </div>
 
         {isOwnProfile && (
           <div>
-            <div className="eyebrow mb-2">الملف الشخصي</div>
-            <h2 className="font-cairo font-extrabold text-[21px] mb-4">تعديل معلوماتك</h2>
+            <div className="eyebrow mb-2">إعدادات الملف</div>
+            <div className="flex items-end justify-between gap-4 mb-4">
+              <div>
+                <h2 className="font-cairo font-extrabold text-[21px] sm:text-[23px]">تعديل معلوماتك</h2>
+                <p className="text-muted2 text-[12.5px] mt-1">هذه المعلومات تظهر لأعضاء المجتمع عند فتح ملفك الشخصي.</p>
+              </div>
+            </div>
             <ProfileEditor profile={profile} />
           </div>
         )}
