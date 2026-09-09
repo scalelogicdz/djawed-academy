@@ -217,7 +217,7 @@ export default function CommunityFeed({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-[20px] border border-white/[0.07] bg-[#111925] p-3 sm:p-4 shadow-[0_16px_34px_-28px_rgba(0,0,0,0.9)]">
+      <div className="mb-2">
         <div className="flex items-center gap-3 mb-3 px-1">
           <Link href={`/profile/${currentUserId}`} className={`avatar-ring ${currentUserIsAdmin ? 'admin' : ''}`} style={{ width: 40, height: 40, fontSize: 14 }} aria-label="ملفي الشخصي">
             {currentUserIsAdmin ? 'DK' : initial(currentUserDisplayName)}
