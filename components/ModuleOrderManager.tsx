@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import type { DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Course = { id: string; title: string };
@@ -52,7 +53,7 @@ export default function ModuleOrderManager({
     setMessage('');
   }
 
-  function handleDragOver(event: React.DragEvent<HTMLDivElement>, targetId: string) {
+  function handleDragOver(event: DragEvent<HTMLDivElement>, targetId: string) {
     event.preventDefault();
     if (!draggingId || draggingId === targetId) return;
 
@@ -69,7 +70,7 @@ export default function ModuleOrderManager({
     replaceCourseOrder(next);
   }
 
-  async function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+  async function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     if (!draggingId || saving) return;
 
