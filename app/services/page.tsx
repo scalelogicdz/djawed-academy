@@ -49,9 +49,10 @@ export default async function ServicesPage() {
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
           {content.services.map((service, index) => (
-            <article
+            <Link
               key={service.image}
-              className="group overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#111925] shadow-[0_20px_45px_-28px_rgba(0,0,0,0.85)] transition duration-300 hover:-translate-y-1 hover:border-gold/30 flex flex-col"
+              href={serviceRoutes[index] ?? '/services'}
+              className="group overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#111925] shadow-[0_20px_45px_-28px_rgba(0,0,0,0.85)] transition duration-300 hover:-translate-y-1 hover:border-gold/30 flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60"
             >
               <div className="aspect-[4/3] bg-[#F6F0E7] overflow-hidden">
                 <img
@@ -70,16 +71,15 @@ export default async function ServicesPage() {
                 </p>
 
                 <div className="mt-auto pt-6 flex justify-center">
-                  <Link
-                    href={serviceRoutes[index] ?? '/services'}
-                    className="inline-flex items-center justify-center gap-2 min-w-[170px] rounded-xl border border-gold/45 bg-gold/[0.08] px-5 py-3 text-[14px] font-bold font-cairo text-gold transition duration-200 hover:bg-gold hover:text-[#0A0F1A] hover:border-gold"
+                  <span
+                    className="inline-flex items-center justify-center gap-2 min-w-[170px] rounded-xl border border-gold/45 bg-gold/[0.08] px-5 py-3 text-[14px] font-bold font-cairo text-gold transition duration-200 group-hover:bg-gold group-hover:text-[#0A0F1A] group-hover:border-gold"
                   >
                     <span>{content.cta}</span>
                     <span className="text-[16px]">←</span>
-                  </Link>
+                  </span>
                 </div>
               </div>
-            </article>
+            </Link>
           ))}
         </section>
 
