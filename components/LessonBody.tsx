@@ -180,60 +180,69 @@ export default function LessonBody({
   const requiresWatch = !!lesson.video_id && lesson.video_provider !== 'vimeo';
   const canMarkComplete = completed || !requiresWatch || videoEnded;
   const navButtonClass =
-    'text-center inline-flex items-center justify-center min-h-12 px-5 py-3 rounded-xl bg-surface2 border border-border text-text font-semibold shadow-sm hover:bg-surface hover:border-gold/40 hover:text-gold transition';
+    'group inline-flex min-h-14 w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] px-4 sm:px-5 py-3.5 text-text shadow-[0_12px_28px_-24px_rgba(0,0,0,0.9)] transition hover:border-gold/30 hover:bg-gold/[0.045] hover:text-gold';
 
   if (isLocked) {
     return (
-      <div className="aspect-video rounded-2xl border border-border overflow-hidden bg-gradient-to-br from-surface2 to-[#070A10] flex flex-col items-center justify-center text-center px-8 gap-3">
-        <span className="text-3xl">🔒</span>
-        <p className="font-heading font-bold text-[16px]">هذا الدرس مغلق حاليًا</p>
+      <div className="rounded-[22px] border border-white/[0.08] overflow-hidden bg-gradient-to-br from-surface2 to-[#070A10] px-6 sm:px-8 py-12 sm:py-16 text-center shadow-[0_20px_50px_-34px_rgba(0,0,0,0.9)]">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] text-2xl">🔒</div>
+        <p className="font-heading font-bold text-[18px] sm:text-[20px] mb-2">هذا الدرس مغلق حاليًا</p>
         {requiredLessonTitle && (
-          <p className="text-muted text-[13.5px]">أكمل درس <span className="text-text font-semibold">"{requiredLessonTitle}"</span> أولًا لفتح هذا الدرس</p>
+          <p className="mx-auto max-w-[560px] text-muted text-[13.5px] sm:text-[14px] leading-7">
+            أكمل درس <span className="text-text font-semibold">"{requiredLessonTitle}"</span> أولًا لفتح هذا الدرس.
+          </p>
         )}
-        {requiredLessonId && <Link href={`/lesson/${requiredLessonId}`} className="btn-primary mt-2">الذهاب إلى الدرس المطلوب</Link>}
+        {requiredLessonId && (
+          <Link href={`/lesson/${requiredLessonId}`} className="btn-primary mt-6 inline-flex">
+            الذهاب إلى الدرس المطلوب
+          </Link>
+        )}
       </div>
     );
   }
 
   return (
     <div>
-      <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface2 to-[#070A10]">
-        {lesson.video_id ? (
-          hasStarted ? (
-            <iframe
-              ref={iframeRef}
-              src={embedUrl}
-              className="w-full h-full rounded-2xl"
-              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-            />
+      <div className="rounded-[22px] border border-white/[0.08] bg-[#0B111B] p-1.5 sm:p-2 shadow-[0_24px_60px_-36px_rgba(0,0,0,0.95)]">
+        <div className="relative aspect-video overflow-hidden rounded-[17px] sm:rounded-[18px] border border-white/[0.05] bg-gradient-to-br from-surface2 to-[#070A10]">
+          {lesson.video_id ? (
+            hasStarted ? (
+              <iframe
+                ref={iframeRef}
+                src={embedUrl}
+                className="w-full h-full rounded-[17px] sm:rounded-[18px]"
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setHasStarted(true)}
+                className="absolute inset-0 w-full h-full rounded-[17px] sm:rounded-[18px] flex flex-col items-center justify-center gap-3 overflow-hidden text-text group"
+              >
+                {thumbnailUrl ? (
+                  <img
+                    src={thumbnailUrl}
+                    alt="صورة الدرس"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.015]"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-surface2 to-[#070A10]" />
+                )}
+                <div className="absolute inset-0 bg-black/40" />
+                <span className="relative z-10 w-16 h-16 sm:w-[70px] sm:h-[70px] rounded-full bg-[#C9A84C] text-[#100C02] flex items-center justify-center shadow-[0_10px_32px_rgba(201,168,76,0.35)] transition-transform duration-200 group-hover:scale-105">
+                  <svg width="27" height="27" viewBox="0 0 24 24" fill="currentColor" className="translate-x-[1px]">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+                <span className="relative z-10 font-heading font-bold text-[16px] sm:text-[17px] drop-shadow-md">ابدأ الفيديو</span>
+                <span className="relative z-10 text-[11.5px] sm:text-[12px] text-white/65">يمكنك الإيقاف والمتابعة في أي وقت</span>
+              </button>
+            )
           ) : (
-            <button
-              type="button"
-              onClick={() => setHasStarted(true)}
-              className="absolute inset-0 w-full h-full rounded-2xl flex flex-col items-center justify-center gap-3 overflow-hidden text-text group"
-            >
-              {thumbnailUrl ? (
-                <img
-                  src={thumbnailUrl}
-                  alt="صورة الدرس"
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.015]"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-surface2 to-[#070A10]" />
-              )}
-              <div className="absolute inset-0 bg-black/35" />
-              <span className="relative z-10 w-16 h-16 rounded-full bg-[#C9A84C] text-[#100C02] flex items-center justify-center shadow-[0_8px_28px_rgba(201,168,76,0.35)] transition-transform duration-200 group-hover:scale-105">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" className="translate-x-[1px]">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </span>
-              <span className="relative z-10 font-heading font-bold text-[16px] drop-shadow-md">ابدأ الفيديو</span>
-            </button>
-          )
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted text-sm">لم يتم إضافة الفيديو بعد</div>
-        )}
+            <div className="w-full h-full flex items-center justify-center text-muted text-sm">لم يتم إضافة الفيديو بعد</div>
+          )}
+        </div>
       </div>
 
       {hasStarted && lesson.video_id && lesson.video_provider !== 'vimeo' && (
@@ -243,7 +252,7 @@ export default function LessonBody({
             onClick={togglePlayback}
             disabled={!playerReady}
             aria-busy={!playerReady}
-            className="min-w-[170px] inline-flex items-center justify-center gap-2 rounded-xl bg-surface2 border border-border px-5 py-3 text-text font-semibold shadow-sm hover:border-gold/40 hover:text-gold transition disabled:opacity-60 disabled:cursor-not-allowed"
+            className="min-w-[180px] inline-flex items-center justify-center gap-2 rounded-xl bg-white/[0.025] border border-white/[0.08] px-5 py-3 text-text font-semibold shadow-sm hover:border-gold/35 hover:bg-gold/[0.035] hover:text-gold transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {!playerReady ? <LoadingSpinner size={16} /> : <span className="text-[17px]">{isPlaying ? 'Ⅱ' : '▶'}</span>}
             {!playerReady ? 'جارٍ تجهيز الفيديو...' : isPlaying ? 'إيقاف مؤقت' : 'تشغيل'}
@@ -251,28 +260,70 @@ export default function LessonBody({
         </div>
       )}
 
-      <div className="mt-6 flex flex-col gap-4">
-        <div className="flex flex-col items-center gap-1.5">
+      <div className="mt-6 sm:mt-7 rounded-[20px] border border-white/[0.07] bg-white/[0.018] p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-[13px] font-bold ${completed ? 'bg-success/15 text-success' : 'bg-gold/[0.08] text-gold'}`}>
+                {completed ? '✓' : '•'}
+              </span>
+              <p className="font-cairo font-bold text-[15px] sm:text-[16px]">
+                {completed ? 'تم إكمال هذا الدرس' : 'أكمل الدرس عندما تنتهي'}
+              </p>
+            </div>
+            <p className="text-muted2 text-[12px] sm:text-[12.5px] leading-6 pr-9">
+              {completed
+                ? 'يمكنك إعادة مشاهدة الدرس في أي وقت، أو المتابعة إلى الدرس التالي.'
+                : canMarkComplete
+                  ? 'عندما تكون جاهزًا، حدّد الدرس كمكتمل لحفظ تقدمك.'
+                  : 'شاهد الفيديو كاملاً أولًا، وبعدها سيتاح لك تحديد الدرس كمكتمل.'}
+            </p>
+          </div>
+
           <button
             onClick={toggleComplete}
             disabled={saving || !canMarkComplete}
             aria-busy={saving}
-            className="min-w-[210px] inline-flex items-center justify-center gap-2 rounded-xl bg-[#C9A84C] px-7 py-3.5 font-heading text-[16px] font-bold text-[#100C02] shadow-[0_8px_24px_rgba(201,168,76,0.22)] transition hover:bg-[#D4B15E] disabled:bg-[#C9A84C] disabled:text-[#100C02] disabled:cursor-not-allowed"
+            className="w-full sm:w-auto sm:min-w-[210px] inline-flex items-center justify-center gap-2 rounded-xl bg-[#C9A84C] px-6 py-3.5 font-heading text-[15px] sm:text-[16px] font-bold text-[#100C02] shadow-[0_8px_24px_rgba(201,168,76,0.2)] transition hover:bg-[#D4B15E] disabled:bg-[#C9A84C] disabled:text-[#100C02] disabled:cursor-not-allowed disabled:opacity-55"
           >
             {saving && <LoadingSpinner size={17} />}
             {saving ? 'جارٍ الحفظ...' : completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
           </button>
-          {!canMarkComplete && <span className="text-muted2 text-[11.5px] text-center px-3">شاهد الفيديو كاملاً لتتمكن من تحديد الدرس كمكتمل</span>}
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
-          <div className="flex justify-start">
-            {prevLessonId && <Link href={`/lesson/${prevLessonId}`} className={`${navButtonClass} w-full sm:w-auto`}>→ الدرس السابق</Link>}
-          </div>
-          <div className="flex justify-end">
-            {nextLessonId && canMarkComplete && <Link href={`/lesson/${nextLessonId}`} className={`${navButtonClass} w-full sm:w-auto`}>الدرس التالي ←</Link>}
-          </div>
-        </div>
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {prevLessonId ? (
+          <Link href={`/lesson/${prevLessonId}`} className={navButtonClass}>
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-muted group-hover:text-gold">→</span>
+            <span className="min-w-0 text-right">
+              <span className="block text-[11px] text-muted2 mb-0.5">العودة</span>
+              <span className="block text-[13.5px] sm:text-[14px] font-bold">الدرس السابق</span>
+            </span>
+          </Link>
+        ) : (
+          <div className="hidden sm:block" />
+        )}
+
+        {nextLessonId && canMarkComplete ? (
+          <Link href={`/lesson/${nextLessonId}`} className={`${navButtonClass} sm:justify-end`}>
+            <span className="min-w-0 text-right sm:text-left flex-1 sm:flex-none">
+              <span className="block text-[11px] text-muted2 mb-0.5">متابعة التعلم</span>
+              <span className="block text-[13.5px] sm:text-[14px] font-bold">الدرس التالي</span>
+            </span>
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-muted group-hover:text-gold">←</span>
+          </Link>
+        ) : !nextLessonId && completed ? (
+          <Link href={`/course-content?lesson=${lesson.id}`} className={`${navButtonClass} sm:justify-end`}>
+            <span className="min-w-0 text-right sm:text-left flex-1 sm:flex-none">
+              <span className="block text-[11px] text-success/80 mb-0.5">أحسنت</span>
+              <span className="block text-[13.5px] sm:text-[14px] font-bold text-success">العودة إلى محتوى الدورة</span>
+            </span>
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-success/15 bg-success/[0.05] text-success">✓</span>
+          </Link>
+        ) : (
+          <div className="hidden sm:block" />
+        )}
       </div>
     </div>
   );
