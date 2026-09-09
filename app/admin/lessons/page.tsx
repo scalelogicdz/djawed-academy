@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import LessonsManager from '@/components/LessonsManager';
+import ModuleOrderManager from '@/components/ModuleOrderManager';
 import AdminBackButton from '@/components/AdminBackButton';
 
 export default async function AdminLessonsPage() {
@@ -31,6 +32,16 @@ export default async function AdminLessonsPage() {
       </div>
       <div className="eyebrow">لوحة الإدارة</div>
       <h1 className="font-cairo font-extrabold text-[27px] sm:text-[31px] mb-8">إدارة الدروس</h1>
+
+      <ModuleOrderManager
+        courses={courses ?? []}
+        initialModules={(modules ?? []).map((module) => ({
+          id: module.id,
+          course_id: module.course_id,
+          title: module.title,
+          position: module.position,
+        }))}
+      />
 
       <LessonsManager
         courses={courses ?? []}
