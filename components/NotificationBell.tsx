@@ -89,7 +89,7 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
       return;
     }
 
-    const timeout = window.setTimeout(() => setRenderDropdown(false), 180);
+    const timeout = window.setTimeout(() => setRenderDropdown(false), 240);
     return () => window.clearTimeout(timeout);
   }, [open]);
 
@@ -154,14 +154,14 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
 
       {renderDropdown && (
         <div
-          className={`absolute right-0 mt-2 w-80 max-w-[calc(100vw-3.5rem)] max-h-96 overflow-y-auto bg-surface2 border border-border rounded-xl shadow-2xl z-50 origin-top-right transition-all duration-200 ease-out will-change-transform ${
+          className={`fixed top-[68px] right-4 left-4 sm:left-auto sm:w-80 max-h-[min(24rem,calc(100vh-5.5rem))] overflow-y-auto overflow-x-hidden bg-surface2 border border-border rounded-2xl shadow-[0_22px_55px_-18px_rgba(0,0,0,0.72)] z-[80] origin-top-right transition-[opacity,transform] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
             open
               ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
-              : 'opacity-0 -translate-y-1.5 scale-[0.985] pointer-events-none'
+              : 'opacity-0 -translate-y-2 scale-[0.985] pointer-events-none'
           }`}
         >
           {notifications.length > 0 && (
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3 bg-surface2/95 backdrop-blur border-b border-border">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3 bg-surface2/95 backdrop-blur-md border-b border-border">
               <span className="font-cairo font-bold text-sm">الإشعارات</span>
               {unreadCount > 0 && (
                 <button
@@ -189,8 +189,8 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
               >
                 <div className="flex items-start gap-2">
                   {!n.is_read && <span className="w-2 h-2 rounded-full bg-gold mt-1.5 flex-shrink-0" />}
-                  <div className="flex-1">
-                    <p className="text-[13.5px] leading-snug">{messageFor(n)}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13.5px] leading-snug break-words">{messageFor(n)}</p>
                     <span className="text-[11.5px] text-muted2">{timeAgo(n.created_at)}</span>
                   </div>
                 </div>
