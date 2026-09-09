@@ -18,10 +18,16 @@
 
 html {
   scroll-behavior: smooth;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   background:
     radial-gradient(circle at top right, rgba(33, 46, 69, 0.22), transparent 34%),
     radial-gradient(circle at bottom left, rgba(212, 177, 94, 0.045), transparent 28%),
