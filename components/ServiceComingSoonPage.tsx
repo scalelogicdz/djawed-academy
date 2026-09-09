@@ -18,11 +18,11 @@ function WhatsAppIcon() {
   );
 }
 
-export default function ServiceComingSoonPage({ title, description, image, whatsappMessage }: Props) {
+export default function ServiceComingSoonPage({ title, description, whatsappMessage }: Props) {
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
-    <main className="max-w-[1040px] mx-auto px-5 sm:px-6 py-10 sm:py-14" dir="rtl">
+    <main className="max-w-[860px] mx-auto px-5 sm:px-6 py-10 sm:py-14" dir="rtl">
       <div className="mb-6">
         <Link href="/services" className="inline-flex items-center gap-2 text-sm text-muted hover:text-gold transition">
           <span>→</span>
@@ -30,45 +30,36 @@ export default function ServiceComingSoonPage({ title, description, image, whats
         </Link>
       </div>
 
-      <section className="overflow-hidden rounded-[26px] border border-white/[0.08] bg-[#111925] shadow-[0_28px_70px_-34px_rgba(0,0,0,0.9)]">
-        <div className="grid lg:grid-cols-[0.95fr_1.05fr] items-stretch">
-          <div className="relative min-h-[280px] sm:min-h-[360px] lg:min-h-[520px] bg-[#F6F0E7] overflow-hidden">
-            <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#080C13]/30 via-transparent to-transparent lg:bg-gradient-to-l" />
-          </div>
-
-          <div className="p-6 sm:p-9 lg:p-11 flex flex-col justify-center">
-            <div className="inline-flex self-start items-center gap-2 rounded-full border border-[#E4756A]/35 bg-[#E4756A]/[0.08] px-3.5 py-2 text-[12px] font-bold text-[#F0A49C] mb-5">
-              <span className="w-2 h-2 rounded-full bg-[#E4756A]" />
-              الخدمة غير متاحة حاليًا
-            </div>
-
-            <div className="eyebrow mb-3">خدمات Djawed Logic</div>
-            <h1 className="font-heading font-extrabold text-[29px] sm:text-[36px] lg:text-[41px] leading-[1.35] mb-5">
-              {title}
-            </h1>
-            <p className="text-muted text-[14px] sm:text-[15.5px] leading-8 mb-6">
-              {description}
-            </p>
-
-            <div className="rounded-2xl border border-gold/20 bg-gold/[0.045] p-5 sm:p-6 mb-7">
-              <h2 className="font-cairo font-bold text-[17px] sm:text-[18px] mb-2">هذه الخدمة لم تُفتح بعد</h2>
-              <p className="text-muted text-[13.5px] leading-7">
-                يمكنك التواصل الآن إذا أردت الاستفسار عنها أو تسجيل اهتمامك قبل إطلاقها.
-              </p>
-            </div>
-
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noreferrer"
-              className="group inline-flex w-full sm:w-auto sm:min-w-[280px] items-center justify-center gap-3 rounded-xl border border-[#25D366]/35 bg-[#25D366] px-6 py-3.5 text-[15px] font-bold font-cairo text-[#07120B] shadow-[0_14px_30px_-18px_rgba(37,211,102,0.7)] transition duration-200 hover:brightness-105 hover:-translate-y-0.5"
-            >
-              <WhatsAppIcon />
-              <span>تواصل عبر واتساب</span>
-            </a>
-          </div>
+      <section className="rounded-[26px] border border-white/[0.08] bg-[#111925] shadow-[0_28px_70px_-34px_rgba(0,0,0,0.9)] p-6 sm:p-9 lg:p-11">
+        <div className="inline-flex self-start items-center gap-2 rounded-full border border-[#E4756A]/35 bg-[#E4756A]/[0.08] px-3.5 py-2 text-[12px] font-bold text-[#F0A49C] mb-5">
+          <span className="w-2 h-2 rounded-full bg-[#E4756A]" />
+          الخدمة غير متاحة حاليًا
         </div>
+
+        <div className="eyebrow mb-3">خدمات Djawed Logic</div>
+        <h1 className="font-heading font-extrabold text-[29px] sm:text-[36px] lg:text-[41px] leading-[1.35] mb-5">
+          {title}
+        </h1>
+        <p className="text-muted text-[14px] sm:text-[15.5px] leading-8 mb-6 max-w-[680px]">
+          {description}
+        </p>
+
+        <div className="rounded-2xl border border-gold/20 bg-gold/[0.045] p-5 sm:p-6 mb-7">
+          <h2 className="font-cairo font-bold text-[17px] sm:text-[18px] mb-2">هذه الخدمة لم تُفتح بعد</h2>
+          <p className="text-muted text-[13.5px] leading-7">
+            يمكنك التواصل الآن إذا أردت الاستفسار عنها أو تسجيل اهتمامك قبل إطلاقها.
+          </p>
+        </div>
+
+        <a
+          href={whatsappHref}
+          target="_blank"
+          rel="noreferrer"
+          className="group inline-flex w-full sm:w-auto sm:min-w-[280px] items-center justify-center gap-3 rounded-xl border border-[#25D366]/35 bg-[#25D366] px-6 py-3.5 text-[15px] font-bold font-cairo text-[#07120B] shadow-[0_14px_30px_-18px_rgba(37,211,102,0.7)] transition duration-200 hover:brightness-105 hover:-translate-y-0.5"
+        >
+          <WhatsAppIcon />
+          <span>تواصل عبر واتساب</span>
+        </a>
       </section>
     </main>
   );
