@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import LessonsManager from '@/components/LessonsManager';
 import ModuleOrderManager from '@/components/ModuleOrderManager';
+import LessonOrderManager from '@/components/LessonOrderManager';
 import AdminBackButton from '@/components/AdminBackButton';
 
 export default async function AdminLessonsPage() {
@@ -40,6 +41,21 @@ export default async function AdminLessonsPage() {
           course_id: module.course_id,
           title: module.title,
           position: module.position,
+        }))}
+      />
+
+      <LessonOrderManager
+        initialModules={(modules ?? []).map((module) => ({
+          id: module.id,
+          course_id: module.course_id,
+          title: module.title,
+          position: module.position,
+        }))}
+        initialLessons={(lessons ?? []).map((lesson) => ({
+          id: lesson.id,
+          module_id: lesson.module_id,
+          title: lesson.title,
+          position: lesson.position,
         }))}
       />
 
