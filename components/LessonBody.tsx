@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useLanguage } from '@/components/LanguageProvider';
 
 type Lesson = {
   id: string;
@@ -40,6 +41,7 @@ export default function LessonBody({
 }) {
   const supabase = createClient();
   const router = useRouter();
+  const { language } = useLanguage();
   const [completed, setCompleted] = useState(isCompleted);
   const [saving, setSaving] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
@@ -48,6 +50,90 @@ export default function LessonBody({
   const [isPlaying, setIsPlaying] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const playerRef = useRef<any>(null);
+
+  const copy = language === 'fr'
+    ? {
+        lockedTitle: 'Cette leçon est actuellement verrouillée',
+        lockedText: (title: string) => <>Terminez d’abord la leçon <span className="text-text font-semibold">« {title} »</span> pour débloquer celle-ci.</>,
+        goRequired: 'Aller à la leçon requise',
+        imageAlt: 'Miniature de la leçon',
+        startVideo: 'Démarrer la vidéo',
+        pauseAnytime: 'Vous pouvez mettre en pause et reprendre à tout moment',
+        noVideo: 'La vidéo n’a pas encore été ajoutée',
+        preparing: 'Préparation de la vidéo...',
+        pause: 'Pause',
+        play: 'Lecture',
+        completedTitle: 'Cette leçon est terminée',
+        finishTitle: 'Terminez la leçon lorsque vous avez fini',
+        completedText: 'Vous pouvez revoir la leçon à tout moment ou passer à la suivante.',
+        canCompleteText: 'Lorsque vous êtes prêt, marquez la leçon comme terminée pour enregistrer votre progression.',
+        mustWatchText: 'Regardez d’abord la vidéo jusqu’à la fin, puis vous pourrez marquer la leçon comme terminée.',
+        saving: 'Enregistrement...',
+        completed: '✓ Terminée',
+        markComplete: 'Marquer comme terminée',
+        back: 'Retour',
+        previousLesson: 'Leçon précédente',
+        continueLearning: 'Continuer',
+        nextLesson: 'Leçon suivante',
+        wellDone: 'Bravo',
+        backToCourse: 'Retour au contenu du cours',
+      }
+    : language === 'en'
+      ? {
+          lockedTitle: 'This lesson is currently locked',
+          lockedText: (title: string) => <>Complete <span className="text-text font-semibold">“{title}”</span> first to unlock this lesson.</>,
+          goRequired: 'Go to required lesson',
+          imageAlt: 'Lesson thumbnail',
+          startVideo: 'Start video',
+          pauseAnytime: 'You can pause and continue at any time',
+          noVideo: 'The video has not been added yet',
+          preparing: 'Preparing video...',
+          pause: 'Pause',
+          play: 'Play',
+          completedTitle: 'This lesson is completed',
+          finishTitle: 'Complete the lesson when you finish',
+          completedText: 'You can rewatch the lesson at any time or continue to the next lesson.',
+          canCompleteText: 'When you are ready, mark the lesson as completed to save your progress.',
+          mustWatchText: 'Watch the full video first, then you will be able to mark the lesson as completed.',
+          saving: 'Saving...',
+          completed: '✓ Completed',
+          markComplete: 'Mark as completed',
+          back: 'Back',
+          previousLesson: 'Previous lesson',
+          continueLearning: 'Continue learning',
+          nextLesson: 'Next lesson',
+          wellDone: 'Well done',
+          backToCourse: 'Back to course content',
+        }
+      : {
+          lockedTitle: 'هذا الدرس مغلق حاليًا',
+          lockedText: (title: string) => <>أكمل درس <span className="text-text font-semibold">"{title}"</span> أولًا لفتح هذا الدرس.</>,
+          goRequired: 'الذهاب إلى الدرس المطلوب',
+          imageAlt: 'صورة الدرس',
+          startVideo: 'ابدأ الفيديو',
+          pauseAnytime: 'يمكنك الإيقاف والمتابعة في أي وقت',
+          noVideo: 'لم يتم إضافة الفيديو بعد',
+          preparing: 'جارٍ تجهيز الفيديو...',
+          pause: 'إيقاف مؤقت',
+          play: 'تشغيل',
+          completedTitle: 'تم إكمال هذا الدرس',
+          finishTitle: 'أكمل الدرس عندما تنتهي',
+          completedText: 'يمكنك إعادة مشاهدة الدرس في أي وقت، أو المتابعة إلى الدرس التالي.',
+          canCompleteText: 'عندما تكون جاهزًا، حدّد الدرس كمكتمل لحفظ تقدمك.',
+          mustWatchText: 'شاهد الفيديو كاملاً أولًا، وبعدها سيتاح لك تحديد الدرس كمكتمل.',
+          saving: 'جارٍ الحفظ...',
+          completed: '✓ مكتمل',
+          markComplete: 'تحديد كمكتمل',
+          back: 'العودة',
+          previousLesson: 'الدرس السابق',
+          continueLearning: 'متابعة التعلم',
+          nextLesson: 'الدرس التالي',
+          wellDone: 'أحسنت',
+          backToCourse: 'العودة إلى محتوى الدورة',
+        };
+
+  const backArrow = language === 'ar' ? '→' : '←';
+  const nextArrow = language === 'ar' ? '←' : '→';
 
   const BUNNY_LIBRARY_ID = '744754';
   const embedUrl =
@@ -186,15 +272,15 @@ export default function LessonBody({
     return (
       <div className="rounded-[22px] border border-white/[0.08] overflow-hidden bg-gradient-to-br from-surface2 to-[#070A10] px-6 sm:px-8 py-12 sm:py-16 text-center shadow-[0_20px_50px_-34px_rgba(0,0,0,0.9)]">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] text-2xl">🔒</div>
-        <p className="font-heading font-bold text-[18px] sm:text-[20px] mb-2">هذا الدرس مغلق حاليًا</p>
+        <p className="font-heading font-bold text-[18px] sm:text-[20px] mb-2">{copy.lockedTitle}</p>
         {requiredLessonTitle && (
           <p className="mx-auto max-w-[560px] text-muted text-[13.5px] sm:text-[14px] leading-7">
-            أكمل درس <span className="text-text font-semibold">"{requiredLessonTitle}"</span> أولًا لفتح هذا الدرس.
+            {copy.lockedText(requiredLessonTitle)}
           </p>
         )}
         {requiredLessonId && (
           <Link href={`/lesson/${requiredLessonId}`} className="btn-primary mt-6 inline-flex">
-            الذهاب إلى الدرس المطلوب
+            {copy.goRequired}
           </Link>
         )}
       </div>
@@ -223,7 +309,7 @@ export default function LessonBody({
                 {thumbnailUrl ? (
                   <img
                     src={thumbnailUrl}
-                    alt="صورة الدرس"
+                    alt={copy.imageAlt}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.015]"
                   />
                 ) : (
@@ -235,12 +321,12 @@ export default function LessonBody({
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 </span>
-                <span className="relative z-10 font-heading font-bold text-[16px] sm:text-[17px] drop-shadow-md">ابدأ الفيديو</span>
-                <span className="relative z-10 text-[11.5px] sm:text-[12px] text-white/65">يمكنك الإيقاف والمتابعة في أي وقت</span>
+                <span className="relative z-10 font-heading font-bold text-[16px] sm:text-[17px] drop-shadow-md">{copy.startVideo}</span>
+                <span className="relative z-10 text-[11.5px] sm:text-[12px] text-white/65">{copy.pauseAnytime}</span>
               </button>
             )
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted text-sm">لم يتم إضافة الفيديو بعد</div>
+            <div className="w-full h-full flex items-center justify-center text-muted text-sm">{copy.noVideo}</div>
           )}
         </div>
       </div>
@@ -255,7 +341,7 @@ export default function LessonBody({
             className="min-w-[180px] inline-flex items-center justify-center gap-2 rounded-xl bg-white/[0.025] border border-white/[0.08] px-5 py-3 text-text font-semibold shadow-sm hover:border-gold/35 hover:bg-gold/[0.035] hover:text-gold transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {!playerReady ? <LoadingSpinner size={16} /> : <span className="text-[17px]">{isPlaying ? 'Ⅱ' : '▶'}</span>}
-            {!playerReady ? 'جارٍ تجهيز الفيديو...' : isPlaying ? 'إيقاف مؤقت' : 'تشغيل'}
+            {!playerReady ? copy.preparing : isPlaying ? copy.pause : copy.play}
           </button>
         </div>
       )}
@@ -268,15 +354,15 @@ export default function LessonBody({
                 {completed ? '✓' : '•'}
               </span>
               <p className="font-cairo font-bold text-[15px] sm:text-[16px]">
-                {completed ? 'تم إكمال هذا الدرس' : 'أكمل الدرس عندما تنتهي'}
+                {completed ? copy.completedTitle : copy.finishTitle}
               </p>
             </div>
-            <p className="text-muted2 text-[12px] sm:text-[12.5px] leading-6 pr-9">
+            <p className="text-muted2 text-[12px] sm:text-[12.5px] leading-6 ps-9">
               {completed
-                ? 'يمكنك إعادة مشاهدة الدرس في أي وقت، أو المتابعة إلى الدرس التالي.'
+                ? copy.completedText
                 : canMarkComplete
-                  ? 'عندما تكون جاهزًا، حدّد الدرس كمكتمل لحفظ تقدمك.'
-                  : 'شاهد الفيديو كاملاً أولًا، وبعدها سيتاح لك تحديد الدرس كمكتمل.'}
+                  ? copy.canCompleteText
+                  : copy.mustWatchText}
             </p>
           </div>
 
@@ -287,7 +373,7 @@ export default function LessonBody({
             className="w-full sm:w-auto sm:min-w-[210px] inline-flex items-center justify-center gap-2 rounded-xl bg-[#C9A84C] px-6 py-3.5 font-heading text-[15px] sm:text-[16px] font-bold text-[#100C02] shadow-[0_8px_24px_rgba(201,168,76,0.2)] transition hover:bg-[#D4B15E] disabled:bg-[#C9A84C] disabled:text-[#100C02] disabled:cursor-not-allowed disabled:opacity-55"
           >
             {saving && <LoadingSpinner size={17} />}
-            {saving ? 'جارٍ الحفظ...' : completed ? '✓ مكتمل' : 'تحديد كمكتمل'}
+            {saving ? copy.saving : completed ? copy.completed : copy.markComplete}
           </button>
         </div>
       </div>
@@ -295,10 +381,10 @@ export default function LessonBody({
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
         {prevLessonId ? (
           <Link href={`/lesson/${prevLessonId}`} className={navButtonClass}>
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-muted group-hover:text-gold">→</span>
-            <span className="min-w-0 text-right">
-              <span className="block text-[11px] text-muted2 mb-0.5">العودة</span>
-              <span className="block text-[13.5px] sm:text-[14px] font-bold">الدرس السابق</span>
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-muted group-hover:text-gold">{backArrow}</span>
+            <span className="min-w-0 text-start">
+              <span className="block text-[11px] text-muted2 mb-0.5">{copy.back}</span>
+              <span className="block text-[13.5px] sm:text-[14px] font-bold">{copy.previousLesson}</span>
             </span>
           </Link>
         ) : (
@@ -307,17 +393,17 @@ export default function LessonBody({
 
         {nextLessonId && canMarkComplete ? (
           <Link href={`/lesson/${nextLessonId}`} className={`${navButtonClass} sm:justify-end`}>
-            <span className="min-w-0 text-right sm:text-left flex-1 sm:flex-none">
-              <span className="block text-[11px] text-muted2 mb-0.5">متابعة التعلم</span>
-              <span className="block text-[13.5px] sm:text-[14px] font-bold">الدرس التالي</span>
+            <span className="min-w-0 text-start flex-1 sm:flex-none">
+              <span className="block text-[11px] text-muted2 mb-0.5">{copy.continueLearning}</span>
+              <span className="block text-[13.5px] sm:text-[14px] font-bold">{copy.nextLesson}</span>
             </span>
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-muted group-hover:text-gold">←</span>
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-muted group-hover:text-gold">{nextArrow}</span>
           </Link>
         ) : !nextLessonId && completed ? (
           <Link href={`/course-content?lesson=${lesson.id}`} className={`${navButtonClass} sm:justify-end`}>
-            <span className="min-w-0 text-right sm:text-left flex-1 sm:flex-none">
-              <span className="block text-[11px] text-success/80 mb-0.5">أحسنت</span>
-              <span className="block text-[13.5px] sm:text-[14px] font-bold text-success">العودة إلى محتوى الدورة</span>
+            <span className="min-w-0 text-start flex-1 sm:flex-none">
+              <span className="block text-[11px] text-success/80 mb-0.5">{copy.wellDone}</span>
+              <span className="block text-[13.5px] sm:text-[14px] font-bold text-success">{copy.backToCourse}</span>
             </span>
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-success/15 bg-success/[0.05] text-success">✓</span>
           </Link>
