@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/components/LanguageProvider';
 
 type ModuleRow = { id: string; title: string; description: string | null; thumbnail_url: string | null; position: number };
 type LessonRow = { id: string; title: string; module_id: string; position: number };
@@ -21,10 +22,41 @@ export default function CourseAccordion({
   highlightedLessonId: string | null;
   defaultOpenModuleId: string | null;
 }) {
+  const { language } = useLanguage();
   const [openModuleId, setOpenModuleId] = useState<string | null>(defaultOpenModuleId);
   const completedSet = new Set(completedIds);
   const lockedSet = new Set(lockedIds);
   const highlightedRef = useRef<HTMLDivElement>(null);
+
+  const copy = language === 'fr'
+    ? {
+        complete: 'Terminé',
+        completedLessons: (done: number, total: number) => `${done} sur ${total} leçons terminées`,
+        lesson: (index: number) => `Leçon ${index}`,
+        locked: 'Terminez la leçon précédente pour débloquer celle-ci',
+        continueHere: 'Reprendre ici',
+        rewatch: 'Vous pouvez revoir cette leçon',
+        ready: 'Prête à regarder',
+      }
+    : language === 'en'
+      ? {
+          complete: 'Completed',
+          completedLessons: (done: number, total: number) => `${done} of ${total} lessons completed`,
+          lesson: (index: number) => `Lesson ${index}`,
+          locked: 'Complete the previous lesson to unlock this one',
+          continueHere: 'Continue from here',
+          rewatch: 'You can rewatch this lesson',
+          ready: 'Ready to watch',
+        }
+      : {
+          complete: 'مكتمل',
+          completedLessons: (done: number, total: number) => `${done} من ${total} دروس مكتملة`,
+          lesson: (index: number) => `درس ${index}`,
+          locked: 'أكمل الدرس السابق لفتح هذا الدرس',
+          continueHere: 'تابع من هنا',
+          rewatch: 'يمكنك إعادة مشاهدة الدرس',
+          ready: 'جاهز للمشاهدة',
+        };
 
   useEffect(() => {
     if (!highlightedLessonId) return;
@@ -53,7 +85,7 @@ export default function CourseAccordion({
               type="button"
               onClick={() => toggleModule(module.id)}
               aria-expanded={isOpen}
-              className="w-full text-right hover:bg-white/[0.02] transition"
+              className="w-full text-start hover:bg-white/[0.02] transition"
             >
               <div className="flex items-center gap-4 px-4 sm:px-6 pt-5 sm:pt-6 pb-4">
                 <div
@@ -71,12 +103,12 @@ export default function CourseAccordion({
                     <div className="font-heading font-bold text-[16px] sm:text-[18px] leading-snug">{module.title}</div>
                     {moduleDone && (
                       <span className="inline-flex rounded-full border border-success/20 bg-success/[0.08] px-2 py-0.5 text-[10px] font-bold text-success">
-                        مكتمل
+                        {copy.complete}
                       </span>
                     )}
                   </div>
                   <div className="text-muted2 text-[11.5px] sm:text-[12px]">
-                    {completedInModule} من {moduleLessons.length} دروس مكتملة
+                    {copy.completedLessons(completedInModule, moduleLessons.length)}
                   </div>
                 </div>
 
@@ -142,7 +174,7 @@ export default function CourseAccordion({
                           }`}
                         >
                           {isHighlighted && (
-                            <span className="absolute inset-y-3 right-0 w-[3px] rounded-full bg-gold" aria-hidden="true" />
+                            <span className="absolute inset-y-3 start-0 w-[3px] rounded-full bg-gold" aria-hidden="true" />
                           )}
 
                           <div className="relative w-[86px] sm:w-[118px] aspect-video rounded-xl overflow-hidden bg-gradient-to-br from-surface2 to-[#070A10] border border-border flex-shrink-0">
@@ -174,7 +206,7 @@ export default function CourseAccordion({
                                 )}
                               </div>
                             </div>
-                            <span className="absolute bottom-1.5 right-2 text-[10px] text-white/80 drop-shadow">درس {lessonIndex + 1}</span>
+                            <span className="absolute bottom-1.5 end-2 text-[10px] text-white/80 drop-shadow">{copy.lesson(lessonIndex + 1)}</span>
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -188,13 +220,13 @@ export default function CourseAccordion({
                               </p>
                               {done && !isHighlighted && (
                                 <span className="inline-flex rounded-full bg-success/[0.08] px-2 py-0.5 text-[9.5px] font-bold text-success">
-                                  مكتمل
+                                  {copy.complete}
                                 </span>
                               )}
                             </div>
 
                             <p className={`text-[11px] sm:text-[11.5px] ${locked ? 'text-muted2' : isHighlighted ? 'text-gold' : 'text-muted2'}`}>
-                              {locked ? 'أكمل الدرس السابق لفتح هذا الدرس' : isHighlighted ? 'تابع من هنا' : done ? 'يمكنك إعادة مشاهدة الدرس' : 'جاهز للمشاهدة'}
+                              {locked ? copy.locked : isHighlighted ? copy.continueHere : done ? copy.rewatch : copy.ready}
                             </p>
                           </div>
 
@@ -204,7 +236,7 @@ export default function CourseAccordion({
                             ) : locked ? (
                               <span className="inline-flex w-6 h-6 rounded-full border border-white/[0.07] bg-white/[0.02] items-center justify-center text-[11px]">🔒</span>
                             ) : (
-                              <span className="text-gold text-[20px] leading-none">‹</span>
+                              <span className="text-gold text-[20px] leading-none">{language === 'ar' ? '‹' : '›'}</span>
                             )}
                           </div>
                         </div>
