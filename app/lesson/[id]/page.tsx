@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import LessonBody from '@/components/LessonBody';
+import LocalizedText from '@/components/LocalizedText';
 import { computeLockedLessonIds, findRequiredLesson } from '@/lib/lessonLocking';
 
 export default async function LessonPage({ params }: { params: Promise<{ id: string }> }) {
@@ -66,12 +67,21 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
             <div className="flex flex-wrap items-center gap-2 mb-2.5 text-[11.5px] sm:text-[12px] font-cairo">
               {currentModule?.title && (
                 <span className="inline-flex items-center rounded-full border border-gold/20 bg-gold/[0.055] px-3 py-1.5 text-gold font-semibold">
-                  {moduleIndex >= 0 ? `الوحدة ${moduleIndex + 1}` : 'الوحدة'} · {currentModule.title}
+                  <LocalizedText
+                    ar={moduleIndex >= 0 ? `الوحدة ${moduleIndex + 1}` : 'الوحدة'}
+                    fr={moduleIndex >= 0 ? `Module ${moduleIndex + 1}` : 'Module'}
+                    en={moduleIndex >= 0 ? `Module ${moduleIndex + 1}` : 'Module'}
+                  />
+                  {' · '}{currentModule.title}
                 </span>
               )}
               {lessonIndexInModule >= 0 && (
                 <span className="text-muted2">
-                  الدرس {lessonIndexInModule + 1} من {moduleLessons.length}
+                  <LocalizedText
+                    ar={`الدرس ${lessonIndexInModule + 1} من ${moduleLessons.length}`}
+                    fr={`Leçon ${lessonIndexInModule + 1} sur ${moduleLessons.length}`}
+                    en={`Lesson ${lessonIndexInModule + 1} of ${moduleLessons.length}`}
+                  />
                 </span>
               )}
             </div>
@@ -83,8 +93,8 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
 
           <Link
             href={`/course-content?lesson=${lesson.id}`}
-            aria-label="العودة إلى محتوى الدورة"
-            title="العودة إلى محتوى الدورة"
+            aria-label="Back to course content"
+            title="Back to course content"
             className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl border border-white/[0.09] bg-white/[0.025] flex items-center justify-center text-[23px] leading-none text-muted hover:border-gold/40 hover:text-gold hover:bg-gold/[0.04] transition flex-shrink-0"
           >
             ×
