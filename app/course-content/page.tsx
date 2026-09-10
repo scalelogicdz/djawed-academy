@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import StudentNav from '@/components/StudentNav';
 import { computeLockedLessonIds } from '@/lib/lessonLocking';
 import CourseAccordion from '@/components/CourseAccordion';
+import LocalizedText from '@/components/LocalizedText';
 
 export default async function CourseContentPage({
   searchParams,
@@ -34,7 +35,13 @@ export default async function CourseContentPage({
       <>
         <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
         <section className="max-w-[900px] mx-auto px-5 sm:px-6 py-10 sm:py-14">
-          <div className="card p-8 text-muted text-sm">لا يوجد لديك وصول لأي دورة حاليًا.</div>
+          <div className="card p-8 text-muted text-sm">
+            <LocalizedText
+              ar="لا يوجد لديك وصول لأي دورة حاليًا."
+              fr="Vous n’avez actuellement accès à aucun cours."
+              en="You currently do not have access to any course."
+            />
+          </div>
         </section>
       </>
     );
@@ -85,7 +92,9 @@ export default async function CourseContentPage({
       <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
       <section className="max-w-[940px] mx-auto px-5 sm:px-6 py-8 sm:py-12">
         <div className="mb-7 sm:mb-9">
-          <div className="eyebrow">محتوى الدورة</div>
+          <div className="eyebrow">
+            <LocalizedText ar="محتوى الدورة" fr="Contenu du cours" en="Course content" />
+          </div>
           <h1 className="font-heading font-extrabold text-[28px] sm:text-[34px] leading-tight mb-2">{course.title}</h1>
           {course.description && (
             <p className="text-muted text-[14px] sm:text-[15px] leading-7 max-w-[760px]">{course.description}</p>
@@ -97,25 +106,29 @@ export default async function CourseContentPage({
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
             <div>
-              <div className="text-[12px] font-bold text-gold mb-1.5">تقدمك في الدورة</div>
+              <div className="text-[12px] font-bold text-gold mb-1.5">
+                <LocalizedText ar="تقدمك في الدورة" fr="Votre progression" en="Your course progress" />
+              </div>
               <div className="flex items-end gap-2">
                 <span className="font-heading font-extrabold text-[34px] sm:text-[38px] leading-none text-text">{progressPct}%</span>
-                <span className="text-muted2 text-[12px] pb-1">مكتمل</span>
+                <span className="text-muted2 text-[12px] pb-1">
+                  <LocalizedText ar="مكتمل" fr="terminé" en="completed" />
+                </span>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2 sm:gap-3 min-w-0 sm:min-w-[330px]">
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-3 text-center">
                 <div className="text-[17px] font-bold text-success">{completedLessons}</div>
-                <div className="text-[10.5px] text-muted2 mt-1">مكتمل</div>
+                <div className="text-[10.5px] text-muted2 mt-1"><LocalizedText ar="مكتمل" fr="Terminées" en="Completed" /></div>
               </div>
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-3 text-center">
                 <div className="text-[17px] font-bold text-gold">{remainingLessons}</div>
-                <div className="text-[10.5px] text-muted2 mt-1">متبقي</div>
+                <div className="text-[10.5px] text-muted2 mt-1"><LocalizedText ar="متبقي" fr="Restantes" en="Remaining" /></div>
               </div>
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-3 text-center">
                 <div className="text-[17px] font-bold text-text">{totalLessons}</div>
-                <div className="text-[10.5px] text-muted2 mt-1">إجمالي</div>
+                <div className="text-[10.5px] text-muted2 mt-1"><LocalizedText ar="إجمالي" fr="Total" en="Total" /></div>
               </div>
             </div>
           </div>
@@ -130,7 +143,11 @@ export default async function CourseContentPage({
           <div className="mt-4 flex items-center gap-2 text-[12.5px]">
             <span className={`inline-flex h-2 w-2 rounded-full ${isComplete ? 'bg-success' : 'bg-gold'}`} />
             <span className={isComplete ? 'text-success' : 'text-muted'}>
-              {isComplete ? 'أكملت جميع دروس الدورة' : 'واصل من الدرس المحدد بالأسفل'}
+              {isComplete ? (
+                <LocalizedText ar="أكملت جميع دروس الدورة" fr="Vous avez terminé toutes les leçons" en="You completed all course lessons" />
+              ) : (
+                <LocalizedText ar="واصل من الدرس المحدد بالأسفل" fr="Reprenez à partir de la leçon indiquée ci-dessous" en="Continue from the highlighted lesson below" />
+              )}
             </span>
           </div>
         </div>
