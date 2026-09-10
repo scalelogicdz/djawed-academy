@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import type { Language, TranslationKey } from '@/lib/i18n';
 import { translations } from '@/lib/i18n';
 
@@ -18,24 +19,23 @@ function isLanguage(value: unknown): value is Language {
   return value === 'ar' || value === 'fr' || value === 'en';
 }
 
-function applyDocumentLanguage(language: Language) {
-  if (typeof document === 'undefined') return;
-  document.documentElement.lang = language;
-  document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-}
-
 export default function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [language, setLanguageState] = useState<Language>('ar');
   const [loading, setLoading] = useState(true);
+  const forceArabicLayout = pathname.startsWith('/admin') || pathname.startsWith('/login');
+  const direction: 'rtl' | 'ltr' = forceArabicLayout || language === 'ar' ? 'rtl' : 'ltr';
+
+  useEffect(() => {
+    document.documentElement.lang = forceArabicLayout ? 'ar' : language;
+    document.documentElement.dir = direction;
+  }, [language, direction, forceArabicLayout]);
 
   useEffect(() => {
     let active = true;
 
     const cached = window.localStorage.getItem('preferred_language');
-    if (isLanguage(cached)) {
-      setLanguageState(cached);
-      applyDocumentLanguage(cached);
-    }
+    if (isLanguage(cached)) setLanguageState(cached);
 
     fetch('/api/profile/language', { cache: 'no-store' })
       .then((response) => response.json())
@@ -43,7 +43,6 @@ export default function LanguageProvider({ children }: { children: React.ReactNo
         if (!active || !isLanguage(data.language)) return;
         setLanguageState(data.language);
         window.localStorage.setItem('preferred_language', data.language);
-        applyDocumentLanguage(data.language);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -58,7 +57,6 @@ export default function LanguageProvider({ children }: { children: React.ReactNo
     const previous = language;
     setLanguageState(nextLanguage);
     window.localStorage.setItem('preferred_language', nextLanguage);
-    applyDocumentLanguage(nextLanguage);
 
     try {
       const response = await fetch('/api/profile/language', {
@@ -71,19 +69,18 @@ export default function LanguageProvider({ children }: { children: React.ReactNo
     } catch {
       setLanguageState(previous);
       window.localStorage.setItem('preferred_language', previous);
-      applyDocumentLanguage(previous);
     }
   }
 
   const value = useMemo<LanguageContextValue>(
     () => ({
       language,
-      direction: language === 'ar' ? 'rtl' : 'ltr',
+      direction,
       setLanguage,
       t: (key) => translations[language][key],
       loading,
     }),
-    [language, loading]
+    [language, direction, loading]
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
