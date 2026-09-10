@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useLanguage } from '@/components/LanguageProvider';
 
 export default function SupportForm({
   userId,
@@ -16,12 +17,52 @@ export default function SupportForm({
 }) {
   const router = useRouter();
   const supabase = createClient();
+  const { language } = useLanguage();
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+
+  const copy = language === 'fr'
+    ? {
+        required: 'Veuillez remplir tous les champs.',
+        failed: 'Impossible d’envoyer votre demande pour le moment. Réessayez.',
+        name: 'Nom',
+        email: 'Adresse e-mail',
+        subject: 'Sujet',
+        subjectPlaceholder: 'Exemple : question concernant le cours',
+        message: 'Votre message',
+        messagePlaceholder: 'Décrivez votre question ou votre demande...',
+        sending: 'Envoi...',
+        send: "Envoyer à l'administration",
+      }
+    : language === 'en'
+      ? {
+          required: 'Please complete all fields.',
+          failed: 'Your request could not be sent right now. Please try again.',
+          name: 'Name',
+          email: 'Email address',
+          subject: 'Subject',
+          subjectPlaceholder: 'Example: question about the course',
+          message: 'Your message',
+          messagePlaceholder: 'Describe your question or request...',
+          sending: 'Sending...',
+          send: 'Send to administration',
+        }
+      : {
+          required: 'يرجى إكمال جميع الحقول.',
+          failed: 'تعذر إرسال طلبك حاليًا. حاول مرة أخرى.',
+          name: 'الاسم',
+          email: 'البريد الإلكتروني',
+          subject: 'الموضوع',
+          subjectPlaceholder: 'مثال: سؤال بخصوص الدورة',
+          message: 'رسالتك',
+          messagePlaceholder: 'اكتب سؤالك أو طلبك بالتفصيل...',
+          sending: 'جارٍ الإرسال...',
+          send: 'إرسال للإدارة',
+        };
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,7 +74,7 @@ export default function SupportForm({
     const cleanMessage = message.trim();
 
     if (!cleanName || !cleanEmail || !cleanSubject || !cleanMessage) {
-      setError('يرجى إكمال جميع الحقول.');
+      setError(copy.required);
       return;
     }
 
@@ -50,7 +91,7 @@ export default function SupportForm({
 
     if (insertError) {
       setSending(false);
-      setError('تعذر إرسال طلبك حاليًا. حاول مرة أخرى.');
+      setError(copy.failed);
       return;
     }
 
@@ -64,12 +105,12 @@ export default function SupportForm({
     <form onSubmit={handleSubmit} className="card p-5 sm:p-7 space-y-5">
       <div className="grid sm:grid-cols-2 gap-4">
         <label className="block">
-          <span className="block font-cairo font-semibold text-sm mb-2">الاسم</span>
+          <span className="block font-cairo font-semibold text-sm mb-2">{copy.name}</span>
           <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} required />
         </label>
 
         <label className="block">
-          <span className="block font-cairo font-semibold text-sm mb-2">البريد الإلكتروني</span>
+          <span className="block font-cairo font-semibold text-sm mb-2">{copy.email}</span>
           <input
             type="email"
             value={email}
@@ -82,24 +123,24 @@ export default function SupportForm({
       </div>
 
       <label className="block">
-        <span className="block font-cairo font-semibold text-sm mb-2">الموضوع</span>
+        <span className="block font-cairo font-semibold text-sm mb-2">{copy.subject}</span>
         <input
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           className={inputClass}
-          placeholder="مثال: سؤال بخصوص الدورة"
+          placeholder={copy.subjectPlaceholder}
           maxLength={160}
           required
         />
       </label>
 
       <label className="block">
-        <span className="block font-cairo font-semibold text-sm mb-2">رسالتك</span>
+        <span className="block font-cairo font-semibold text-sm mb-2">{copy.message}</span>
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           className={`${inputClass} min-h-[180px] resize-y`}
-          placeholder="اكتب سؤالك أو طلبك بالتفصيل..."
+          placeholder={copy.messagePlaceholder}
           maxLength={3000}
           required
         />
@@ -114,7 +155,7 @@ export default function SupportForm({
         className="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2"
       >
         {sending && <LoadingSpinner size={17} />}
-        {sending ? 'جارٍ الإرسال...' : 'إرسال للإدارة'}
+        {sending ? copy.sending : copy.send}
       </button>
     </form>
   );
