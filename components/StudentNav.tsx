@@ -6,13 +6,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import NotificationBell from '@/components/NotificationBell';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useLanguage } from '@/components/LanguageProvider';
+import { languageLabels, type Language, type TranslationKey } from '@/lib/i18n';
 
-const links = [
-  { href: '/dashboard', label: 'دوراتي' },
-  { href: '/community', label: 'المجتمع' },
-  { href: '/services', label: 'خدماتنا' },
-  { href: '/support', label: 'تواصل مع الإدارة', support: true },
-  { href: '/guidelines', label: 'قواعد وإرشادات المنصة' },
+const links: { href: string; key: TranslationKey; support?: boolean }[] = [
+  { href: '/dashboard', key: 'navCourses' },
+  { href: '/community', key: 'navCommunity' },
+  { href: '/services', key: 'navServices' },
+  { href: '/support', key: 'navSupport', support: true },
+  { href: '/guidelines', key: 'navGuidelines' },
 ];
 
 function UserIcon() {
@@ -43,10 +45,39 @@ function SupportIcon({ size = 17 }: { size?: number }) {
   );
 }
 
+function LanguageSelector({ mobile = false }: { mobile?: boolean }) {
+  const { language, setLanguage, t } = useLanguage();
+
+  return (
+    <label
+      className={
+        mobile
+          ? 'flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.018] text-sm'
+          : 'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-white/[0.06] bg-white/[0.018]'
+      }
+    >
+      <span className="text-muted text-xs whitespace-nowrap">{t('language')}</span>
+      <select
+        value={language}
+        onChange={(e) => setLanguage(e.target.value as Language)}
+        className="bg-transparent text-text text-xs font-semibold outline-none cursor-pointer"
+        aria-label={t('language')}
+      >
+        {(Object.keys(languageLabels) as Language[]).map((code) => (
+          <option key={code} value={code} className="bg-[#111925] text-text">
+            {languageLabels[code]}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boolean; currentUserId: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -61,10 +92,10 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
   const baseLinks = isAdmin
     ? links.filter((link) => !link.support && link.href !== '/dashboard')
     : links;
-  const allLinks = isAdmin ? [...baseLinks, { href: '/admin', label: 'لوحة الإدارة', support: false }] : baseLinks;
-  const mobileLinks = allLinks
-    .filter((link) => link.href !== '/community')
-    .map((link) => (link.href === '/dashboard' ? { ...link, label: 'دوراتي' } : link));
+  const allLinks = isAdmin
+    ? [...baseLinks, { href: '/admin', key: 'navAdmin' as TranslationKey, support: false }]
+    : baseLinks;
+  const mobileLinks = allLinks.filter((link) => link.href !== '/community');
   const profileHref = `/profile/${currentUserId}`;
   const isAdminArea = pathname.startsWith('/admin');
 
@@ -92,16 +123,18 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
               }`}
             >
               {l.support && <SupportIcon />}
-              {l.label}
+              {t(l.key)}
             </Link>
           ))}
+
+          {!isAdminArea && <LanguageSelector />}
         </div>
 
         <div className="order-1 md:order-3 flex items-center gap-1.5 flex-shrink-0">
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="md:hidden p-2 rounded-xl text-muted border border-transparent hover:text-text hover:bg-white/[0.025] hover:border-white/[0.05] transition"
-            aria-label="القائمة"
+            aria-label={t('navMenu')}
           >
             {menuOpen ? (
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -118,8 +151,8 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
             <Link
               href={profileHref}
               className={`w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/profile') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
-              aria-label="ملفي الشخصي"
-              title="ملفي الشخصي"
+              aria-label={t('navProfile')}
+              title={t('navProfile')}
             >
               <UserIcon />
             </Link>
@@ -128,8 +161,8 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           <Link
             href="/community"
             className={`md:hidden w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/community') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
-            aria-label="المجتمع"
-            title="المجتمع"
+            aria-label={t('navCommunity')}
+            title={t('navCommunity')}
           >
             <CommunityIcon />
           </Link>
@@ -143,7 +176,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
             className="hidden md:inline-flex items-center gap-2 btn-ghost !py-2 !px-4 text-xs whitespace-nowrap"
           >
             {loggingOut && <LoadingSpinner size={14} />}
-            {loggingOut ? 'جارٍ الخروج...' : 'تسجيل الخروج'}
+            {loggingOut ? t('loggingOut') : t('logout')}
           </button>
         </div>
       </div>
@@ -162,9 +195,12 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
               }`}
             >
               {l.support && <SupportIcon size={18} />}
-              {l.label}
+              {t(l.key)}
             </Link>
           ))}
+
+          {!isAdminArea && <LanguageSelector mobile />}
+
           <button
             onClick={handleLogout}
             disabled={loggingOut}
@@ -172,7 +208,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
             className="flex items-center justify-start gap-2 text-right font-cairo font-semibold text-[14px] px-4 py-3 rounded-xl border border-transparent text-muted hover:bg-white/[0.025] hover:border-white/[0.05] hover:text-text transition"
           >
             {loggingOut && <LoadingSpinner size={15} />}
-            {loggingOut ? 'جارٍ الخروج...' : 'تسجيل الخروج'}
+            {loggingOut ? t('loggingOut') : t('logout')}
           </button>
         </div>
       )}
