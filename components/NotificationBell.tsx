@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useLanguage } from '@/components/LanguageProvider';
+import type { Language } from '@/lib/i18n';
 
 type NotificationRow = {
   id: string;
@@ -20,19 +22,36 @@ type PanelPosition = {
   width: number;
 };
 
-function timeAgo(iso: string) {
+function timeAgo(iso: string, language: Language) {
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
+  const hrs = Math.floor(mins / 60);
+  const days = Math.floor(hrs / 24);
+
+  if (language === 'fr') {
+    if (mins < 1) return 'À l’instant';
+    if (mins < 60) return `Il y a ${mins} min`;
+    if (hrs < 24) return `Il y a ${hrs} h`;
+    return `Il y a ${days} j`;
+  }
+
+  if (language === 'en') {
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins} min ago`;
+    if (hrs < 24) return `${hrs} hr ago`;
+    return `${days} day${days === 1 ? '' : 's'} ago`;
+  }
+
   if (mins < 1) return 'الآن';
   if (mins < 60) return `منذ ${mins} دقيقة`;
-  const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `منذ ${hrs} ساعة`;
-  return `منذ ${Math.floor(hrs / 24)} يوم`;
+  return `منذ ${days} يوم`;
 }
 
 export default function NotificationBell({ currentUserId }: { currentUserId: string }) {
   const supabase = createClient();
   const router = useRouter();
+  const { language } = useLanguage();
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [open, setOpen] = useState(false);
   const [renderDropdown, setRenderDropdown] = useState(false);
@@ -40,6 +59,36 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
   const [markingAllRead, setMarkingAllRead] = useState(false);
   const [panelPosition, setPanelPosition] = useState<PanelPosition>({ top: 68, left: 16, width: 320 });
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  const copy = language === 'fr'
+    ? {
+        notifications: 'Notifications',
+        marking: 'Mise à jour...',
+        markAll: 'Tout marquer comme lu',
+        empty: 'Aucune notification pour le moment',
+        someone: 'Quelqu’un',
+        newQuestion: (name: string) => `${name} a posé une nouvelle question`,
+        newReply: (name: string) => `${name} a répondu à votre question`,
+      }
+    : language === 'en'
+      ? {
+          notifications: 'Notifications',
+          marking: 'Updating...',
+          markAll: 'Mark all as read',
+          empty: 'No notifications yet',
+          someone: 'Someone',
+          newQuestion: (name: string) => `${name} posted a new question`,
+          newReply: (name: string) => `${name} replied to your question`,
+        }
+      : {
+          notifications: 'الإشعارات',
+          marking: 'جارٍ التحديد...',
+          markAll: 'تحديد الكل كمقروء',
+          empty: 'لا توجد إشعارات بعد',
+          someone: 'شخص ما',
+          newQuestion: (name: string) => `${name} طرح سؤالًا جديدًا`,
+          newReply: (name: string) => `${name} ردّ على سؤالك`,
+        };
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -175,9 +224,9 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
   }
 
   function messageFor(n: NotificationRow) {
-    const name = n.actor_display_name ?? 'شخص ما';
-    if (n.type === 'new_question') return `${name} طرح سؤالًا جديدًا`;
-    return `${name} ردّ على سؤالك`;
+    const name = n.actor_display_name ?? copy.someone;
+    if (n.type === 'new_question') return copy.newQuestion(name);
+    return copy.newReply(name);
   }
 
   return (
@@ -185,7 +234,7 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
       <button
         onClick={() => setOpen((v) => !v)}
         className={`relative p-2 rounded-lg transition duration-200 ${open ? 'text-gold bg-gold/[0.07]' : 'text-muted hover:text-text hover:bg-white/[0.025]'}`}
-        aria-label="الإشعارات"
+        aria-label={copy.notifications}
         aria-expanded={open}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -210,7 +259,7 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
         >
           {notifications.length > 0 && (
             <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3 bg-surface2/95 backdrop-blur-md border-b border-border">
-              <span className="font-cairo font-bold text-sm">الإشعارات</span>
+              <span className="font-cairo font-bold text-sm">{copy.notifications}</span>
               {unreadCount > 0 && (
                 <button
                   type="button"
@@ -218,20 +267,20 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
                   disabled={markingAllRead}
                   className="text-[12px] font-cairo text-gold hover:text-text transition disabled:opacity-50"
                 >
-                  {markingAllRead ? 'جارٍ التحديد...' : 'تحديد الكل كمقروء'}
+                  {markingAllRead ? copy.marking : copy.markAll}
                 </button>
               )}
             </div>
           )}
 
           {notifications.length === 0 ? (
-            <div className="p-5 text-center text-muted text-sm">لا توجد إشعارات بعد</div>
+            <div className="p-5 text-center text-muted text-sm">{copy.empty}</div>
           ) : (
             notifications.map((n) => (
               <button
                 key={n.id}
                 onClick={() => handleClickNotification(n)}
-                className={`w-full text-right px-4 py-3 border-b border-border last:border-b-0 hover:bg-white/[0.03] transition ${
+                className={`w-full text-start px-4 py-3 border-b border-border last:border-b-0 hover:bg-white/[0.03] transition ${
                   !n.is_read ? 'bg-gold/[0.06]' : ''
                 }`}
               >
@@ -239,7 +288,7 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
                   {!n.is_read && <span className="w-2 h-2 rounded-full bg-gold mt-1.5 flex-shrink-0" />}
                   <div className="flex-1 min-w-0">
                     <p className="text-[13.5px] leading-snug break-words">{messageFor(n)}</p>
-                    <span className="text-[11.5px] text-muted2">{timeAgo(n.created_at)}</span>
+                    <span className="text-[11.5px] text-muted2">{timeAgo(n.created_at, language)}</span>
                   </div>
                 </div>
               </button>
