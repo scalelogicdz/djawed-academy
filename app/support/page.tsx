@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import StudentNav from '@/components/StudentNav';
 import SupportForm from '@/components/SupportForm';
+import LocalizedText from '@/components/LocalizedText';
 
 function SupportIcon() {
   return (
@@ -39,13 +40,19 @@ export default async function SupportPage() {
             <SupportIcon />
           </div>
           <div>
-            <div className="eyebrow mb-2">الدعم</div>
-            <h1 className="font-cairo font-extrabold text-[26px] sm:text-[31px]">تواصل مع الإدارة</h1>
+            <div className="eyebrow mb-2"><LocalizedText ar="الدعم" fr="Support" en="Support" /></div>
+            <h1 className="font-cairo font-extrabold text-[26px] sm:text-[31px]">
+              <LocalizedText ar="تواصل مع الإدارة" fr="Contacter l'administration" en="Contact administration" />
+            </h1>
           </div>
         </div>
 
         <p className="text-muted text-sm sm:text-[15px] leading-7 mb-7">
-          عندك سؤال أو تحتاج مساعدة مباشرة؟ أرسل طلبك من هنا، وسنتواصل معك خارج المنصة عبر البريد الإلكتروني الذي تضعه في النموذج.
+          <LocalizedText
+            ar="عندك سؤال أو تحتاج مساعدة مباشرة؟ أرسل طلبك من هنا، وسنتواصل معك خارج المنصة عبر البريد الإلكتروني الذي تضعه في النموذج."
+            fr="Vous avez une question ou besoin d’aide ? Envoyez votre demande ici et nous vous contacterons par l’adresse e-mail indiquée dans le formulaire."
+            en="Have a question or need direct help? Send your request here and we will contact you using the email address you provide in the form."
+          />
         </p>
 
         <SupportForm userId={user.id} defaultName={defaultName} defaultEmail={defaultEmail} />
