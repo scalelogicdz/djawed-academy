@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useLanguage } from '@/components/LanguageProvider';
 
 type Props = {
   title: string;
@@ -19,36 +22,62 @@ function WhatsAppIcon() {
 }
 
 export default function ServiceComingSoonPage({ title, description, whatsappMessage }: Props) {
+  const { language } = useLanguage();
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
+  const copy = language === 'fr'
+    ? {
+        back: 'Retour aux services',
+        unavailable: 'Service actuellement indisponible',
+        eyebrow: 'Services Djawed Logic',
+        notOpen: 'Ce service n’est pas encore ouvert',
+        note: 'Vous pouvez nous contacter dès maintenant pour poser vos questions ou enregistrer votre intérêt avant son lancement.',
+        whatsapp: 'Contacter via WhatsApp',
+      }
+    : language === 'en'
+      ? {
+          back: 'Back to services',
+          unavailable: 'Service currently unavailable',
+          eyebrow: 'Djawed Logic Services',
+          notOpen: 'This service is not open yet',
+          note: 'You can contact us now to ask about it or register your interest before it launches.',
+          whatsapp: 'Contact via WhatsApp',
+        }
+      : {
+          back: 'العودة إلى الخدمات',
+          unavailable: 'الخدمة غير متاحة حاليًا',
+          eyebrow: 'خدمات Djawed Logic',
+          notOpen: 'هذه الخدمة لم تُفتح بعد',
+          note: 'يمكنك التواصل الآن إذا أردت الاستفسار عنها أو تسجيل اهتمامك قبل إطلاقها.',
+          whatsapp: 'تواصل عبر واتساب',
+        };
+
   return (
-    <main className="max-w-[860px] mx-auto px-5 sm:px-6 py-10 sm:py-14" dir="rtl">
+    <main className="max-w-[860px] mx-auto px-5 sm:px-6 py-10 sm:py-14">
       <div className="mb-6">
         <Link href="/services" className="inline-flex items-center gap-2 text-sm text-muted hover:text-gold transition">
-          <span>→</span>
-          <span>العودة إلى الخدمات</span>
+          <span>{language === 'ar' ? '→' : '←'}</span>
+          <span>{copy.back}</span>
         </Link>
       </div>
 
       <section className="rounded-[26px] border border-white/[0.08] bg-[#111925] shadow-[0_28px_70px_-34px_rgba(0,0,0,0.9)] p-6 sm:p-9 lg:p-11">
         <div className="inline-flex self-start items-center gap-2 rounded-full border border-[#E4756A]/35 bg-[#E4756A]/[0.08] px-3.5 py-2 text-[12px] font-bold text-[#F0A49C] mb-5">
           <span className="w-2 h-2 rounded-full bg-[#E4756A]" />
-          الخدمة غير متاحة حاليًا
+          {copy.unavailable}
         </div>
 
-        <div className="eyebrow mb-3">خدمات Djawed Logic</div>
+        <div className="eyebrow mb-3">{copy.eyebrow}</div>
         <h1 className="font-heading font-extrabold text-[29px] sm:text-[36px] lg:text-[41px] leading-[1.35] mb-5">
           {title}
         </h1>
-        <p className="text-muted text-[14px] sm:text-[15.5px] leading-8 mb-6 max-w-[680px]">
+        <p className="text-muted text-[14px] sm:text-[15.5px] leading-8 mb-6 max-w-[680px]" dir="auto">
           {description}
         </p>
 
         <div className="rounded-2xl border border-gold/20 bg-gold/[0.045] p-5 sm:p-6 mb-7">
-          <h2 className="font-cairo font-bold text-[17px] sm:text-[18px] mb-2">هذه الخدمة لم تُفتح بعد</h2>
-          <p className="text-muted text-[13.5px] leading-7">
-            يمكنك التواصل الآن إذا أردت الاستفسار عنها أو تسجيل اهتمامك قبل إطلاقها.
-          </p>
+          <h2 className="font-cairo font-bold text-[17px] sm:text-[18px] mb-2">{copy.notOpen}</h2>
+          <p className="text-muted text-[13.5px] leading-7">{copy.note}</p>
         </div>
 
         <a
@@ -58,7 +87,7 @@ export default function ServiceComingSoonPage({ title, description, whatsappMess
           className="group inline-flex w-full sm:w-auto sm:min-w-[280px] items-center justify-center gap-3 rounded-xl border border-[#25D366]/35 bg-[#25D366] px-6 py-3.5 text-[15px] font-bold font-cairo text-[#07120B] shadow-[0_14px_30px_-18px_rgba(37,211,102,0.7)] transition duration-200 hover:brightness-105 hover:-translate-y-0.5"
         >
           <WhatsAppIcon />
-          <span>تواصل عبر واتساب</span>
+          <span>{copy.whatsapp}</span>
         </a>
       </section>
     </main>
