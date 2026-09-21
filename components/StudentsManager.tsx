@@ -22,6 +22,8 @@ export default function StudentsManager({
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingStudentId, setDeletingStudentId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     fullName: '',
@@ -52,6 +54,31 @@ export default function StudentsManager({
         body: JSON.stringify({ studentId, courseId }),
       });
     }
+  }
+
+  async function removeStudent(student: Student) {
+    if (deletingStudentId) return;
+    if (!window.confirm(`هل أنت متأكد من حذف الطالب "${student.full_name}"؟`)) return;
+
+    setDeleteError(null);
+    setDeletingStudentId(student.id);
+
+    const res = await fetch('/api/admin/students', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId: student.id }),
+    });
+    const data = await res.json();
+    setDeletingStudentId(null);
+
+    if (!res.ok) {
+      setDeleteError(data.error ?? 'تعذر حذف الطالب');
+      return;
+    }
+
+    setStudents((current) => current.filter((s) => s.id !== student.id));
+    setEnrollments((current) => current.filter((e) => e.student_id !== student.id));
+    router.refresh();
   }
 
   async function submitNewStudent(e: React.FormEvent) {
@@ -172,6 +199,8 @@ export default function StudentsManager({
         </form>
       )}
 
+      {deleteError && <p className="text-sm text-red-400 mb-4">{deleteError}</p>}
+
       <div className="card overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -182,6 +211,7 @@ export default function StudentsManager({
                   {c.title}
                 </th>
               ))}
+              <th className="text-center p-4 font-medium">إجراءات</th>
             </tr>
           </thead>
           <tbody>
@@ -203,6 +233,16 @@ export default function StudentsManager({
                     </button>
                   </td>
                 ))}
+                <td className="text-center p-4">
+                  <button
+                    type="button"
+                    onClick={() => removeStudent(s)}
+                    disabled={deletingStudentId === s.id}
+                    className="rounded-lg border border-red-400/30 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-400/10 disabled:opacity-50"
+                  >
+                    {deletingStudentId === s.id ? 'جارٍ الحذف...' : 'حذف الطالب'}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
