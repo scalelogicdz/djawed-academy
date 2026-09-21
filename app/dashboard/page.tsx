@@ -98,9 +98,6 @@ export default async function DashboardPage() {
 
       <main className="max-w-[1140px] mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-14">
         <section className="relative overflow-hidden rounded-[24px] border border-border bg-surface p-5 sm:p-7 lg:p-9 mb-7 sm:mb-9">
-          <div className="pointer-events-none absolute -top-28 -left-20 w-72 h-72 rounded-full bg-gold/[0.06] blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 right-16 w-56 h-56 rounded-full bg-gold/[0.035] blur-3xl" />
-
           <div className="relative grid lg:grid-cols-[1fr_auto] gap-7 lg:gap-10 items-center">
             <div>
               <div className="eyebrow mb-3"><LocalizedText ar="مساحتك التعليمية" fr="Votre espace d’apprentissage" en="Your learning space" /></div>
@@ -137,37 +134,48 @@ export default async function DashboardPage() {
             </div>
 
             {courseCards.length > 0 && (
-              <div className="flex justify-center lg:justify-end">
-                <div
-                  className="relative w-[154px] h-[154px] sm:w-[172px] sm:h-[172px] rounded-full p-[9px] shadow-[0_18px_60px_rgba(0,0,0,0.28)]"
-                  style={{ background: `conic-gradient(#D4B15E ${overallPct * 3.6}deg, #3A3220 0deg)` }}
-                >
-                  <div className="w-full h-full rounded-full bg-surface border border-border flex flex-col items-center justify-center text-center">
-                    <span className="font-heading font-extrabold text-[34px] sm:text-[39px] text-gold leading-none">{overallPct}%</span>
-                    <span className="text-muted text-[11.5px] sm:text-xs mt-2"><LocalizedText ar="التقدم الكلي" fr="Progression globale" en="Overall progress" /></span>
+              <div className="w-full lg:w-[360px]">
+                <div className="rounded-[18px] border border-white/[0.08] bg-surface p-4 sm:p-5 shadow-[0_12px_28px_-22px_rgba(0,0,0,0.75)]">
+                  <div className="flex items-end justify-between gap-4 mb-3">
+                    <div>
+                      <div className="text-[12px] font-bold text-gold mb-1">
+                        <LocalizedText ar="التقدم الكلي" fr="Progression globale" en="Overall progress" />
+                      </div>
+                      <div className="flex items-end gap-2">
+                        <span className="font-heading font-extrabold text-[34px] sm:text-[38px] leading-none text-text">{overallPct}%</span>
+                        <span className="text-muted2 text-[11.5px] pb-1">
+                          <LocalizedText ar="مكتمل" fr="terminé" en="completed" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="h-2.5 rounded-full overflow-hidden bg-[#2A3039] mb-4">
+                    <div
+                      className="h-full rounded-full bg-gold transition-[width] duration-500"
+                      style={{ width: `${overallPct}%` }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="rounded-xl border border-white/[0.08] bg-surface2 px-2.5 py-3 text-center">
+                      <div className="font-heading font-extrabold text-[19px] text-success">{completedLessonsAll}</div>
+                      <div className="text-muted2 text-[10.5px] mt-1"><LocalizedText ar="مكتمل" fr="Terminées" en="Completed" /></div>
+                    </div>
+                    <div className="rounded-xl border border-white/[0.08] bg-surface2 px-2.5 py-3 text-center">
+                      <div className="font-heading font-extrabold text-[19px] text-gold">{remainingLessonsAll}</div>
+                      <div className="text-muted2 text-[10.5px] mt-1"><LocalizedText ar="متبقي" fr="Restantes" en="Remaining" /></div>
+                    </div>
+                    <div className="rounded-xl border border-white/[0.08] bg-surface2 px-2.5 py-3 text-center">
+                      <div className="font-heading font-extrabold text-[19px] text-text">{totalLessonsAll}</div>
+                      <div className="text-muted2 text-[10.5px] mt-1"><LocalizedText ar="الإجمالي" fr="Total" en="Total" /></div>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
         </section>
-
-        {courseCards.length > 0 && (
-          <section className="grid grid-cols-3 gap-2.5 sm:gap-4 mb-7 sm:mb-9">
-            <div className="rounded-2xl border border-border bg-surface p-3.5 sm:p-5 text-center">
-              <div className="font-heading font-extrabold text-[22px] sm:text-[29px] text-success">{completedLessonsAll}</div>
-              <div className="text-muted text-[10.5px] sm:text-[12.5px] mt-1.5"><LocalizedText ar="دروس مكتملة" fr="Leçons terminées" en="Completed lessons" /></div>
-            </div>
-            <div className="rounded-2xl border border-border bg-surface p-3.5 sm:p-5 text-center">
-              <div className="font-heading font-extrabold text-[22px] sm:text-[29px] text-gold">{remainingLessonsAll}</div>
-              <div className="text-muted text-[10.5px] sm:text-[12.5px] mt-1.5"><LocalizedText ar="دروس متبقية" fr="Leçons restantes" en="Remaining lessons" /></div>
-            </div>
-            <div className="rounded-2xl border border-border bg-surface p-3.5 sm:p-5 text-center">
-              <div className="font-heading font-extrabold text-[22px] sm:text-[29px]">{totalLessonsAll}</div>
-              <div className="text-muted text-[10.5px] sm:text-[12.5px] mt-1.5"><LocalizedText ar="إجمالي الدروس" fr="Total des leçons" en="Total lessons" /></div>
-            </div>
-          </section>
-        )}
 
         {courseCards.length === 0 && (
           <div className="card p-7 sm:p-9 text-center">
