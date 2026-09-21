@@ -54,3 +54,51 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ ok: true, studentId: created.user.id });
 }
+
+
+// Permanently delete a student account.
+// Deleting the Supabase Auth user cascades to profiles, enrollments,
+// progress, questions, replies, and any other relations configured
+// with ON DELETE CASCADE.
+export async function DELETE(request: Request) {
+  const admin = await assertAdmin();
+  if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
+
+  const { studentId } = await request.json();
+
+  if (!studentId || typeof studentId !== 'string') {
+    return NextResponse.json({ error: 'معرّف الطالب غير صالح' }, { status: 400 });
+  }
+
+  if (studentId === admin.id) {
+    return NextResponse.json({ error: 'لا يمكنك حذف حسابك الإداري' }, { status: 400 });
+  }
+
+  const adminClient = createAdminClient();
+
+  const { data: targetProfile, error: profileReadError } = await adminClient
+    .from('profiles')
+    .select('id, is_admin')
+    .eq('id', studentId)
+    .maybeSingle();
+
+  if (profileReadError) {
+    return NextResponse.json({ error: profileReadError.message }, { status: 400 });
+  }
+
+  if (!targetProfile) {
+    return NextResponse.json({ error: 'الطالب غير موجود' }, { status: 404 });
+  }
+
+  if (targetProfile.is_admin) {
+    return NextResponse.json({ error: 'لا يمكن حذف حساب إداري من صفحة الطلاب' }, { status: 400 });
+  }
+
+  const { error: deleteError } = await adminClient.auth.admin.deleteUser(studentId);
+
+  if (deleteError) {
+    return NextResponse.json({ error: deleteError.message }, { status: 400 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
