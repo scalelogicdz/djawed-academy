@@ -71,7 +71,7 @@ export default function CourseAccordion({
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-6 sm:space-y-7">
       {modules.map((module, moduleIndex) => {
         const isOpen = openModuleId === module.id;
         const moduleLessons = lessons.filter((lesson) => lesson.module_id === module.id);
@@ -80,19 +80,27 @@ export default function CourseAccordion({
         const moduleDone = moduleLessons.length > 0 && completedInModule === moduleLessons.length;
 
         return (
-          <div key={module.id} className="card overflow-hidden border border-border/90">
+          <div
+            key={module.id}
+            className={`overflow-hidden rounded-[24px] border transition-all duration-300 ${isOpen
+              ? 'border-gold/35 bg-[#182334] shadow-[0_18px_48px_-28px_rgba(212,177,94,0.28),0_0_0_1px_rgba(212,177,94,0.04)]'
+              : 'border-white/[0.10] bg-[#151F2E] shadow-[0_16px_38px_-30px_rgba(0,0,0,0.9)] hover:border-white/[0.16] hover:bg-[#182334]'
+            }`}
+          >
             <button
               type="button"
               onClick={() => toggleModule(module.id)}
               aria-expanded={isOpen}
-              className="w-full text-start hover:bg-white/[0.02] transition"
+              className={`w-full text-start transition ${isOpen ? 'bg-gold/[0.025]' : 'hover:bg-white/[0.025]'}`}
             >
-              <div className="flex items-center gap-4 px-4 sm:px-6 pt-5 sm:pt-6 pb-4">
+              <div className="flex items-center gap-4 sm:gap-5 px-4 sm:px-6 pt-5 sm:pt-6 pb-4">
                 <div
-                  className={`w-10 h-10 rounded-xl border flex items-center justify-center font-heading font-bold flex-shrink-0 ${
+                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] border flex items-center justify-center font-heading font-bold text-[16px] sm:text-[17px] flex-shrink-0 ${
                     moduleDone
-                      ? 'border-success/30 bg-success/[0.08] text-success'
-                      : 'border-border bg-surface2 text-gold'
+                      ? 'border-success/35 bg-success/[0.10] text-success'
+                      : isOpen
+                        ? 'border-gold/45 bg-gold/[0.10] text-gold shadow-[0_0_0_3px_rgba(212,177,94,0.04)]'
+                        : 'border-white/[0.12] bg-[#1B2738] text-gold'
                   }`}
                 >
                   {moduleDone ? '✓' : moduleIndex + 1}
@@ -100,14 +108,14 @@ export default function CourseAccordion({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <div className="font-heading font-bold text-[16px] sm:text-[18px] leading-snug">{module.title}</div>
+                    <div className={`font-heading font-extrabold text-[17px] sm:text-[19px] leading-snug ${isOpen ? 'text-text' : 'text-[#F1F0EC]'}`}>{module.title}</div>
                     {moduleDone && (
                       <span className="inline-flex rounded-full border border-success/20 bg-success/[0.08] px-2 py-0.5 text-[10px] font-bold text-success">
                         {copy.complete}
                       </span>
                     )}
                   </div>
-                  <div className="text-muted2 text-[11.5px] sm:text-[12px]">
+                  <div className={`text-[11.5px] sm:text-[12px] ${isOpen ? 'text-muted' : 'text-muted2'}`}>
                     {copy.completedLessons(completedInModule, moduleLessons.length)}
                   </div>
                 </div>
@@ -116,22 +124,24 @@ export default function CourseAccordion({
                   <span className={`hidden sm:inline text-[12px] font-bold ${moduleDone ? 'text-success' : 'text-muted'}`}>
                     {modulePct}%
                   </span>
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className={`text-muted flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
-                  >
-                    <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <span className={`w-9 h-9 rounded-xl border flex items-center justify-center transition ${isOpen ? 'border-gold/25 bg-gold/[0.07] text-gold' : 'border-white/[0.07] bg-white/[0.02] text-muted'}`}>
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className={`flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                    >
+                      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
                 </div>
               </div>
 
               <div className="px-4 sm:px-6 pb-5">
-                <div className="h-1.5 rounded-full overflow-hidden bg-track">
+                <div className="h-2 rounded-full overflow-hidden bg-[#322B1F] border border-white/[0.025]">
                   <div
                     className={`h-full rounded-full transition-[width] duration-500 ${
                       moduleDone ? 'bg-success' : 'bg-gradient-to-l from-goldDim to-gold'
@@ -147,9 +157,9 @@ export default function CourseAccordion({
               style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
             >
               <div className="overflow-hidden">
-                <div className="border-t border-border px-3 sm:px-4 py-3">
+                <div className="border-t border-gold/15 bg-[#0F1723] px-3 sm:px-4 py-4 sm:py-5">
                   {module.description && (
-                    <p className="text-muted2 text-[12.5px] leading-7 px-2 sm:px-3 py-3">{module.description}</p>
+                    <p className="text-muted text-[12.5px] leading-7 px-2 sm:px-3 pb-4">{module.description}</p>
                   )}
 
                   <div className="space-y-2.5 pb-2">
@@ -163,10 +173,10 @@ export default function CourseAccordion({
                           ref={isHighlighted ? highlightedRef : undefined}
                           className={`relative flex items-center gap-3 sm:gap-4 rounded-2xl px-3 sm:px-4 py-3.5 transition border ${
                             locked
-                              ? 'opacity-55 border-white/[0.04] bg-white/[0.012]'
+                              ? 'opacity-55 border-white/[0.06] bg-[#131D2B]'
                               : done
-                                ? 'border-success/[0.10] bg-success/[0.025] hover:border-success/[0.18] hover:bg-success/[0.04]'
-                                : 'border-white/[0.04] bg-white/[0.012] hover:border-gold/20 hover:bg-white/[0.025]'
+                                ? 'border-success/[0.14] bg-success/[0.035] hover:border-success/[0.24] hover:bg-success/[0.055]'
+                                : 'border-white/[0.07] bg-[#131D2B] hover:border-gold/25 hover:bg-[#172334]'
                           } ${
                             isHighlighted
                               ? '!border-gold/50 !bg-gold/[0.075] shadow-[0_0_0_1px_rgba(212,177,94,0.06),0_12px_28px_-24px_rgba(212,177,94,0.45)]'
