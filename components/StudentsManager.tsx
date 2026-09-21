@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Student = { id: string; full_name: string; display_name: string; email: string; created_at: string };
@@ -280,7 +280,8 @@ export default function StudentsManager({
           </thead>
           <tbody>
             {students.map((s) => (
-              <tr key={s.id} className="border-b border-border last:border-0">
+              <Fragment key={s.id}>
+              <tr className="border-b border-border last:border-0">
                 <td className="p-4">
                   <div className="font-medium">{s.full_name}</div>
                   <div className="text-muted2 text-xs">{s.display_name}</div>
@@ -383,6 +384,7 @@ export default function StudentsManager({
                   </td>
                 </tr>
               )}
+              </Fragment>
             ))}
           </tbody>
         </table>
