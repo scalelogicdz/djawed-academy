@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import StudentsManager from '@/components/StudentsManager';
 import AdminBackButton from '@/components/AdminBackButton';
 
@@ -16,6 +17,15 @@ export default async function AdminStudentsPage() {
     .eq('is_admin', false)
     .order('created_at', { ascending: false });
 
+  const adminClient = createAdminClient();
+  const { data: authUsers } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const emailById = new Map((authUsers?.users ?? []).map((authUser) => [authUser.id, authUser.email ?? '']));
+
+  const studentsWithEmail = (students ?? []).map((student) => ({
+    ...student,
+    email: emailById.get(student.id) ?? '',
+  }));
+
   const { data: courses } = await supabase.from('courses').select('id, title');
   const { data: enrollments } = await supabase.from('enrollments').select('student_id, course_id');
 
@@ -28,7 +38,7 @@ export default async function AdminStudentsPage() {
       <h1 className="font-cairo font-extrabold text-[27px] sm:text-[31px] mb-8">إدارة الطلاب</h1>
 
       <StudentsManager
-        initialStudents={students ?? []}
+        initialStudents={studentsWithEmail}
         courses={courses ?? []}
         initialEnrollments={enrollments ?? []}
       />
