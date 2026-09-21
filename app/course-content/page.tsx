@@ -101,14 +101,13 @@ export default async function CourseContentPage({
           )}
         </div>
 
-        <div className="bg-[#0d1219] border border-white/[0.08] rounded-[18px] p-4 mb-[24px] sm:mb-[26px]">
+        <div className="card p-5 sm:p-6 mb-6 sm:mb-8 border border-white/[0.08] overflow-hidden relative">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/35 to-transparent" />
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-1 h-4 rounded-full bg-gold flex-shrink-0" />
-                <div className="text-[12.5px] font-bold text-gold">
-                  <LocalizedText ar="تقدمك في الدورة" fr="Votre progression" en="Your course progress" />
-                </div>
+              <div className="text-[12px] font-bold text-gold mb-1.5">
+                <LocalizedText ar="تقدمك في الدورة" fr="Votre progression" en="Your course progress" />
               </div>
               <div className="flex items-end gap-2">
                 <span className="font-heading font-extrabold text-[34px] sm:text-[38px] leading-none text-text">{progressPct}%</span>
@@ -119,24 +118,24 @@ export default async function CourseContentPage({
             </div>
 
             <div className="grid grid-cols-3 gap-2 sm:gap-3 min-w-0 sm:min-w-[330px]">
-              <div className="rounded-xl border border-[rgba(90,199,140,0.28)] bg-[#121824] px-3 py-3 text-center">
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-3 text-center">
                 <div className="text-[17px] font-bold text-success">{completedLessons}</div>
                 <div className="text-[10.5px] text-muted2 mt-1"><LocalizedText ar="مكتمل" fr="Terminées" en="Completed" /></div>
               </div>
-              <div className="rounded-xl border border-[rgba(212,177,94,0.28)] bg-[#121824] px-3 py-3 text-center">
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-3 text-center">
                 <div className="text-[17px] font-bold text-gold">{remainingLessons}</div>
                 <div className="text-[10.5px] text-muted2 mt-1"><LocalizedText ar="متبقي" fr="Restantes" en="Remaining" /></div>
               </div>
-              <div className="rounded-xl border border-white/[0.10] bg-[#121824] px-3 py-3 text-center">
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-3 text-center">
                 <div className="text-[17px] font-bold text-text">{totalLessons}</div>
                 <div className="text-[10.5px] text-muted2 mt-1"><LocalizedText ar="إجمالي" fr="Total" en="Total" /></div>
               </div>
             </div>
           </div>
 
-          <div className="h-2 bg-white/[0.09] rounded-full overflow-hidden">
+          <div className="h-2 bg-track rounded-full overflow-hidden">
             <div
-              className="h-full bg-gold rounded-full transition-[width] duration-500"
+              className="h-full bg-gradient-to-l from-goldDim via-gold to-[#E7CB82] rounded-full transition-[width] duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
