@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-type Student = { id: string; full_name: string; display_name: string; created_at: string };
+type Student = { id: string; full_name: string; display_name: string; email: string; created_at: string };
 type Course = { id: string; title: string };
 type Enrollment = { student_id: string; course_id: string };
 
@@ -24,6 +24,15 @@ export default function StudentsManager({
   const [error, setError] = useState<string | null>(null);
   const [deletingStudentId, setDeletingStudentId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [savingStudentEdit, setSavingStudentEdit] = useState(false);
+  const [studentEditError, setStudentEditError] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    fullName: '',
+    displayName: '',
+    email: '',
+    password: '',
+  });
 
   const [form, setForm] = useState({
     fullName: '',
@@ -54,6 +63,60 @@ export default function StudentsManager({
         body: JSON.stringify({ studentId, courseId }),
       });
     }
+  }
+
+  function startEditingStudent(student: Student) {
+    setEditingStudentId(student.id);
+    setStudentEditError(null);
+    setEditForm({
+      fullName: student.full_name ?? '',
+      displayName: student.display_name ?? '',
+      email: student.email ?? '',
+      password: '',
+    });
+  }
+
+  function cancelEditingStudent() {
+    setEditingStudentId(null);
+    setStudentEditError(null);
+    setEditForm({ fullName: '', displayName: '', email: '', password: '' });
+  }
+
+  async function saveStudentEdit(studentId: string) {
+    if (savingStudentEdit) return;
+    if (!editForm.fullName.trim() || !editForm.email.trim()) {
+      setStudentEditError('الاسم والبريد الإلكتروني مطلوبان');
+      return;
+    }
+
+    setSavingStudentEdit(true);
+    setStudentEditError(null);
+
+    const res = await fetch('/api/admin/students', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentId,
+        fullName: editForm.fullName,
+        displayName: editForm.displayName,
+        email: editForm.email,
+        password: editForm.password || undefined,
+      }),
+    });
+
+    const data = await res.json();
+    setSavingStudentEdit(false);
+
+    if (!res.ok) {
+      setStudentEditError(data.error ?? 'تعذر حفظ تعديلات الطالب');
+      return;
+    }
+
+    setStudents((current) =>
+      current.map((student) => (student.id === studentId ? { ...student, ...data.student } : student))
+    );
+    cancelEditingStudent();
+    router.refresh();
   }
 
   async function removeStudent(student: Student) {
@@ -103,7 +166,7 @@ export default function StudentsManager({
     setForm({ fullName: '', displayName: '', email: '', password: '', courseIds: [] });
     router.refresh();
     setStudents([
-      { id: data.studentId, full_name: form.fullName, display_name: form.displayName || form.fullName, created_at: new Date().toISOString() },
+      { id: data.studentId, full_name: form.fullName, display_name: form.displayName || form.fullName, email: form.email, created_at: new Date().toISOString() },
       ...students,
     ]);
     setEnrollments([
@@ -200,6 +263,7 @@ export default function StudentsManager({
       )}
 
       {deleteError && <p className="text-sm text-red-400 mb-4">{deleteError}</p>}
+      {studentEditError && <p className="text-sm text-red-400 mb-4">{studentEditError}</p>}
 
       <div className="card overflow-x-auto">
         <table className="w-full text-sm">
@@ -220,6 +284,7 @@ export default function StudentsManager({
                 <td className="p-4">
                   <div className="font-medium">{s.full_name}</div>
                   <div className="text-muted2 text-xs">{s.display_name}</div>
+                  <div className="text-muted2 text-[11px] mt-1" dir="ltr">{s.email || '—'}</div>
                 </td>
                 {courses.map((c) => (
                   <td key={c.id} className="text-center p-4">
@@ -234,16 +299,90 @@ export default function StudentsManager({
                   </td>
                 ))}
                 <td className="text-center p-4">
-                  <button
-                    type="button"
-                    onClick={() => removeStudent(s)}
-                    disabled={deletingStudentId === s.id}
-                    className="rounded-lg border border-red-400/30 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-400/10 disabled:opacity-50"
-                  >
-                    {deletingStudentId === s.id ? 'جارٍ الحذف...' : 'حذف الطالب'}
-                  </button>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => startEditingStudent(s)}
+                      className="rounded-lg border border-gold/30 px-3 py-2 text-xs font-semibold text-gold hover:bg-gold/[0.08] transition"
+                    >
+                      تعديل
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeStudent(s)}
+                      disabled={deletingStudentId === s.id}
+                      className="rounded-lg border border-red-400/30 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-400/10 disabled:opacity-50"
+                    >
+                      {deletingStudentId === s.id ? 'جارٍ الحذف...' : 'حذف الطالب'}
+                    </button>
+                  </div>
                 </td>
               </tr>
+              {editingStudentId === s.id && (
+                <tr className="border-b border-border bg-white/[0.015]">
+                  <td colSpan={courses.length + 2} className="p-4 sm:p-5">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs text-muted mb-2">الاسم الكامل</label>
+                        <input
+                          value={editForm.fullName}
+                          onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                          className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-3 text-[14px] focus:outline-none focus:border-gold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-muted mb-2">الاسم المعروض</label>
+                        <input
+                          value={editForm.displayName}
+                          onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })}
+                          className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-3 text-[14px] focus:outline-none focus:border-gold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-muted mb-2">البريد الإلكتروني للدخول</label>
+                        <input
+                          type="email"
+                          dir="ltr"
+                          value={editForm.email}
+                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                          className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-3 text-[14px] focus:outline-none focus:border-gold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-muted mb-2">كلمة مرور جديدة (اختياري)</label>
+                        <input
+                          type="text"
+                          dir="ltr"
+                          value={editForm.password}
+                          onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                          placeholder="اتركها فارغة إذا لا تريد تغييرها"
+                          className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-3 text-[14px] focus:outline-none focus:border-gold"
+                        />
+                        <p className="text-[11px] text-muted2 mt-1.5">لا يمكن عرض كلمة المرور الحالية، لكن يمكنك تعيين كلمة مرور جديدة للطالب.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap justify-end gap-2 mt-4">
+                      <button
+                        type="button"
+                        onClick={cancelEditingStudent}
+                        disabled={savingStudentEdit}
+                        className="btn-ghost !py-2 !px-4 text-xs"
+                      >
+                        إلغاء
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => saveStudentEdit(s.id)}
+                        disabled={savingStudentEdit}
+                        className="btn-primary !py-2 !px-4 text-xs"
+                      >
+                        {savingStudentEdit ? 'جارٍ الحفظ...' : 'حفظ التعديلات'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )}
             ))}
           </tbody>
         </table>
