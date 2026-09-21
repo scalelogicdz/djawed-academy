@@ -71,39 +71,35 @@ export default function CourseAccordion({
   }
 
   return (
-    <div className="space-y-6 sm:space-y-7 w-full max-w-full overflow-x-clip">
+    <div className="space-y-3 w-full max-w-full overflow-x-clip">
       {modules.map((module, moduleIndex) => {
         const isOpen = openModuleId === module.id;
         const moduleLessons = lessons.filter((lesson) => lesson.module_id === module.id);
         const completedInModule = moduleLessons.filter((lesson) => completedSet.has(lesson.id)).length;
         const modulePct = moduleLessons.length > 0 ? Math.round((completedInModule / moduleLessons.length) * 100) : 0;
         const moduleDone = moduleLessons.length > 0 && completedInModule === moduleLessons.length;
+        const isCurrentModule = module.id === defaultOpenModuleId;
 
         return (
           <div
             key={module.id}
-            className={`overflow-hidden rounded-[18px] sm:rounded-[20px] border transition-all duration-300 ${isOpen
-              ? 'border-gold/55 bg-[#171D26] shadow-[0_18px_44px_-30px_rgba(0,0,0,0.82)]'
-              : 'border-white/[0.10] bg-[#171D26] shadow-[0_14px_32px_-28px_rgba(0,0,0,0.80)] hover:border-white/[0.16] hover:bg-[#1A212B]'
-            }`}
+            className={`overflow-hidden rounded-2xl border bg-[#141b28] shadow-[0_6px_16px_-8px_rgba(0,0,0,0.55)] transition-all duration-300 ${isCurrentModule ? 'border-white/[0.10] border-l-[3px] !border-l-gold' : 'border-white/[0.10]'} ${isOpen ? 'ring-1 ring-gold/20' : ''}`}
           >
             <button
               type="button"
               onClick={() => toggleModule(module.id)}
               aria-expanded={isOpen}
-              className={`w-full text-start transition ${isOpen ? 'bg-gold/[0.025]' : 'hover:bg-white/[0.018]'}`}
+              className="w-full text-start transition hover:bg-white/[0.018]"
             >
               <div className="flex items-center gap-4 sm:gap-5 px-4 sm:px-6 pt-5 sm:pt-6 pb-4">
                 <div
-                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border flex items-center justify-center font-heading font-bold text-[16px] sm:text-[17px] flex-shrink-0 ${
-                    moduleDone
-                      ? 'border-success/35 bg-success/[0.10] text-success'
-                      : isOpen
-                        ? 'border-gold/60 bg-[#1A2029] text-gold shadow-[0_0_0_3px_rgba(212,177,94,0.04)]'
-                        : 'border-white/[0.10] bg-[#1A2029] text-gold'
+                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-heading font-extrabold text-[16px] sm:text-[17px] flex-shrink-0 ${
+                    isCurrentModule
+                      ? 'bg-gold text-[#0b0e14]'
+                      : 'bg-[#1c2433] border border-gold/40 text-gold'
                   }`}
                 >
-                  {moduleDone ? '✓' : moduleIndex + 1}
+                  {moduleIndex + 1}
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -124,7 +120,7 @@ export default function CourseAccordion({
                   <span className={`hidden sm:inline text-[12px] font-bold ${moduleDone ? 'text-success' : 'text-muted'}`}>
                     {modulePct}%
                   </span>
-                  <span className={`w-9 h-9 rounded-xl border flex items-center justify-center transition ${isOpen ? 'border-gold/45 bg-[#1A2029] text-gold' : 'border-white/[0.07] bg-white/[0.02] text-muted'}`}>
+                  <span className={`w-9 h-9 rounded-xl border flex items-center justify-center transition ${isOpen ? 'border-gold/40 bg-[#1c2433] text-gold' : 'border-white/[0.08] bg-[#1c2433] text-muted'}`}>
                     <svg
                       width="17"
                       height="17"
@@ -141,7 +137,7 @@ export default function CourseAccordion({
               </div>
 
               <div className="px-4 sm:px-6 pb-5">
-                <div className="h-2 rounded-full overflow-hidden bg-[#262A30] border border-white/[0.04]">
+                <div className="h-2 rounded-full overflow-hidden bg-white/[0.10]">
                   <div
                     className={`h-full rounded-full transition-[width] duration-500 ${
                       moduleDone ? 'bg-success' : 'bg-gold'
