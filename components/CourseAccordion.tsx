@@ -71,7 +71,7 @@ export default function CourseAccordion({
   }
 
   return (
-    <div className="space-y-6 sm:space-y-7">
+    <div className="space-y-6 sm:space-y-7 w-full max-w-full overflow-x-clip">
       {modules.map((module, moduleIndex) => {
         const isOpen = openModuleId === module.id;
         const moduleLessons = lessons.filter((lesson) => lesson.module_id === module.id);
@@ -83,15 +83,15 @@ export default function CourseAccordion({
           <div
             key={module.id}
             className={`overflow-hidden rounded-[24px] border transition-all duration-300 ${isOpen
-              ? 'border-gold/28 bg-[#151D27] shadow-[0_18px_42px_-30px_rgba(0,0,0,0.78),0_0_0_1px_rgba(212,177,94,0.035)]'
-              : 'border-white/[0.09] bg-[#121922] shadow-[0_14px_32px_-28px_rgba(0,0,0,0.82)] hover:border-white/[0.14] hover:bg-[#141C26]'
+              ? 'border-gold/55 bg-[#141A22] shadow-[0_18px_42px_-30px_rgba(0,0,0,0.82),0_0_0_1px_rgba(212,177,94,0.08)]'
+              : 'border-white/[0.10] bg-[#11171F] shadow-[0_14px_32px_-28px_rgba(0,0,0,0.82)] hover:border-gold/22 hover:bg-[#131A23]'
             }`}
           >
             <button
               type="button"
               onClick={() => toggleModule(module.id)}
               aria-expanded={isOpen}
-              className={`w-full text-start transition ${isOpen ? 'bg-gold/[0.025]' : 'hover:bg-white/[0.025]'}`}
+              className={`w-full text-start transition ${isOpen ? 'bg-gold/[0.035]' : 'hover:bg-white/[0.018]'}`}
             >
               <div className="flex items-center gap-4 sm:gap-5 px-4 sm:px-6 pt-5 sm:pt-6 pb-4">
                 <div
@@ -99,8 +99,8 @@ export default function CourseAccordion({
                     moduleDone
                       ? 'border-success/35 bg-success/[0.10] text-success'
                       : isOpen
-                        ? 'border-gold/45 bg-gold/[0.10] text-gold shadow-[0_0_0_3px_rgba(212,177,94,0.04)]'
-                        : 'border-white/[0.10] bg-[#18212C] text-gold'
+                        ? 'border-gold/60 bg-gold/[0.12] text-gold shadow-[0_0_0_3px_rgba(212,177,94,0.05)]'
+                        : 'border-white/[0.10] bg-[#171C24] text-gold'
                   }`}
                 >
                   {moduleDone ? '✓' : moduleIndex + 1}
@@ -124,7 +124,7 @@ export default function CourseAccordion({
                   <span className={`hidden sm:inline text-[12px] font-bold ${moduleDone ? 'text-success' : 'text-muted'}`}>
                     {modulePct}%
                   </span>
-                  <span className={`w-9 h-9 rounded-xl border flex items-center justify-center transition ${isOpen ? 'border-gold/25 bg-gold/[0.07] text-gold' : 'border-white/[0.07] bg-white/[0.02] text-muted'}`}>
+                  <span className={`w-9 h-9 rounded-xl border flex items-center justify-center transition ${isOpen ? 'border-gold/45 bg-gold/[0.10] text-gold' : 'border-white/[0.07] bg-white/[0.02] text-muted'}`}>
                     <svg
                       width="17"
                       height="17"
@@ -141,10 +141,10 @@ export default function CourseAccordion({
               </div>
 
               <div className="px-4 sm:px-6 pb-5">
-                <div className="h-2 rounded-full overflow-hidden bg-[#28241C] border border-white/[0.025]">
+                <div className="h-2 rounded-full overflow-hidden bg-[#211D16] border border-gold/[0.08]">
                   <div
                     className={`h-full rounded-full transition-[width] duration-500 ${
-                      moduleDone ? 'bg-success' : 'bg-gradient-to-l from-goldDim to-gold'
+                      moduleDone ? 'bg-success' : 'bg-gold'
                     }`}
                     style={{ width: `${modulePct}%` }}
                   />
@@ -157,7 +157,7 @@ export default function CourseAccordion({
               style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
             >
               <div className="overflow-hidden">
-                <div className="border-t border-white/[0.07] bg-[#0D131B] px-3 sm:px-4 py-4 sm:py-5">
+                <div className="border-t border-gold/35 bg-[#0C1117] px-3 sm:px-4 py-4 sm:py-5">
                   {module.description && (
                     <p className="text-muted text-[12.5px] leading-7 px-2 sm:px-3 pb-4">{module.description}</p>
                   )}
@@ -173,13 +173,13 @@ export default function CourseAccordion({
                           ref={isHighlighted ? highlightedRef : undefined}
                           className={`relative flex items-center gap-3 sm:gap-4 rounded-2xl px-3 sm:px-4 py-3.5 transition border ${
                             locked
-                              ? 'opacity-55 border-white/[0.06] bg-[#111821]'
+                              ? 'opacity-55 border-white/[0.06] bg-[#10151C]'
                               : done
-                                ? 'border-success/[0.14] bg-[#121C22] hover:border-success/[0.22] hover:bg-[#152129]'
-                                : 'border-white/[0.07] bg-[#121A24] hover:border-gold/22 hover:bg-[#151E29]'
+                                ? 'border-success/[0.16] bg-[#11181D] hover:border-success/[0.24] hover:bg-[#131D22]'
+                                : 'border-white/[0.08] bg-[#12171E] hover:border-gold/30 hover:bg-[#151B23]'
                           } ${
                             isHighlighted
-                              ? '!border-gold/50 !bg-gold/[0.075] shadow-[0_0_0_1px_rgba(212,177,94,0.06),0_12px_28px_-24px_rgba(212,177,94,0.45)]'
+                              ? '!border-gold/65 !bg-gold/[0.09] shadow-[0_0_0_1px_rgba(212,177,94,0.08),0_12px_28px_-24px_rgba(212,177,94,0.42)]'
                               : ''
                           }`}
                         >
