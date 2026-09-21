@@ -83,7 +83,7 @@ export default function CourseAccordion({
         return (
           <div
             key={module.id}
-            className={`overflow-hidden rounded-2xl border bg-[#141b28] shadow-[0_6px_16px_-8px_rgba(0,0,0,0.55)] transition-all duration-300 ${isCurrentModule ? 'border-white/[0.10] border-l-[3px] !border-l-gold' : 'border-white/[0.10]'} ${isOpen ? 'ring-1 ring-gold/20' : ''}`}
+            className={`overflow-hidden rounded-2xl border bg-surface shadow-[0_6px_16px_-8px_rgba(0,0,0,0.55)] transition-all duration-300 ${isCurrentModule ? 'border-white/[0.10] border-l-[3px] !border-l-gold' : 'border-white/[0.10]'} ${isOpen ? 'ring-1 ring-gold/20' : ''}`}
           >
             <button
               type="button"
@@ -96,7 +96,7 @@ export default function CourseAccordion({
                   className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-heading font-extrabold text-[16px] sm:text-[17px] flex-shrink-0 ${
                     isCurrentModule
                       ? 'bg-gold text-[#0b0e14]'
-                      : 'bg-[#1c2433] border border-gold/40 text-gold'
+                      : 'bg-surface2 border border-gold/40 text-gold'
                   }`}
                 >
                   {moduleIndex + 1}
@@ -120,7 +120,7 @@ export default function CourseAccordion({
                   <span className={`hidden sm:inline text-[12px] font-bold ${moduleDone ? 'text-success' : 'text-muted'}`}>
                     {modulePct}%
                   </span>
-                  <span className={`w-9 h-9 rounded-xl border flex items-center justify-center transition ${isOpen ? 'border-gold/40 bg-[#1c2433] text-gold' : 'border-white/[0.08] bg-[#1c2433] text-muted'}`}>
+                  <span className={`w-9 h-9 rounded-xl border flex items-center justify-center transition ${isOpen ? 'border-gold/40 bg-surface2 text-gold' : 'border-white/[0.08] bg-surface2 text-muted'}`}>
                     <svg
                       width="17"
                       height="17"
