@@ -83,8 +83,8 @@ export default function CourseAccordion({
           <div
             key={module.id}
             className={`overflow-hidden rounded-[24px] border transition-all duration-300 ${isOpen
-              ? 'border-gold/35 bg-[#182334] shadow-[0_18px_48px_-28px_rgba(212,177,94,0.28),0_0_0_1px_rgba(212,177,94,0.04)]'
-              : 'border-white/[0.10] bg-[#151F2E] shadow-[0_16px_38px_-30px_rgba(0,0,0,0.9)] hover:border-white/[0.16] hover:bg-[#182334]'
+              ? 'border-gold/28 bg-[#151D27] shadow-[0_18px_42px_-30px_rgba(0,0,0,0.78),0_0_0_1px_rgba(212,177,94,0.035)]'
+              : 'border-white/[0.09] bg-[#121922] shadow-[0_14px_32px_-28px_rgba(0,0,0,0.82)] hover:border-white/[0.14] hover:bg-[#141C26]'
             }`}
           >
             <button
@@ -100,7 +100,7 @@ export default function CourseAccordion({
                       ? 'border-success/35 bg-success/[0.10] text-success'
                       : isOpen
                         ? 'border-gold/45 bg-gold/[0.10] text-gold shadow-[0_0_0_3px_rgba(212,177,94,0.04)]'
-                        : 'border-white/[0.12] bg-[#1B2738] text-gold'
+                        : 'border-white/[0.10] bg-[#18212C] text-gold'
                   }`}
                 >
                   {moduleDone ? '✓' : moduleIndex + 1}
@@ -141,7 +141,7 @@ export default function CourseAccordion({
               </div>
 
               <div className="px-4 sm:px-6 pb-5">
-                <div className="h-2 rounded-full overflow-hidden bg-[#322B1F] border border-white/[0.025]">
+                <div className="h-2 rounded-full overflow-hidden bg-[#28241C] border border-white/[0.025]">
                   <div
                     className={`h-full rounded-full transition-[width] duration-500 ${
                       moduleDone ? 'bg-success' : 'bg-gradient-to-l from-goldDim to-gold'
@@ -157,7 +157,7 @@ export default function CourseAccordion({
               style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
             >
               <div className="overflow-hidden">
-                <div className="border-t border-gold/15 bg-[#0F1723] px-3 sm:px-4 py-4 sm:py-5">
+                <div className="border-t border-white/[0.07] bg-[#0D131B] px-3 sm:px-4 py-4 sm:py-5">
                   {module.description && (
                     <p className="text-muted text-[12.5px] leading-7 px-2 sm:px-3 pb-4">{module.description}</p>
                   )}
@@ -173,10 +173,10 @@ export default function CourseAccordion({
                           ref={isHighlighted ? highlightedRef : undefined}
                           className={`relative flex items-center gap-3 sm:gap-4 rounded-2xl px-3 sm:px-4 py-3.5 transition border ${
                             locked
-                              ? 'opacity-55 border-white/[0.06] bg-[#131D2B]'
+                              ? 'opacity-55 border-white/[0.06] bg-[#111821]'
                               : done
-                                ? 'border-success/[0.14] bg-success/[0.035] hover:border-success/[0.24] hover:bg-success/[0.055]'
-                                : 'border-white/[0.07] bg-[#131D2B] hover:border-gold/25 hover:bg-[#172334]'
+                                ? 'border-success/[0.14] bg-[#121C22] hover:border-success/[0.22] hover:bg-[#152129]'
+                                : 'border-white/[0.07] bg-[#121A24] hover:border-gold/22 hover:bg-[#151E29]'
                           } ${
                             isHighlighted
                               ? '!border-gold/50 !bg-gold/[0.075] shadow-[0_0_0_1px_rgba(212,177,94,0.06),0_12px_28px_-24px_rgba(212,177,94,0.45)]'
