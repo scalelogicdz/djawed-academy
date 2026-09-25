@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { checkRateLimit, readJsonObject } from '@/lib/security';
 
 const MAX_DISPLAY_NAME = 50;
 const MAX_BIO = 240;
@@ -33,7 +34,16 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'غير مصرح' }, { status: 401 });
   }
 
-  const payload = await request.json();
+  const rate = checkRateLimit(`profile-update:${user.id}`, 20, 60_000);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'طلبات كثيرة جدًا. حاول مرة أخرى بعد قليل.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } }
+    );
+  }
+
+  const payload = await readJsonObject(request, 16 * 1024);
+  if (!payload) return NextResponse.json({ error: 'بيانات الملف الشخصي غير صالحة' }, { status: 400 });
   const displayName = typeof payload.display_name === 'string' ? payload.display_name.trim() : '';
   const bio = cleanOptional(payload.bio, MAX_BIO);
   const instagramUrl = cleanOptional(payload.instagram_url, MAX_URL);
