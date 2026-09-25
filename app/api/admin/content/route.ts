@@ -138,13 +138,20 @@ export async function PATCH(request: Request) {
   return NextResponse.json({ error: 'نوع غير معروف' }, { status: 400 });
 }
 
-// body: { type: 'lesson' | 'quizQuestion', id }
+// body: { type: 'module' | 'lesson' | 'quizQuestion', id }
 export async function DELETE(request: Request) {
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
 
   const body = await request.json();
   const adminClient = createAdminClient();
+
+  if (body.type === 'module') {
+    if (!body.id) return NextResponse.json({ error: 'معرّف الوحدة مفقود' }, { status: 400 });
+    const { error } = await adminClient.from('modules').delete().eq('id', body.id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ ok: true });
+  }
 
   if (body.type === 'lesson') {
     if (!body.id) return NextResponse.json({ error: 'معرّف الدرس مفقود' }, { status: 400 });
