@@ -43,9 +43,10 @@ function parseQuiz(body: Record<string, unknown>) {
     options.length >= 2 &&
     options.length <= 10 &&
     options.every((option): option is string => typeof option === 'string') &&
+    typeof correctIndex === 'number' &&
     Number.isInteger(correctIndex) &&
-    Number(correctIndex) >= 0 &&
-    Number(correctIndex) < options.length;
+    correctIndex >= 0 &&
+    correctIndex < options.length;
 
   return valid
     ? { question, options, correctIndex: Number(correctIndex) }
