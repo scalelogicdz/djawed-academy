@@ -2,17 +2,31 @@
 const nextConfig = {
   reactStrictMode: true,
   async headers() {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const scriptSources = [
+      "'self'",
+      "'unsafe-inline'",
+      ...(isDevelopment ? ["'unsafe-eval'"] : []),
+      'https://assets.mediadelivery.net',
+    ];
+    const connectSources = [
+      "'self'",
+      'https://*.supabase.co',
+      'wss://*.supabase.co',
+      ...(isDevelopment ? ['http:', 'https:', 'ws:', 'wss:'] : []),
+    ];
+
     const contentSecurityPolicy = [
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
       "object-src 'none'",
-      "script-src 'self' 'unsafe-inline' https://assets.mediadelivery.net",
+      `script-src ${scriptSources.join(' ')}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      `connect-src ${connectSources.join(' ')}`,
       "frame-src https://iframe.mediadelivery.net https://player.vimeo.com",
       "media-src 'self' blob: https:",
       "worker-src 'self' blob:",
