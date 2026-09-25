@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { checkRateLimit, readJsonObject } from '@/lib/security';
 
 const supportedLanguages = new Set(['ar', 'fr', 'en']);
 
@@ -33,7 +34,16 @@ export async function PATCH(request: Request) {
 
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const payload = await request.json();
+  const rate = checkRateLimit(`language-update:${user.id}`, 30, 60_000);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } }
+    );
+  }
+
+  const payload = await readJsonObject(request, 4 * 1024);
+  if (!payload) return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   const language = typeof payload.language === 'string' ? payload.language : '';
 
   if (!supportedLanguages.has(language)) {
