@@ -57,6 +57,7 @@ export default function LessonsManager({
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [editModuleDraft, setEditModuleDraft] = useState(emptyModuleDraft);
   const [savingModuleEdit, setSavingModuleEdit] = useState(false);
+  const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
 
   const [openQuizForLesson, setOpenQuizForLesson] = useState<string | null>(null);
   const [quizDraft, setQuizDraft] = useState(emptyQuizDraft);
@@ -118,6 +119,35 @@ export default function LessonsManager({
       setEditingModuleId(null);
       router.refresh();
     }
+  }
+
+  async function deleteModule(moduleId: string, moduleTitle: string) {
+    const lessonIds = lessons.filter((l) => l.module_id === moduleId).map((l) => l.id);
+    const confirmed = window.confirm(
+      `هل أنت متأكد من حذف الوحدة "${moduleTitle}"؟ سيتم حذف جميع الدروس والأسئلة داخلها، ولا يمكن التراجع عن هذا الإجراء.`
+    );
+    if (!confirmed) return;
+
+    setDeletingModuleId(moduleId);
+    const res = await fetch('/api/admin/content', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'module', id: moduleId }),
+    });
+    const data = await res.json();
+    setDeletingModuleId(null);
+
+    if (!res.ok) {
+      setOrderMessage(data.error || 'تعذر حذف الوحدة');
+      return;
+    }
+
+    setModules((current) => current.filter((m) => m.id !== moduleId));
+    setLessons((current) => current.filter((l) => l.module_id !== moduleId));
+    setQuizQuestions((current) => current.filter((q) => !lessonIds.includes(q.lesson_id)));
+    if (editingModuleId === moduleId) setEditingModuleId(null);
+    setOrderMessage('تم حذف الوحدة');
+    router.refresh();
   }
 
   async function addLesson(moduleId: string) {
@@ -479,12 +509,21 @@ export default function LessonsManager({
                 </div>
                 {m.description && <p className="text-muted text-[13px] mt-1.5">{m.description}</p>}
               </div>
-              <button
-                onClick={() => startEditingModule(m)}
-                className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-gold hover:border-goldDim transition flex-shrink-0"
-              >
-                ✏️ تعديل الوحدة
-              </button>
+              <div className="flex gap-1.5 flex-shrink-0">
+                <button
+                  onClick={() => startEditingModule(m)}
+                  className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-gold hover:border-goldDim transition"
+                >
+                  ✏️ تعديل الوحدة
+                </button>
+                <button
+                  onClick={() => deleteModule(m.id, m.title)}
+                  disabled={deletingModuleId === m.id}
+                  className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-[#E4756A] hover:border-[#E4756A] transition disabled:opacity-60"
+                >
+                  {deletingModuleId === m.id ? '...' : '🗑️ حذف الوحدة'}
+                </button>
+              </div>
             </div>
           )}
 
