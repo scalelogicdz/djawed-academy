@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { checkRateLimit, readJsonObject } from '@/lib/security';
 
 const allowedKeys = new Set(['services', 'guidelines']);
 
@@ -25,9 +26,19 @@ export async function PATCH(request: Request) {
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
 
-  const body = await request.json();
-  const key = typeof body?.key === 'string' ? body.key : '';
-  const content = body?.content;
+  const rate = checkRateLimit(`admin-site-content:${admin.id}`, 30, 60_000);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'طلبات كثيرة جدًا. حاول مرة أخرى بعد قليل.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } }
+    );
+  }
+
+  const body = await readJsonObject(request, 128 * 1024);
+  if (!body) return NextResponse.json({ error: 'بيانات المحتوى غير صالحة' }, { status: 400 });
+
+  const key = typeof body.key === 'string' ? body.key : '';
+  const content = body.content;
 
   if (!allowedKeys.has(key) || !content || typeof content !== 'object' || Array.isArray(content)) {
     return NextResponse.json({ error: 'بيانات المحتوى غير صالحة' }, { status: 400 });
