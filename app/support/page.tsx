@@ -55,7 +55,7 @@ export default async function SupportPage() {
           />
         </p>
 
-        <SupportForm userId={user.id} defaultName={defaultName} defaultEmail={defaultEmail} />
+        <SupportForm defaultName={defaultName} defaultEmail={defaultEmail} />
       </section>
     </>
   );
