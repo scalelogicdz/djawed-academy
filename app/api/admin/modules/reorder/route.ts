@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { checkRateLimit, isUuid, readJsonObject } from '@/lib/security';
 
 async function assertAdmin() {
   const supabase = await createClient();
@@ -22,11 +23,21 @@ export async function PATCH(request: Request) {
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
 
-  const body = await request.json();
-  const courseId = typeof body.courseId === 'string' ? body.courseId : '';
-  const moduleIds = Array.isArray(body.moduleIds) ? body.moduleIds.filter((id: unknown) => typeof id === 'string') : [];
+  const rate = checkRateLimit(`admin-module-order:${admin.id}`, 60, 60_000);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'طلبات كثيرة جدًا. حاول مرة أخرى بعد قليل.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } }
+    );
+  }
 
-  if (!courseId || moduleIds.length === 0 || new Set(moduleIds).size !== moduleIds.length) {
+  const body = await readJsonObject(request, 32 * 1024);
+  const courseId = body && isUuid(body.courseId) ? body.courseId : '';
+  const moduleIds = body && Array.isArray(body.moduleIds)
+    ? body.moduleIds.filter((id): id is string => isUuid(id))
+    : [];
+
+  if (!body || !courseId || moduleIds.length === 0 || moduleIds.length > 500 || moduleIds.length !== (Array.isArray(body.moduleIds) ? body.moduleIds.length : 0) || new Set(moduleIds).size !== moduleIds.length) {
     return NextResponse.json({ error: 'ترتيب الوحدات غير صالح' }, { status: 400 });
   }
 
