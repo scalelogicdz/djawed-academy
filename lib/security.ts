@@ -104,7 +104,7 @@ export function cleanWebUrl(value: unknown, maxLength = 2048) {
 
 export function cleanPosition(value: unknown) {
   if (value == null) return 0;
-  return Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 10000
-    ? Number(value)
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 10000
+    ? value
     : null;
 }
