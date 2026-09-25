@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useLanguage } from '@/components/LanguageProvider';
 import type { Language } from '@/lib/i18n';
@@ -100,7 +99,6 @@ export default function CommunityFeed({
   initialQuestions: Question[];
   initialReplies: Reply[];
 }) {
-  const supabase = createClient();
   const searchParams = useSearchParams();
   const { language } = useLanguage();
   const highlightedId = searchParams.get('q');
@@ -161,24 +159,45 @@ export default function CommunityFeed({
   }
 
   async function submitQuestion() {
-    if (!newQuestion.trim() || posting) return;
+    const body = newQuestion.trim();
+    if (!body || posting) return;
+
     setPosting(true);
-    const { data, error } = await supabase.from('questions').insert({ body: newQuestion.trim(), student_id: currentUserId }).select('id, body, image_url, created_at, student_id').single();
+    const response = await fetch('/api/community/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'question', body }),
+    });
+    const data = await response.json();
     setPosting(false);
-    if (!error && data) {
-      setQuestions([{ ...data, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } }, ...questions]);
+
+    if (response.ok && data.question) {
+      setQuestions([
+        { ...data.question, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } },
+        ...questions,
+      ]);
       setNewQuestion('');
     }
   }
 
   async function submitReply(questionId: string) {
-    const body = replyDrafts[questionId];
-    if (!body?.trim() || replyPostingId === questionId) return;
+    const body = replyDrafts[questionId]?.trim();
+    if (!body || replyPostingId === questionId) return;
+
     setReplyPostingId(questionId);
-    const { data, error } = await supabase.from('replies').insert({ body: body.trim(), question_id: questionId, student_id: currentUserId }).select('id, body, created_at, question_id, student_id').single();
+    const response = await fetch('/api/community/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'reply', questionId, body }),
+    });
+    const data = await response.json();
     setReplyPostingId(null);
-    if (!error && data) {
-      setReplies([...replies, { ...data, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } }]);
+
+    if (response.ok && data.reply) {
+      setReplies([
+        ...replies,
+        { ...data.reply, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } },
+      ]);
       setReplyDrafts({ ...replyDrafts, [questionId]: '' });
     }
   }
