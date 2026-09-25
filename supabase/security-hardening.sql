@@ -124,83 +124,11 @@ $$;
 
 -- ============================================================
 -- Notifications
--- Recipients can read/update their own notifications.
--- Admins can manage all.
--- Authenticated users can only originate notification shapes that
--- correspond to a real question/reply relationship.
+-- Audit only for now. The notification trigger/policies were created
+-- outside the repository, so we do not replace them blindly.
+-- After running this file, inspect the audit output below before
+-- changing notification policies.
 -- ============================================================
-do $$
-declare
-  policy_row record;
-begin
-  if to_regclass('public.notifications') is not null then
-    execute 'alter table public.notifications enable row level security';
-
-    for policy_row in
-      select policyname
-      from pg_policies
-      where schemaname = 'public' and tablename = 'notifications'
-    loop
-      execute format('drop policy if exists %I on public.notifications', policy_row.policyname);
-    end loop;
-
-    execute $policy$
-      create policy "read own notifications"
-      on public.notifications
-      for select
-      using (recipient_id = auth.uid() or public.is_admin())
-    $policy$;
-
-    execute $policy$
-      create policy "update own notifications"
-      on public.notifications
-      for update
-      using (recipient_id = auth.uid() or public.is_admin())
-      with check (recipient_id = auth.uid() or public.is_admin())
-    $policy$;
-
-    execute $policy$
-      create policy "delete own notifications"
-      on public.notifications
-      for delete
-      using (recipient_id = auth.uid() or public.is_admin())
-    $policy$;
-
-    execute $policy$
-      create policy "create valid notifications"
-      on public.notifications
-      for insert
-      with check (
-        public.is_admin()
-        or (
-          actor_id = auth.uid()
-          and recipient_id <> auth.uid()
-          and (
-            (
-              type = 'new_reply'
-              and exists (
-                select 1
-                from public.questions q
-                where q.id = notifications.question_id
-                  and q.student_id = notifications.recipient_id
-              )
-            )
-            or (
-              type = 'new_question'
-              and exists (
-                select 1
-                from public.profiles p
-                where p.id = notifications.recipient_id
-                  and p.is_admin = true
-              )
-            )
-          )
-        )
-      )
-    $policy$;
-  end if;
-end
-$$;
 
 -- ============================================================
 -- Community body limits.
@@ -239,7 +167,7 @@ begin
 end
 $$;
 
--- Audit result: check that the newer tables have RLS enabled.
+-- Audit result: verify RLS state for newer tables.
 select
   c.relname as table_name,
   c.relrowsecurity as rls_enabled
@@ -248,3 +176,30 @@ join pg_namespace n on n.oid = c.relnamespace
 where n.nspname = 'public'
   and c.relname in ('quiz_questions', 'support_requests', 'notifications', 'questions', 'replies')
 order by c.relname;
+
+-- Read-only audit of notification policies.
+select
+  schemaname,
+  tablename,
+  policyname,
+  permissive,
+  roles,
+  cmd,
+  qual,
+  with_check
+from pg_policies
+where schemaname = 'public'
+  and tablename = 'notifications'
+order by policyname;
+
+-- Read-only audit of question/reply/notification triggers.
+select
+  event_object_table,
+  trigger_name,
+  action_timing,
+  event_manipulation,
+  action_statement
+from information_schema.triggers
+where event_object_schema = 'public'
+  and event_object_table in ('questions', 'replies', 'notifications')
+order by event_object_table, trigger_name, event_manipulation;
