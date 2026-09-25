@@ -2,21 +2,17 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useLanguage } from '@/components/LanguageProvider';
 
 export default function SupportForm({
-  userId,
   defaultName,
   defaultEmail,
 }: {
-  userId: string;
   defaultName: string;
   defaultEmail: string;
 }) {
   const router = useRouter();
-  const supabase = createClient();
   const { language } = useLanguage();
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
@@ -81,16 +77,20 @@ export default function SupportForm({
     setSending(true);
     setError('');
 
-    const { error: insertError } = await supabase.from('support_requests').insert({
-      student_id: userId,
-      name: cleanName,
-      email: cleanEmail,
-      subject: cleanSubject,
-      message: cleanMessage,
+    const response = await fetch('/api/support', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: cleanName,
+        email: cleanEmail,
+        subject: cleanSubject,
+        message: cleanMessage,
+      }),
     });
 
-    if (insertError) {
-      setSending(false);
+    setSending(false);
+
+    if (!response.ok) {
       setError(copy.failed);
       return;
     }
