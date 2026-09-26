@@ -47,49 +47,33 @@ export default function StudentPresence() {
     if (!presenceKey || !supabaseRef.current) return;
 
     const supabase = supabaseRef.current;
-    let active = true;
-    let channel: RealtimeChannel | null = null;
+    const channel = supabase.channel(PRESENCE_TOPIC, {
+      config: {
+        private: true,
+        presence: { key: presenceKey },
+      },
+    });
 
-    async function connectPresence() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    channelRef.current = channel;
 
-      if (!active || !session?.access_token) return;
+    channel.subscribe(async (status) => {
+      if (status !== 'SUBSCRIBED') return;
 
-      await supabase.realtime.setAuth(session.access_token);
-
-      channel = supabase.channel(PRESENCE_TOPIC, {
-        config: {
-          private: true,
-          presence: { key: presenceKey },
-        },
-      });
-
-      channelRef.current = channel;
-
-      channel.subscribe(async (status) => {
-        if (!active || status !== 'SUBSCRIBED' || !channel) return;
-
-        subscribedRef.current = true;
-        try {
-          await channel.track({
-            page: pathname,
-            seen_at: Date.now(),
-          });
-        } catch {
-          // Presence is non-critical; the rest of the platform keeps working.
-        }
-      });
-    }
-
-    connectPresence();
+      subscribedRef.current = true;
+      try {
+        await channel.track({
+          page: pathname,
+          seen_at: Date.now(),
+        });
+      } catch {
+        // Presence is non-critical; the rest of the platform keeps working.
+      }
+    });
 
     return () => {
-      active = false;
       subscribedRef.current = false;
       channelRef.current = null;
-      if (channel) supabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [presenceKey]);
 
