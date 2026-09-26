@@ -1,16 +1,29 @@
 -- Live student presence for the admin dashboard.
--- Run this once in Supabase SQL Editor.
+-- Run this in Supabase SQL Editor to update the existing Presence policies.
 --
--- This uses a PRIVATE Realtime channel named:
---   academy:student-presence
+-- IMPORTANT:
+-- Supabase private Presence requires a participant to be authorized to
+-- receive Presence state as well as publish its own state.
 --
--- Students may publish their own connection state to the channel.
--- Only admins may receive the channel's presence state.
---
--- Do NOT disable "Allow public access" globally in Realtime Settings;
--- other existing realtime features may still use public channels.
+-- Presence payloads intentionally contain only:
+--   - an opaque server-generated key
+--   - the current platform path
+--   - a timestamp
+-- No student name, email, or raw user id is broadcast.
 
 drop policy if exists "students publish academy presence" on realtime.messages;
+drop policy if exists "admins read academy presence" on realtime.messages;
+drop policy if exists "authenticated read academy presence" on realtime.messages;
+
+create policy "authenticated read academy presence"
+on realtime.messages
+for select
+to authenticated
+using (
+  (select realtime.topic()) = 'academy:student-presence'
+  and realtime.messages.extension = 'presence'
+);
+
 create policy "students publish academy presence"
 on realtime.messages
 for insert
@@ -21,18 +34,6 @@ with check (
   and not public.is_admin()
 );
 
-drop policy if exists "admins read academy presence" on realtime.messages;
-create policy "admins read academy presence"
-on realtime.messages
-for select
-to authenticated
-using (
-  (select realtime.topic()) = 'academy:student-presence'
-  and realtime.messages.extension = 'presence'
-  and public.is_admin()
-);
-
--- Read-only verification: these two policies should appear below.
 select
   policyname,
   cmd,
@@ -42,4 +43,8 @@ select
 from pg_policies
 where schemaname = 'realtime'
   and tablename = 'messages'
+  and policyname in (
+    'authenticated read academy presence',
+    'students publish academy presence'
+  )
 order by policyname;
