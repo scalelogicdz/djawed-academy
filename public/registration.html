@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>التسجيل — دورة السبونسور</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05070A; --bg-2:#0A0E16;
+    --surface:rgba(255,255,255,0.03); --surface-solid:#0D1219;
+    --border:rgba(255,255,255,0.08); --border-strong:rgba(229,192,105,0.35);
+    --gold:#E5C069; --gold-2:#C9A84C; --gold-dim:#6B5A2E;
+    --muted:#A8AEBB; --muted-2:#6B7280;
+    --gold-glow:0 0 50px rgba(229,192,105,0.22), 0 0 110px rgba(229,192,105,0.1);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ overflow-x:hidden; max-width:100%; }
+  body{
+    background:var(--bg); color:#F3F1EA;
+    font-family:'IBM Plex Sans Arabic', sans-serif; line-height:1.8;
+    min-height:100vh; position:relative; overflow-x:hidden;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.02;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .glow-blob{ position:fixed; border-radius:50%; filter:blur(100px); pointer-events:none; z-index:0; }
+
+  h1,h2,h3{ font-family:'Cairo', sans-serif; letter-spacing:0; }
+
+  /* TOP BAR */
+  .topbar{
+    position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between;
+    max-width:640px; margin:0 auto; padding:22px 24px 0;
+  }
+  .topbar a{
+    color:var(--muted); text-decoration:none; font-size:13.5px; display:flex; align-items:center; gap:6px;
+    transition:color .2s ease;
+  }
+  .topbar a:hover{ color:var(--gold); }
+  .topbar .brand{ font-family:'Cairo'; font-weight:800; font-size:14.5px; color:var(--gold); }
+
+  /* PROGRESS */
+  .progress-wrap{
+    position:relative; z-index:2; max-width:640px; margin:22px auto 0; padding:0 24px;
+  }
+  .progress-track{
+    height:4px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; background:linear-gradient(90deg, var(--gold-2), var(--gold));
+    border-radius:99px; width:20%; transition:width .35s cubic-bezier(.22,.61,.36,1);
+    box-shadow:0 0 12px rgba(229,192,105,0.5);
+  }
+  .progress-label{
+    display:flex; justify-content:space-between; margin-top:9px;
+    font-size:12px; color:var(--muted-2); font-family:'IBM Plex Sans Arabic';
+  }
+
+  /* MAIN CARD AREA */
+  .stage{
+    position:relative; z-index:2; max-width:640px; margin:0 auto; padding:38px 24px 60px;
+    min-height:calc(100vh - 130px); display:flex; flex-direction:column; justify-content:center;
+  }
+
+  .step{ display:none; animation:stepIn .4s cubic-bezier(.22,.61,.36,1); }
+  .step.active{ display:block; }
+  @keyframes stepIn{
+    from{ opacity:0; transform:translateY(14px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .step-eyebrow{
+    color:var(--gold); font-size:12.5px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; margin-bottom:14px; display:block;
+  }
+  .step h2{
+    font-size:clamp(22px,4.2vw,30px); font-weight:800; margin-bottom:28px; line-height:1.5;
+  }
+
+  /* OPTIONS */
+  .options{ display:flex; flex-direction:column; gap:10px; }
+  .option{
+    display:flex; align-items:center; gap:12px; text-align:right;
+    background:var(--surface); border:1.5px solid var(--border); border-radius:12px;
+    padding:14px 16px; cursor:pointer; transition:all .2s ease; font-size:13.5px; color:#F3F1EA;
+    font-family:'IBM Plex Sans Arabic';
+  }
+  .option:hover{ border-color:var(--border-strong); background:rgba(229,192,105,0.04); }
+  .option .radio{
+    width:18px; height:18px; border-radius:50%; border:1.5px solid var(--muted-2);
+    flex-shrink:0; position:relative; transition:all .2s ease;
+  }
+  .option.selected{
+    border-color:var(--gold); background:rgba(229,192,105,0.08); box-shadow:var(--gold-glow);
+  }
+  .option.selected .radio{ border-color:var(--gold); }
+  .option.selected .radio::after{
+    content:''; position:absolute; inset:3px; border-radius:50%; background:var(--gold);
+  }
+
+  /* TEXT INPUTS */
+  .field{ margin-bottom:18px; }
+  .field label{ display:block; font-size:13.5px; color:var(--muted); margin-bottom:9px; }
+  .field input{
+    width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:12px;
+    padding:16px 18px; font-size:15px; color:#F3F1EA; font-family:'IBM Plex Sans Arabic';
+    outline:none; transition:border-color .2s ease;
+  }
+  .field input::placeholder{ color:var(--muted-2); }
+  .field input:focus{ border-color:var(--gold); }
+  .field input[dir="ltr"]{ text-align:left; }
+
+  .phone-row{ display:flex; gap:8px; position:relative; }
+  .phone-row input{ flex:1; min-width:0; }
+
+  .country-picker{ position:relative; flex-shrink:0; }
+  .country-picker-btn{
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
+    width:104px; height:54px; background:var(--surface); border:1.5px solid var(--border); border-radius:12px;
+    padding:0 12px; font-size:14px; color:#F3F1EA; font-family:'IBM Plex Sans Arabic';
+    cursor:pointer; transition:border-color .2s ease;
+  }
+  .country-picker-btn:hover, .country-picker.open .country-picker-btn{ border-color:var(--border-strong); }
+  .country-picker-arrow{ color:var(--muted-2); font-size:11px; }
+  .country-picker-list{
+    display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:20;
+    width:150px; max-height:240px; overflow-y:auto;
+    background:#12161F; border:1.5px solid var(--border-strong); border-radius:12px;
+    box-shadow:0 20px 45px -12px rgba(0,0,0,0.7);
+  }
+  .country-picker.open .country-picker-list{ display:block; }
+  .country-opt{
+    padding:11px 14px; font-size:14px; color:#F3F1EA; font-family:'IBM Plex Sans Arabic';
+    cursor:pointer; transition:background .15s ease;
+  }
+  .country-opt:hover{ background:rgba(229,192,105,0.1); }
+  .country-opt.active{ background:rgba(229,192,105,0.14); color:var(--gold); }
+
+  /* NAV BUTTONS */
+  .step-nav{ display:flex; gap:12px; margin-top:34px; }
+  .btn-next{
+    flex:1; background:linear-gradient(135deg, var(--gold), var(--gold-2));
+    color:#0A0700; border:none; border-radius:12px; padding:17px 24px;
+    font-family:'Cairo'; font-weight:800; font-size:15.5px; cursor:pointer;
+    transition:all .2s ease; opacity:.4; pointer-events:none;
+  }
+  .btn-next.enabled{ opacity:1; pointer-events:auto; box-shadow:var(--gold-glow); }
+  .btn-next.enabled:hover{ transform:translateY(-2px); }
+  .btn-back{
+    background:transparent; color:var(--muted); border:1.5px solid var(--border);
+    border-radius:12px; padding:17px 22px; font-family:'Cairo'; font-weight:700; font-size:14px;
+    cursor:pointer; transition:all .2s ease; white-space:nowrap;
+  }
+  .btn-back:hover{ border-color:var(--border-strong); color:var(--gold); }
+
+  /* CONFIRMATION */
+  .confirm-icon{
+    width:74px; height:74px; border-radius:50%; background:rgba(229,192,105,0.1);
+    border:1.5px solid var(--border-strong); display:flex; align-items:center; justify-content:center;
+    font-size:32px; margin:0 auto 26px; box-shadow:var(--gold-glow);
+  }
+  .confirm-wrap{ text-align:center; }
+  .confirm-wrap h2{ margin-bottom:14px; }
+  .confirm-wrap p{ color:var(--muted); font-size:15px; max-width:420px; margin:0 auto; }
+  .whatsapp-note{
+    display:inline-flex; align-items:center; gap:8px; margin-top:26px; padding:12px 20px;
+    background:rgba(37,211,102,0.08); border:1px solid rgba(37,211,102,0.25); border-radius:99px;
+    font-size:13.5px; color:#9FE6B5;
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-blob" style="width:520px; height:520px; top:-180px; left:-150px; background:rgba(229,192,105,0.1);"></div>
+<div class="glow-blob" style="width:420px; height:420px; bottom:-160px; right:-150px; background:rgba(229,192,105,0.06);"></div>
+
+<div class="topbar">
+  <a href="recorded-course-landing-v2.html">→ رجوع للصفحة الرئيسية</a>
+  <span class="brand">دورة السبونسور</span>
+</div>
+
+<div class="progress-wrap" id="progressWrap">
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressText">السؤال 1 من 5</span><span id="progressPercent">20%</span></div>
+</div>
+
+<div class="stage">
+
+  <!-- STEP 1 -->
+  <div class="step active" data-step="1">
+    <span class="step-eyebrow">أين أنت الآن</span>
+    <h2>أين أنت حاليًا في طريقك مع التجارة أو إعلانات ميتا؟</h2>
+    <div class="options" data-question="stage">
+      <div class="option" data-value="has-business">لدي مشروع وأريد تشغيل إعلانات ميتا له<span class="radio"></span></div>
+      <div class="option" data-value="ecommerce-new">أريد دخول التجارة الإلكترونية ولم أبدأ بعد<span class="radio"></span></div>
+      <div class="option" data-value="service">أريد تعلم إعلانات ميتا والعمل بها كخدمة للعملاء<span class="radio"></span></div>
+    </div>
+    <div class="step-nav">
+      <button class="btn-next" data-next>التالي</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" data-step="2">
+    <span class="step-eyebrow">مستواك الحالي</span>
+    <h2>ما هو مستواك الحالي في إعلانات ميتا؟</h2>
+    <div class="options" data-question="level">
+      <div class="option" data-value="beginner">مبتدئ تمامًا ولم أشغّل أي إعلان من قبل<span class="radio"></span></div>
+      <div class="option" data-value="no-results">شغّلت إعلانات من قبل، لكن النتائج لم تكن مقنعة<span class="radio"></span></div>
+      <div class="option" data-value="experienced">لدي خبرة في إعلانات ميتا وأريد تطوير مستواي أكثر<span class="radio"></span></div>
+    </div>
+    <div class="step-nav">
+      <button class="btn-back" data-back>السابق</button>
+      <button class="btn-next" data-next>التالي</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" data-step="3">
+    <span class="step-eyebrow">أكبر تحدٍ</span>
+    <h2>ما أكثر شيء يواجهك حاليًا في إعلانات ميتا؟</h2>
+    <div class="options" data-question="obstacle">
+      <div class="option" data-value="dont-know-start">لا أعرف كيف أبدأ وأبني حملة بطريقة صحيحة<span class="radio"></span></div>
+      <div class="option" data-value="unstable-results">أشغّل الإعلانات لكن النتائج غير مستقرة أو غير مربحة<span class="radio"></span></div>
+      <div class="option" data-value="losing-money">أنفق المال دون أن أفهم أين المشكلة<span class="radio"></span></div>
+      <div class="option" data-value="targeting">لا أعرف كيف أختار الجمهور أو أتعامل مع الاستهداف<span class="radio"></span></div>
+      <div class="option" data-value="reading-results">لا أعرف كيف أقرأ النتائج وأقرر ماذا أغيّر<span class="radio"></span></div>
+      <div class="option" data-value="other">غير ذلك<span class="radio"></span></div>
+    </div>
+    <div class="step-nav">
+      <button class="btn-back" data-back>السابق</button>
+      <button class="btn-next" data-next>التالي</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step" data-step="4">
+    <span class="step-eyebrow">الهدف المنشود</span>
+    <h2>ما أهم نتيجة تريد الوصول إليها من خلال تعلم إعلانات ميتا؟</h2>
+    <div class="options" data-question="desired-outcome">
+      <div class="option" data-value="run-own-ads">أريد تشغيل إعلانات مشروعي بنفسي<span class="radio"></span></div>
+      <div class="option" data-value="improve-results">أريد تحسين نتائج إعلاناتي وتقليل خسارة الميزانية<span class="radio"></span></div>
+      <div class="option" data-value="launch-ecommerce">أريد إطلاق مشروعي في التجارة الإلكترونية بطريقة صحيحة<span class="radio"></span></div>
+      <div class="option" data-value="skill-for-clients">أريد اكتساب مهارة أستطيع العمل بها وتقديمها للعملاء<span class="radio"></span></div>
+      <div class="option" data-value="understand-independently">أريد أن أفهم إعلانات ميتا وأعتمد على نفسي في اتخاذ القرارات<span class="radio"></span></div>
+    </div>
+    <div class="step-nav">
+      <button class="btn-back" data-back>السابق</button>
+      <button class="btn-next" data-next>التالي</button>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step" data-step="5">
+    <span class="step-eyebrow">المعلومات والتواصل</span>
+    <h2>أرسل معلوماتك وسنتواصل معك</h2>
+    <div class="field">
+      <label>الاسم الكامل</label>
+      <input type="text" id="fieldName" placeholder="اكتب اسمك هنا">
+    </div>
+    <div class="field">
+      <label>رقم واتساب</label>
+      <div class="phone-row" dir="ltr">
+        <div class="country-picker" id="countryPicker">
+          <button type="button" class="country-picker-btn" id="countryPickerBtn">
+            <span id="countryPickerLabel">DZ +213</span>
+            <span class="country-picker-arrow">▾</span>
+          </button>
+          <div class="country-picker-list" id="countryPickerList">
+            <div class="country-opt" data-code="+213" data-label="DZ +213">DZ&nbsp;&nbsp;+213</div>
+            <div class="country-opt" data-code="+212" data-label="MA +212">MA&nbsp;&nbsp;+212</div>
+            <div class="country-opt" data-code="+216" data-label="TN +216">TN&nbsp;&nbsp;+216</div>
+            <div class="country-opt" data-code="+218" data-label="LY +218">LY&nbsp;&nbsp;+218</div>
+            <div class="country-opt" data-code="+20" data-label="EG +20">EG&nbsp;&nbsp;+20</div>
+            <div class="country-opt" data-code="+966" data-label="SA +966">SA&nbsp;&nbsp;+966</div>
+            <div class="country-opt" data-code="+971" data-label="AE +971">AE&nbsp;&nbsp;+971</div>
+            <div class="country-opt" data-code="+974" data-label="QA +974">QA&nbsp;&nbsp;+974</div>
+            <div class="country-opt" data-code="+973" data-label="BH +973">BH&nbsp;&nbsp;+973</div>
+            <div class="country-opt" data-code="+965" data-label="KW +965">KW&nbsp;&nbsp;+965</div>
+            <div class="country-opt" data-code="+968" data-label="OM +968">OM&nbsp;&nbsp;+968</div>
+            <div class="country-opt" data-code="+962" data-label="JO +962">JO&nbsp;&nbsp;+962</div>
+            <div class="country-opt" data-code="+961" data-label="LB +961">LB&nbsp;&nbsp;+961</div>
+            <div class="country-opt" data-code="+963" data-label="SY +963">SY&nbsp;&nbsp;+963</div>
+            <div class="country-opt" data-code="+964" data-label="IQ +964">IQ&nbsp;&nbsp;+964</div>
+            <div class="country-opt" data-code="+970" data-label="PS +970">PS&nbsp;&nbsp;+970</div>
+            <div class="country-opt" data-code="+249" data-label="SD +249">SD&nbsp;&nbsp;+249</div>
+            <div class="country-opt" data-code="+222" data-label="MR +222">MR&nbsp;&nbsp;+222</div>
+            <div class="country-opt" data-code="+33" data-label="FR +33">FR&nbsp;&nbsp;+33</div>
+            <div class="country-opt" data-code="+32" data-label="BE +32">BE&nbsp;&nbsp;+32</div>
+            <div class="country-opt" data-code="+41" data-label="CH +41">CH&nbsp;&nbsp;+41</div>
+            <div class="country-opt" data-code="+49" data-label="DE +49">DE&nbsp;&nbsp;+49</div>
+            <div class="country-opt" data-code="+39" data-label="IT +39">IT&nbsp;&nbsp;+39</div>
+            <div class="country-opt" data-code="+34" data-label="ES +34">ES&nbsp;&nbsp;+34</div>
+            <div class="country-opt" data-code="+31" data-label="NL +31">NL&nbsp;&nbsp;+31</div>
+            <div class="country-opt" data-code="+44" data-label="GB +44">GB&nbsp;&nbsp;+44</div>
+            <div class="country-opt" data-code="+1" data-label="US +1">US&nbsp;&nbsp;+1</div>
+            <div class="country-opt" data-code="+90" data-label="TR +90">TR&nbsp;&nbsp;+90</div>
+            <div class="country-opt" data-code="+7" data-label="RU +7">RU&nbsp;&nbsp;+7</div>
+            <div class="country-opt" data-code="+86" data-label="CN +86">CN&nbsp;&nbsp;+86</div>
+            <div class="country-opt" data-code="+91" data-label="IN +91">IN&nbsp;&nbsp;+91</div>
+            <div class="country-opt" data-code="+61" data-label="AU +61">AU&nbsp;&nbsp;+61</div>
+          </div>
+        </div>
+        <input type="tel" id="fieldWhatsapp" placeholder="5XX XX XX XX" dir="ltr">
+      </div>
+      <div id="waError" style="display:none; color:#E4756A; font-size:12.5px; margin-top:8px;">الرجاء إدخال رقم واتساب صحيح</div>
+    </div>
+    <div class="field">
+      <label>الوقت المفضل للتواصل</label>
+      <div class="options" data-question="contact-time" style="margin-top:2px;">
+        <div class="option" data-value="09-12">09:00–12:00<span class="radio"></span></div>
+        <div class="option" data-value="12-16">12:00–16:00<span class="radio"></span></div>
+        <div class="option" data-value="16-20">16:00–20:00<span class="radio"></span></div>
+        <div class="option" data-value="anytime">أي وقت مناسب<span class="radio"></span></div>
+      </div>
+    </div>
+    <div id="submitError" style="display:none; color:#E4756A; font-size:12.5px; margin-top:14px; text-align:center;">حدث خطأ أثناء الإرسال، الرجاء المحاولة مرة أخرى</div>
+    <div class="step-nav">
+      <button class="btn-back" data-back>السابق</button>
+      <button class="btn-next" id="submitBtn">إرسال والانتهاء</button>
+    </div>
+  </div>
+
+  <!-- CONFIRMATION -->
+  <div class="step" data-step="confirm">
+    <div class="confirm-wrap">
+      <div class="confirm-icon">✓</div>
+      <h2>تم استلام معلوماتك بنجاح</h2>
+      <p>سنراجع إجاباتك ونتواصل معك شخصيًا عبر واتساب خلال 24 ساعة لإتمام تفاصيل التسجيل.</p>
+      <div class="whatsapp-note">📱 راقب رسائل واتساب قريبًا</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var totalQuestionSteps = 5;
+  var currentIndex = 0; // index into steps array
+  var answers = {};
+
+  var progressFill = document.getElementById('progressFill');
+  var progressText = document.getElementById('progressText');
+  var progressPercent = document.getElementById('progressPercent');
+  var progressWrap = document.getElementById('progressWrap');
+
+  function showStep(idx){
+    steps.forEach(function(s, i){ s.classList.toggle('active', i === idx); });
+    currentIndex = idx;
+    var stepAttr = steps[idx].getAttribute('data-step');
+    if(stepAttr === 'confirm'){
+      progressWrap.style.display = 'none';
+    } else {
+      progressWrap.style.display = 'block';
+      var stepNum = parseInt(stepAttr, 10);
+      var pct = Math.round((stepNum / totalQuestionSteps) * 100);
+      progressFill.style.width = pct + '%';
+      progressText.textContent = 'السؤال ' + stepNum + ' من ' + totalQuestionSteps;
+      progressPercent.textContent = pct + '%';
+    }
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  // Option selection
+  document.querySelectorAll('.options').forEach(function(group){
+    var question = group.getAttribute('data-question');
+    group.querySelectorAll('.option').forEach(function(opt){
+      opt.addEventListener('click', function(){
+        group.querySelectorAll('.option').forEach(function(o){ o.classList.remove('selected'); });
+        opt.classList.add('selected');
+        answers[question] = opt.getAttribute('data-value');
+        var nextBtn = group.closest('.step').querySelector('.btn-next');
+        if(nextBtn && nextBtn.id === 'submitBtn'){
+          checkStep5();
+        } else if(nextBtn){
+          nextBtn.classList.add('enabled');
+        }
+      });
+    });
+  });
+
+  // Next buttons
+  document.querySelectorAll('[data-next]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(!btn.classList.contains('enabled')) return;
+      if(currentIndex < steps.length - 1){ showStep(currentIndex + 1); }
+    });
+  });
+
+  // Back buttons
+  document.querySelectorAll('[data-back]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(currentIndex > 0){ showStep(currentIndex - 1); }
+    });
+  });
+
+  // Step 5 field validation enables submit
+  var nameField = document.getElementById('fieldName');
+  var waField = document.getElementById('fieldWhatsapp');
+  var waError = document.getElementById('waError');
+  var submitBtn = document.getElementById('submitBtn');
+
+  // Custom country picker (no native <select>, so styling is fully consistent cross-platform)
+  var countryPicker = document.getElementById('countryPicker');
+  var countryPickerBtn = document.getElementById('countryPickerBtn');
+  var countryPickerLabel = document.getElementById('countryPickerLabel');
+  var countryPickerList = document.getElementById('countryPickerList');
+  var selectedCountryCode = '+213';
+
+  countryPickerBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    countryPicker.classList.toggle('open');
+  });
+  countryPickerList.querySelectorAll('.country-opt').forEach(function(opt){
+    if(opt.getAttribute('data-code') === selectedCountryCode){ opt.classList.add('active'); }
+    opt.addEventListener('click', function(){
+      countryPickerList.querySelectorAll('.country-opt').forEach(function(o){ o.classList.remove('active'); });
+      opt.classList.add('active');
+      selectedCountryCode = opt.getAttribute('data-code');
+      countryPickerLabel.textContent = opt.getAttribute('data-label');
+      countryPicker.classList.remove('open');
+    });
+  });
+  document.addEventListener('click', function(){ countryPicker.classList.remove('open'); });
+
+  function isValidLocalNumber(raw){
+    var digits = raw.replace(/[\s\-().]/g, '');
+    // General check: digits only, reasonable local-number length (6–12 digits), no leading zero required
+    // since the country code is already selected separately.
+    return /^\d{6,12}$/.test(digits);
+  }
+
+  function checkStep5(){
+    var nameValid = nameField.value.trim().length > 1;
+    var waValue = waField.value.trim();
+    var waValid = isValidLocalNumber(waValue);
+    var timeValid = !!answers['contact-time'];
+
+    if(waError){
+      waError.style.display = (waValue.length > 2 && !waValid) ? 'block' : 'none';
+    }
+
+    submitBtn.classList.toggle('enabled', nameValid && waValid && timeValid);
+  }
+  nameField.addEventListener('input', checkStep5);
+  waField.addEventListener('input', checkStep5);
+
+  submitBtn.addEventListener('click', function(){
+    if(!submitBtn.classList.contains('enabled')) return;
+    answers.name = nameField.value.trim();
+    answers.whatsapp = selectedCountryCode + ' ' + waField.value.trim();
+
+    var submitError = document.getElementById('submitError');
+    submitError.style.display = 'none';
+    submitBtn.textContent = 'جارٍ الإرسال...';
+    submitBtn.classList.remove('enabled');
+
+    fetch('https://formspree.io/f/xrpglrlw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        'الاسم': answers.name,
+        'واتساب': answers.whatsapp,
+        'الهدف الحالي': answers.stage,
+        'المستوى': answers.level,
+        'العائق': answers.obstacle,
+        'النتيجة المرجوة': answers['desired-outcome'],
+        'وقت التواصل المفضل': answers['contact-time']
+      })
+    })
+      .then(function(response){
+        if(response.ok){
+          var confirmIdx = steps.findIndex(function(s){ return s.getAttribute('data-step') === 'confirm'; });
+          showStep(confirmIdx);
+        } else {
+          throw new Error('submission failed');
+        }
+      })
+      .catch(function(){
+        submitError.style.display = 'block';
+        submitBtn.textContent = 'إرسال والانتهاء';
+        submitBtn.classList.add('enabled');
+      });
+  });
+
+  showStep(0);
+})();
+</script>
+
+</body>
+</html>
