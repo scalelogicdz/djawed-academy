@@ -1,20 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useEffect, useState } from 'react';
 
-type StudentDirectoryItem = {
-  presenceKey: string;
+type OnlineStudent = {
+  id: string;
   name: string;
+  path: string;
+  lastSeenAt: string;
 };
-
-type OnlineStudent = StudentDirectoryItem & {
-  page: string;
-  seenAt: number;
-  connections: number;
-};
-
-const PRESENCE_TOPIC = 'academy:student-presence';
 
 function pageLabel(path: string) {
   if (path.startsWith('/lesson/')) return 'داخل درس';
@@ -28,76 +21,43 @@ function pageLabel(path: string) {
   return 'داخل المنصة';
 }
 
-export default function AdminLiveUsersPanel({ students }: { students: StudentDirectoryItem[] }) {
+export default function AdminLiveUsersPanel() {
   const [online, setOnline] = useState<OnlineStudent[]>([]);
   const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'error'>('connecting');
-  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
-
-  if (!supabaseRef.current) supabaseRef.current = createClient();
-
-  const directory = useMemo(
-    () => new Map(students.map((student) => [student.presenceKey, student])),
-    [students]
-  );
 
   useEffect(() => {
-    const supabase = supabaseRef.current;
-    if (!supabase) return;
+    let active = true;
 
-    const channel = supabase.channel(PRESENCE_TOPIC, {
-      config: { private: true },
-    });
-
-    function syncPresence() {
-      const state = channel.presenceState() as Record<
-        string,
-        Array<{ page?: unknown; seen_at?: unknown; phx_ref?: string }>
-      >;
-
-      const next: OnlineStudent[] = [];
-
-      for (const [presenceKey, metas] of Object.entries(state)) {
-        const student = directory.get(presenceKey);
-        if (!student || !Array.isArray(metas) || metas.length === 0) continue;
-
-        const safeMetas = metas.map((meta) => ({
-          page: typeof meta.page === 'string' ? meta.page : '/dashboard',
-          seenAt: typeof meta.seen_at === 'number' ? meta.seen_at : 0,
-        }));
-
-        const latest = safeMetas.reduce((best, item) =>
-          item.seenAt > best.seenAt ? item : best
-        );
-
-        next.push({
-          ...student,
-          page: latest.page,
-          seenAt: latest.seenAt,
-          connections: metas.length,
+    async function loadOnlineUsers() {
+      try {
+        const response = await fetch('/api/admin/live-users', {
+          method: 'GET',
+          cache: 'no-store',
         });
-      }
 
-      next.sort((a, b) => b.seenAt - a.seenAt || a.name.localeCompare(b.name, 'ar'));
-      setOnline(next);
+        if (!active) return;
+
+        if (!response.ok) {
+          setConnectionState('error');
+          return;
+        }
+
+        const data = await response.json();
+        setOnline(Array.isArray(data.users) ? data.users : []);
+        setConnectionState('connected');
+      } catch {
+        if (active) setConnectionState('error');
+      }
     }
 
-    channel
-      .on('presence', { event: 'sync' }, syncPresence)
-      .on('presence', { event: 'join' }, syncPresence)
-      .on('presence', { event: 'leave' }, syncPresence)
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          setConnectionState('connected');
-          syncPresence();
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          setConnectionState('error');
-        }
-      });
+    loadOnlineUsers();
+    const interval = window.setInterval(loadOnlineUsers, 10_000);
 
     return () => {
-      supabase.removeChannel(channel);
+      active = false;
+      window.clearInterval(interval);
     };
-  }, [directory]);
+  }, []);
 
   return (
     <section className="card overflow-hidden mb-9">
@@ -123,7 +83,7 @@ export default function AdminLiveUsersPanel({ students }: { students: StudentDir
             </h2>
           </div>
           <p className="text-muted2 text-[11.5px] sm:text-xs">
-            يتحدث تلقائيًا عند دخول أو خروج الطالب من المنصة.
+            يتحدث تلقائيًا حسب نشاط الطالب داخل المنصة.
           </p>
         </div>
 
@@ -134,35 +94,26 @@ export default function AdminLiveUsersPanel({ students }: { students: StudentDir
 
       {connectionState === 'error' ? (
         <div className="px-5 sm:px-6 py-6 text-sm text-[#E7A09A]">
-          تعذر الاتصال بخدمة الحضور المباشر. تحقق من إعدادات Supabase Realtime.
+          تعذر قراءة حالة المستخدمين المتصلين.
         </div>
       ) : online.length === 0 ? (
         <div className="px-5 sm:px-6 py-7 text-center">
           <div className="text-muted text-sm">
-            {connectionState === 'connecting' ? 'جارٍ الاتصال...' : 'لا يوجد طلاب متصلون الآن.'}
+            {connectionState === 'connecting' ? 'جارٍ التحقق...' : 'لا يوجد طلاب متصلون الآن.'}
           </div>
         </div>
       ) : (
         <div className="divide-y divide-white/[0.06]">
           {online.map((student) => (
-            <div key={student.presenceKey} className="flex items-center gap-3 px-5 sm:px-6 py-3.5">
+            <div key={student.id} className="flex items-center gap-3 px-5 sm:px-6 py-3.5">
               <span className="w-2.5 h-2.5 rounded-full bg-success flex-shrink-0 shadow-[0_0_0_4px_rgba(63,203,130,0.08)]" />
 
               <div className="min-w-0 flex-1">
                 <div className="font-cairo font-bold text-[13.5px] sm:text-sm truncate">
                   {student.name}
                 </div>
-                <div className="text-muted2 text-[11px] mt-0.5">{pageLabel(student.page)}</div>
+                <div className="text-muted2 text-[11px] mt-0.5">{pageLabel(student.path)}</div>
               </div>
-
-              {student.connections > 1 && (
-                <span
-                  className="text-[10px] text-muted2 border border-white/[0.07] rounded-full px-2 py-1"
-                  title="الطالب فاتح المنصة في أكثر من تبويب أو جهاز"
-                >
-                  {student.connections} اتصالات
-                </span>
-              )}
 
               <span className="text-[10.5px] font-semibold text-success whitespace-nowrap">
                 مباشر
