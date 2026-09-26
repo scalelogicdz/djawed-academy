@@ -44,11 +44,11 @@ export default function AdminLiveUsersPanel({ students }: { students: StudentDir
     const supabase = supabaseRef.current;
     if (!supabase) return;
 
-    let active = true;
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    const channel = supabase.channel(PRESENCE_TOPIC, {
+      config: { private: true },
+    });
 
     function syncPresence() {
-      if (!channel) return;
       const state = channel.presenceState() as Record<
         string,
         Array<{ page?: unknown; seen_at?: unknown; phx_ref?: string }>
@@ -81,43 +81,21 @@ export default function AdminLiveUsersPanel({ students }: { students: StudentDir
       setOnline(next);
     }
 
-    async function connectPresence() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!active || !session?.access_token) {
-        setConnectionState('error');
-        return;
-      }
-
-      await supabase.realtime.setAuth(session.access_token);
-
-      channel = supabase.channel(PRESENCE_TOPIC, {
-        config: { private: true },
+    channel
+      .on('presence', { event: 'sync' }, syncPresence)
+      .on('presence', { event: 'join' }, syncPresence)
+      .on('presence', { event: 'leave' }, syncPresence)
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setConnectionState('connected');
+          syncPresence();
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setConnectionState('error');
+        }
       });
 
-      channel
-        .on('presence', { event: 'sync' }, syncPresence)
-        .on('presence', { event: 'join' }, syncPresence)
-        .on('presence', { event: 'leave' }, syncPresence)
-        .subscribe((status) => {
-          if (!active) return;
-
-          if (status === 'SUBSCRIBED') {
-            setConnectionState('connected');
-            syncPresence();
-          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            setConnectionState('error');
-          }
-        });
-    }
-
-    connectPresence();
-
     return () => {
-      active = false;
-      if (channel) supabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [directory]);
 
