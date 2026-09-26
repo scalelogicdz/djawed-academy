@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async rewrites() {
+    return [
+      { source: '/course', destination: '/recorded-course-landing-v2.html' },
+    ];
+  },
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development';
     const scriptSources = [
@@ -13,6 +18,7 @@ const nextConfig = {
       "'self'",
       'https://*.supabase.co',
       'wss://*.supabase.co',
+      'https://formspree.io',
       ...(isDevelopment ? ['http:', 'https:', 'ws:', 'wss:'] : []),
     ];
 
