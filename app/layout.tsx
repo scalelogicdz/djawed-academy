@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import NavigationProgress from '@/components/NavigationProgress';
 import LanguageProvider from '@/components/LanguageProvider';
+import StudentPresence from '@/components/StudentPresence';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Suspense fallback={null}>
             <NavigationProgress />
           </Suspense>
+          <StudentPresence />
           {children}
         </LanguageProvider>
       </body>
