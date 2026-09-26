@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { presenceKeyForUser } from '@/lib/presence';
 import AdminLiveUsersPanel from '@/components/AdminLiveUsersPanel';
 
 export default async function AdminOverview() {
@@ -11,23 +10,17 @@ export default async function AdminOverview() {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: students } = await supabase
+  const { count: studentCount } = await supabase
     .from('profiles')
-    .select('id, full_name, display_name')
-    .eq('is_admin', false)
-    .order('created_at', { ascending: true });
-
-  const studentDirectory = (students ?? []).map((student) => ({
-    presenceKey: presenceKeyForUser(student.id),
-    name: student.display_name || student.full_name || 'طالب',
-  }));
+    .select('id', { count: 'exact', head: true })
+    .eq('is_admin', false);
 
   const { count: courseCount } = await supabase.from('courses').select('id', { count: 'exact', head: true });
   const { count: lessonCount } = await supabase.from('lessons').select('id', { count: 'exact', head: true });
   const { count: supportCount } = await supabase.from('support_requests').select('id', { count: 'exact', head: true });
 
   const stats = [
-    { label: 'الطلاب', value: studentDirectory.length },
+    { label: 'الطلاب', value: studentCount ?? 0 },
     { label: 'الدورات', value: courseCount ?? 0 },
     { label: 'الدروس', value: lessonCount ?? 0 },
     { label: 'طلبات الدعم', value: supportCount ?? 0 },
@@ -50,7 +43,7 @@ export default async function AdminOverview() {
         ))}
       </div>
 
-      <AdminLiveUsersPanel students={studentDirectory} />
+      <AdminLiveUsersPanel />
 
       <div className="mb-4">
         <h2 className="font-cairo font-extrabold text-[18px]">إدارة المنصة</h2>
