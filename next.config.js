@@ -33,7 +33,7 @@ const nextConfig = {
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https:",
       `connect-src ${connectSources.join(' ')}`,
-      "frame-src https://iframe.mediadelivery.net https://player.vimeo.com",
+      "frame-src https://iframe.mediadelivery.net https://player.vimeo.com https://www.youtube-nocookie.com",
       "media-src 'self' blob: https:",
       "worker-src 'self' blob:",
       "upgrade-insecure-requests",
