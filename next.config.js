@@ -2,9 +2,18 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    return [
-      { source: '/course', destination: '/recorded-course-landing-v2.html' },
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: '/',
+          has: [{ type: 'host', value: 'course.djawedkhalfaoui.com' }],
+          destination: '/recorded-course-landing-v2.html',
+        },
+      ],
+      afterFiles: [
+        { source: '/course', destination: '/recorded-course-landing-v2.html' },
+      ],
+    };
   },
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development';
