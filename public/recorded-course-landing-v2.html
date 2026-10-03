@@ -505,6 +505,26 @@ body .price-card .value-list{padding-inline:12px}
  body .price-card .value-list{padding-inline:10px}
  body .testi-card{width:calc(100vw - 40px)}
 }
+
+/* Balanced type scale across the wider layout. */
+body{font-size:18px}
+body section h2,body .founder-copy h2,body .final-cta h2{font-size:30px!important;line-height:1.6!important}
+body .hero p.sub,body section p.sub,body .founder p{font-size:18px;line-height:1.9}
+body .price-card h3{font-size:21px!important;line-height:1.65}
+body .price-card .value-list li{font-size:17px;line-height:1.7}
+body .price-card .value-list .check{font-size:20px}
+body .guarantee,body .hero .btn-primary+p{font-size:15px!important;line-height:1.8}
+body .founder .role,body .founder-more summary{font-size:17px}
+body .testi-name{font-size:16px}
+@media(max-width:720px){
+ body{font-size:17px}
+ body section h2,body .founder-copy h2,body .final-cta h2{font-size:26px!important;line-height:1.6!important}
+ body .hero p.sub,body section p.sub,body .founder p{font-size:17px;line-height:1.9}
+ body .price-card h3{font-size:20px!important}
+ body .price-card .value-list li{font-size:clamp(13px,3.8vw,17px);gap:8px}
+ body .price-card .value-list .check{font-size:18px}
+ body .guarantee,body .hero .btn-primary+p{font-size:14px!important}
+}
 </style>
 </head>
 <body>
@@ -749,41 +769,7 @@ body .price-card .value-list{padding-inline:12px}
 </section>
 
 <!-- FAQ -->
-<section>
-  <div class="wrap-narrow">
-    <div class="center"><div class="eyebrow">أسئلة شائعة قبل التسجيل</div></div>
 
-    <details class="faq-item glass" open>
-      <summary>هل أحتاج خبرة سابقة في إعلانات ميتا؟</summary>
-      <p>لا. الدورة تبدأ من الأساسيات وتبني الفهم خطوة بخطوة، وفي نفس الوقت تساعد من جرّب الإعلانات سابقًا على ترتيب فهمه وتحليل نتائجه بشكل أفضل.</p>
-    </details>
-
-    <details class="faq-item glass">
-      <summary>متى أعرف السعر وطريقة الدفع؟</summary>
-      <p>بعد إرسال نموذج التسجيل نراجع معلوماتك ونتواصل معك عبر واتساب لشرح السعر وطريقة الدفع والتفاصيل كاملة قبل أن تقرر إتمام التسجيل.</p>
-    </details>
-
-    <details class="faq-item glass">
-      <summary>هل إرسال نموذج التسجيل يلزمني بالدفع؟</summary>
-      <p>لا. النموذج هو طلب تسجيل وتواصل فقط. لا يتم إنشاء حسابك أو تأكيد انضمامك إلا بعد موافقتك وإتمام الدفع.</p>
-    </details>
-
-    <details class="faq-item glass">
-      <summary>هل الوصول للدورة مدى الحياة؟</summary>
-      <p>نعم. الدفع مرة واحدة ويمنحك وصولًا دائمًا إلى دروس الدورة داخل المنصة، بدون اشتراك شهري أو تجديد.</p>
-    </details>
-
-    <details class="faq-item glass">
-      <summary>هل أستطيع طرح أسئلة إذا واجهتني مشكلة أثناء التطبيق؟</summary>
-      <p>نعم. داخل المنصة توجد مساحة مجتمع مخصصة للطلاب لطرح الأسئلة ومناقشة ما يواجههم أثناء التعلّم والتطبيق.</p>
-    </details>
-
-    <details class="faq-item glass">
-      <summary>كيف يتم الدفع داخل الجزائر؟</summary>
-      <p>يتم توضيح وسيلة الدفع المناسبة لك أثناء التواصل على واتساب. بعد تأكيد الدفع يتم إنشاء حسابك يدويًا على المنصة.</p>
-    </details>
-  </div>
-</section>
 
 <!-- FINAL CTA -->
 <section class="final-cta" style="overflow:hidden;">
