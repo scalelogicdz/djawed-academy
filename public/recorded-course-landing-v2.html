@@ -491,6 +491,20 @@ body .price-card .value-list .check{flex-shrink:0;font-size:16px}
 .founder-more p{margin-top:12px!important}
 @media(max-width:720px){body .price-card .value-list{padding:14px 12px;gap:8px}body .price-card .value-list li{font-size:clamp(10px,3.1vw,13px);gap:8px}}
 
+
+/* Consistent, smaller page gutters and card insets. */
+body .wrap,body .wrap-narrow,body .hero > .wrap{padding-inline:20px!important}
+body .wrap-narrow > .glass,body .founder-layout.glass{padding-inline:24px!important}
+body .price-card{padding-inline:24px}
+body .faq-item,body .testi-card{padding-inline:24px}
+body .price-card .value-list{padding-inline:12px}
+@media(max-width:720px){
+ body .wrap,body .wrap-narrow,body .hero > .wrap{padding-inline:16px!important}
+ body .wrap-narrow > .glass,body .founder-layout.glass{padding-inline:16px!important}
+ body .price-card,body .faq-item,body .testi-card{padding-inline:16px}
+ body .price-card .value-list{padding-inline:10px}
+ body .testi-card{width:calc(100vw - 40px)}
+}
 </style>
 </head>
 <body>
