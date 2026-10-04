@@ -514,7 +514,7 @@ body .field .anytime-choice input{min-height:0;padding:0}
       opt.addEventListener('click', function(){
         group.querySelectorAll('.option').forEach(function(o){ o.classList.remove('selected'); });
         opt.classList.add('selected');
-        answers[question] = opt.getAttribute('data-value');
+        answers[question] = opt.textContent.trim();
         var nextBtn = group.closest('.step').querySelector('.btn-next');
         if(nextBtn && nextBtn.id === 'submitBtn'){
           checkStep5();
@@ -594,7 +594,7 @@ body .field .anytime-choice input{min-height:0;padding:0}
   function updateContactTime(){
     contactHour.disabled = contactAnytime.checked;
     contactTimeField.value = contactHour.value !== '' ? contactHour.value + ':00' : '';
-    answers['contact-time'] = contactAnytime.checked ? 'anytime' : contactTimeField.value;
+    answers['contact-time'] = contactAnytime.checked ? 'أي وقت مناسب' : contactTimeField.value;
     var selected = contactHour.value !== '' && !contactAnytime.checked;
     document.querySelector('.clock-hands').setAttribute('opacity', selected ? '1' : '0.3');
     if(selected){
