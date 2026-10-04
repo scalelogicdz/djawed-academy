@@ -263,6 +263,51 @@ body::after{
 
 
 .time-selectors{max-width:210px}.time-select-unit select{font-size:21px}
+
+/* Compact registration steps: keep options and navigation together. */
+body .topbar{padding:14px 20px 10px}
+body .progress-wrap{margin-top:8px}
+body .progress-label{margin-top:6px;font-size:12px}
+body .stage{padding:18px 20px 24px;min-height:0}
+body .step{padding:24px}
+body .step-eyebrow{font-size:12px;margin-bottom:7px}
+body .step h2{font-size:24px;line-height:1.4;margin-bottom:16px}
+body .options{gap:7px}
+body .option{font-size:14px;line-height:1.45;padding:11px 13px;gap:10px;min-height:44px}
+body .option .radio{width:18px;height:18px;flex-shrink:0}
+body .step-nav{margin-top:18px;gap:9px}
+body .btn-next,body .btn-back{min-height:46px;padding:10px 16px;font-size:14px;line-height:1.5}
+body .field{margin-bottom:12px}
+body .field label{font-size:13px;margin-bottom:5px}
+body .field input,body .country-picker-btn{min-height:46px;padding:10px 12px;font-size:16px}
+body .contact-time-entry{padding:12px;gap:10px}
+body .contact-clock{width:60px;height:60px}
+body .field label.anytime-choice{padding:10px 12px;font-size:13px;margin-bottom:0}
+body .time-hint{font-size:12px;margin-bottom:3px}
+body .time-select-unit select{height:44px;font-size:18px}
+body .time-format{margin-top:4px}
+body .field .anytime-choice input{min-height:0;padding:0}
+@media(max-width:720px){
+ body .topbar{padding:12px 16px 8px}
+ body .progress-wrap{padding:0 16px;margin-top:6px}
+ body .stage{padding:12px 12px 18px}
+ body .step{padding:18px 16px;border-radius:16px}
+ body .step h2{font-size:21px;line-height:1.4;margin-bottom:14px}
+ body .option{font-size:13px;padding:10px 11px;line-height:1.45}
+ body .options{gap:6px}
+ body .step-nav{margin-top:16px}
+}
+@media(max-width:720px) and (max-height:700px){
+ body .topbar{padding-top:8px;padding-bottom:6px}
+ body .progress-wrap{margin-top:4px}
+ body .stage{padding-top:9px;padding-bottom:12px}
+ body .step{padding:14px}
+ body .step h2{font-size:19px;margin-bottom:11px;line-height:1.35}
+ body .step-eyebrow{margin-bottom:5px;font-size:11px}
+ body .option{font-size:12.5px;padding:8px 10px;line-height:1.4}
+ body .options{gap:5px}
+ body .step-nav{margin-top:12px}
+}
 </style>
 </head>
 <body>
