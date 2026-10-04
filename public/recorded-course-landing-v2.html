@@ -575,6 +575,12 @@ body .btn-primary .cta-sub{font-size:10.5px;line-height:1.5}
  body .btn-primary .cta-main{font-size:17px}
  body .btn-primary .cta-sub{font-size:10.5px}
 }
+
+/* Single-line promise and subtle video accent. */
+body .hero p.hero-promise{white-space:nowrap;text-wrap:nowrap;max-width:100%;font-size:20px;line-height:1.7}
+body .hero .video-slot{margin-bottom:0}
+body .video-accent-line{width:70%;max-width:450px;height:2px;margin:16px auto 24px;background:linear-gradient(90deg,transparent,rgba(8,102,255,.18) 20%,rgba(8,102,255,.55) 50%,rgba(8,102,255,.18) 80%,transparent);border-radius:999px;box-shadow:0 0 10px rgba(8,102,255,.12)}
+@media(max-width:720px){body .hero p.hero-promise{font-size:clamp(11px,3.5vw,15px)}body .video-accent-line{width:72%;height:1px;margin:14px auto 22px}}
 </style>
 </head>
 <body>
@@ -591,7 +597,7 @@ body .btn-primary .cta-sub{font-size:10.5px;line-height:1.5}
 <div class="hero-intro"><div class="hero-intro-copy">    <div class="eyebrow">دورة تعلم السبونسور (إعلانات ميطا)</div>
 
     <h1 class="hero-message"><span class="hero-line">وكتاه رايح تفيق بلي لي</span><span class="hero-line">يديرلك سبونسور <span class="hero-emphasis">ماهوش</span></span><span class="hero-line hero-emphasis">خير عليك؟</span></h1>
-    <p class="hero-promise">في هاد الدورة رايحين نعلموك و زيد نتابعوك حتى نهار تشوف النتائج.</p>
+    <p class="hero-promise">رايحين نعلموك وزيد نتابعوك حتى توصل للنتائج</p>
     
 
 </div></div>
@@ -605,6 +611,7 @@ body .btn-primary .cta-sub{font-size:10.5px;line-height:1.5}
         allowfullscreen>
       </iframe>
     </div>
+    <div class="video-accent-line" aria-hidden="true"></div>
   
     <div style="text-align:center; margin-top:26px;">
       <a href="https://course.djawedkhalfaoui.com/registration.html" class="btn-primary"><span class="cta-main">احجز مكالمتك المجانية الآن</span><span class="cta-sub">🔑 التسجيلات تغلق عند نفاذ أماكن هذه الدفعة</span></a>
