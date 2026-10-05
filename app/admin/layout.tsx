@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import StudentNav from '@/components/StudentNav';
 import AdminSidebar from '@/components/AdminSidebar';
+import './admin-theme.css';
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
@@ -21,7 +22,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (!profile?.is_admin) redirect('/dashboard');
 
   return (
-    <>
+    <div className="admin-light-theme">
       <StudentNav isAdmin currentUserId={user.id} />
 
       <div className="max-w-[1440px] mx-auto lg:px-6 lg:py-6">
@@ -30,6 +31,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <div className="min-w-0 flex-1">{children}</div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
