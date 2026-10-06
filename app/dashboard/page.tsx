@@ -1,3 +1,4 @@
+import { hiddenModuleIds } from '@/lib/moduleVisibility';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -61,12 +62,13 @@ export default async function DashboardPage() {
     .eq('student_id', user.id);
   const completedIds = new Set((progressRows ?? []).map((p) => p.lesson_id));
 
+  const hidden = await hiddenModuleIds(supabase);
   const courseCards = await Promise.all(
     (enrollments ?? []).map(async (enr: any) => {
       const course = enr.courses;
 
       const { data: modules } = await supabase.from('modules').select('id').eq('course_id', course.id);
-      const moduleIds = (modules ?? []).map((m) => m.id);
+      const moduleIds = (modules ?? []).filter(m => !hidden.has(m.id)).map((m) => m.id);
       const moduleCount = moduleIds.length;
 
       const { data: lessonsInCourse } = await supabase

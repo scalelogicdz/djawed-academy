@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import LessonsManager from '@/components/LessonsManager';
 import { lessonEmailsReady } from '@/lib/lessonEmails';
+import { hiddenModuleIds } from '@/lib/moduleVisibility';
 import AdminBackButton from '@/components/AdminBackButton';
 
 export default async function AdminLessonsPage() {
@@ -25,6 +26,8 @@ export default async function AdminLessonsPage() {
     .select('id, lesson_id, question, options, correct_index, position')
     .order('position');
 
+  const hidden = await hiddenModuleIds(supabase);
+
   return (
     <section className="max-w-[1140px] mx-auto px-5 sm:px-6 py-10 sm:py-12">
       <div className="mb-5">
@@ -36,7 +39,7 @@ export default async function AdminLessonsPage() {
       <LessonsManager
         emailNotificationsAvailable={await lessonEmailsReady()}
         courses={courses ?? []}
-        initialModules={modules ?? []}
+        initialModules={(modules ?? []).map(module => ({ ...module, hidden: hidden.has(module.id) }))}
         initialLessons={lessons ?? []}
         initialQuizQuestions={quizQuestions ?? []}
       />

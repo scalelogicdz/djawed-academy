@@ -1,3 +1,4 @@
+import { hiddenModuleIds } from '@/lib/moduleVisibility';
 import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -27,11 +28,15 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
     .eq('id', lesson.module_id)
     .single();
 
-  const { data: allModules } = await supabase
+  const { data: fetchedModules } = await supabase
     .from('modules')
     .select('id, title, position')
     .eq('course_id', currentModule?.course_id)
     .order('position', { ascending: true });
+
+  const hidden = await hiddenModuleIds(supabase);
+  const allModules = (fetchedModules ?? []).filter(module => !hidden.has(module.id));
+  if (!currentModule || hidden.has(currentModule.id)) notFound();
 
   const moduleIds = (allModules ?? []).map((module) => module.id);
   const { data: allLessons } = await supabase

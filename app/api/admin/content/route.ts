@@ -3,6 +3,7 @@ import { lessonEmailConfig, lessonEmailsReady, dispatchLessonEmails } from '@/li
 
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { moduleVisibilityKey, hiddenModuleIds } from '@/lib/moduleVisibility';
 import {
   checkRateLimit,
   cleanOptionalText,
@@ -111,6 +112,9 @@ export async function POST(request: Request) {
     }
 
     const notify = body.notifyStudents === true;
+    if (notify && (await hiddenModuleIds(adminClient)).has(moduleId)) {
+      return NextResponse.json({ error: 'الوحدة مخفية. ألغِ إشعار الطلاب أو أظهر الوحدة أولاً.' }, { status: 400 });
+    }
     const config = lessonEmailConfig();
     if (notify && (!config || !(await lessonEmailsReady()))) {
       return NextResponse.json({ error: 'إشعارات البريد غير مفعلة بعد. أكمل إعداد خدمة البريد أو ألغِ خيار الإشعار.' }, { status: 503 });
@@ -169,6 +173,20 @@ export async function PATCH(request: Request) {
   if (!body || !isUuid(body.id)) return NextResponse.json({ error: 'بيانات الطلب غير صالحة' }, { status: 400 });
 
   const adminClient = createAdminClient();
+
+  if (body.type === 'moduleVisibility') {
+    if (typeof body.hidden !== 'boolean') {
+      return NextResponse.json({ error: 'حالة الوحدة غير صالحة' }, { status: 400 });
+    }
+    const { data: module, error: moduleError } = await adminClient.from('modules')
+      .select('id').eq('id', body.id).single();
+    if (moduleError || !module) return NextResponse.json({ error: 'الوحدة غير موجودة' }, { status: 404 });
+    const { error } = await adminClient.from('site_content').upsert({
+      key: moduleVisibilityKey(body.id), content: { hidden: body.hidden }, updated_at: new Date().toISOString(),
+    }, { onConflict: 'key' });
+    if (error) return NextResponse.json({ error: 'تعذر حفظ حالة الوحدة. حاول مرة أخرى.' }, { status: 500 });
+    return NextResponse.json({ ok: true, hidden: body.hidden });
+  }
 
   if (body.type === 'lesson') {
     const title = cleanText(body.title, 1, 180);

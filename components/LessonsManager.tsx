@@ -5,7 +5,7 @@ import type { DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Course = { id: string; title: string };
-type ModuleRow = { id: string; course_id: string; title: string; description: string | null; thumbnail_url: string | null; position: number };
+type ModuleRow = { hidden?: boolean; id: string; course_id: string; title: string; description: string | null; thumbnail_url: string | null; position: number };
 type LessonRow = {
   id: string;
   module_id: string;
@@ -44,6 +44,32 @@ export default function LessonsManager({
 }) {
   const router = useRouter();
   const [modules, setModules] = useState(initialModules);
+  const [visibilityBusy, setVisibilityBusy] = useState<Set<string>>(new Set());
+  const visibilityLocks = useRef(new Set<string>());
+  const [visibilityMessage, setVisibilityMessage] = useState('');
+
+  async function toggleModuleVisibility(module: ModuleRow) {
+    if (visibilityLocks.current.has(module.id)) return;
+    visibilityLocks.current.add(module.id);
+    setVisibilityBusy(new Set(visibilityLocks.current));
+    setVisibilityMessage('');
+    try {
+      const res = await fetch('/api/admin/content', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'moduleVisibility', id: module.id, hidden: !module.hidden }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'تعذر حفظ حالة الوحدة.');
+      setModules(current => current.map(item => item.id === module.id ? { ...item, hidden: data.hidden } : item));
+      setVisibilityMessage(data.hidden ? 'تم إخفاء الوحدة ودروسها عن الطلاب.' : 'تم إظهار الوحدة للطلاب.');
+      router.refresh();
+    } catch (error) {
+      setVisibilityMessage(error instanceof Error ? error.message : 'تعذر الاتصال. حاول مرة أخرى.');
+    } finally {
+      visibilityLocks.current.delete(module.id);
+      setVisibilityBusy(new Set(visibilityLocks.current));
+    }
+  }
   const [lessons, setLessons] = useState(initialLessons);
   const [quizQuestions, setQuizQuestions] = useState(initialQuizQuestions);
   const [selectedCourse, setSelectedCourse] = useState(courses[0]?.id ?? '');
@@ -149,7 +175,7 @@ export default function LessonsManager({
     const data = await res.json();
     setSavingModuleEdit(false);
     if (res.ok) {
-      setModules(modules.map((m) => (m.id === moduleId ? data.module : m)));
+      setModules(current => current.map(m => m.id === moduleId ? { ...data.module, hidden: m.hidden } : m));
       setEditingModuleId(null);
       router.refresh();
     }
@@ -489,6 +515,7 @@ export default function LessonsManager({
         </div>
       )}
 
+      {visibilityMessage && <p role="status" className="text-sm text-muted mb-4">{visibilityMessage}</p>}
       {courseModules.map((m) => (
         <div
           key={m.id}
@@ -556,10 +583,26 @@ export default function LessonsManager({
                     ⋮⋮
                   </span>
                   <h3 className="font-cairo font-bold text-gold text-sm uppercase tracking-wide">{m.title}</h3>
+                  {m.hidden && <span className="text-[11px] text-muted rounded border border-border px-2 py-1">مخفية عن الطلاب</span>}
                 </div>
                 {m.description && <p className="text-muted text-[13px] mt-1.5">{m.description}</p>}
               </div>
               <div className="flex gap-1.5 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => toggleModuleVisibility(m)}
+                  disabled={visibilityBusy.has(m.id)}
+                  aria-label={m.hidden ? 'إظهار الوحدة للطلاب' : 'إخفاء الوحدة عن الطلاب'}
+                  title={m.hidden ? 'إظهار الوحدة للطلاب' : 'إخفاء الوحدة عن الطلاب'}
+                  aria-pressed={!!m.hidden}
+                  className={`p-2 rounded-md border border-border transition hover:text-gold hover:border-goldDim disabled:opacity-50 ${m.hidden ? 'text-muted2' : 'text-gold'}`}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                    {m.hidden && <path d="M3 3l18 18" />}
+                  </svg>
+                </button>
                 <button
                   onClick={() => startEditingModule(m)}
                   className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-gold hover:border-goldDim transition"

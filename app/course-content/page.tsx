@@ -1,3 +1,4 @@
+import { hiddenModuleIds } from '@/lib/moduleVisibility';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -50,11 +51,14 @@ export default async function CourseContentPage({
   const course = enrollment.courses;
   const adminClient = createAdminClient();
 
-  const { data: modules } = await adminClient
+  const { data: fetchedModules } = await adminClient
     .from('modules')
     .select('id, title, description, thumbnail_url, position')
     .eq('course_id', course.id)
     .order('position', { ascending: true });
+
+  const hidden = await hiddenModuleIds(supabase);
+  const modules = (fetchedModules ?? []).filter(module => !hidden.has(module.id));
 
   const moduleIds = (modules ?? []).map((module) => module.id);
   const { data: lessons } = moduleIds.length
