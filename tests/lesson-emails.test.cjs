@@ -4,9 +4,9 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 const source = ts.transpileModule(fs.readFileSync('lib/lessonEmails.ts','utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
-function setup({ enrolled = true, providerOk = true, recordFails = false, configured = true } = {}) {
+function setup({ enrolled = true, providerOk = true, recordFails = false, configured = true, legacy = false } = {}) {
   const updates = [], calls = [];
-  const job = { id:'delivery-1',lesson_id:'lesson-1',student_id:'student-1',recipient:'student@example.com',payload:{from:'Djawed Logic <lessons@example.com>',title:'<img src=x> & درس',url:'https://academy.example.com/lesson/lesson-1'} };
+  const job = { first_attempt_at: legacy ? '2026-10-06T14:40:00Z' : '2026-10-06T16:00:00Z', id:'delivery-1',lesson_id:'lesson-1',student_id:'student-1',recipient:'student@example.com',payload:{from:'Djawed Logic <lessons@example.com>',title:'<img src=x> & درس',url:'https://academy.example.com/lesson/lesson-1'} };
   let claimed = false;
   const db = {
     rpc: async () => ({data: claimed ? [] : (claimed=true,[job]),error:null}),
@@ -23,11 +23,16 @@ function setup({ enrolled = true, providerOk = true, recordFails = false, config
     setTimeout:fn=>{fn();return 1},fetch:async(url,opts)=>{calls.push({url,...opts});return {ok:providerOk}}});
   return {api:exports,updates,calls,job};
 }
-test('new lesson email is private, escaped, and uses stable retry key',async()=>{
+test('new lesson email contains only brand image and plain platform link with private recipient',async()=>{
  const {api,updates,calls}=setup(); await api.dispatchLessonEmails();
  assert.equal(calls.length,1);const body=JSON.parse(calls[0].body);
  assert.deepEqual(body.to,['student@example.com']);assert.equal(body.cc,undefined);
- assert.match(body.html,/&lt;img src=x&gt;/);assert.doesNotMatch(body.html,/<img/);
+ assert.equal((body.html.match(/<img /g)||[]).length,1);
+ assert.match(body.html,/src="https:\/\/academy.example.com\/djawed-logic-logo.png"/);
+ assert.match(body.html,/href="https:\/\/academy.example.com"/);
+ assert.doesNotMatch(body.html,/شاهد الدرس|<button|background:|\/lesson\//);
+ assert.equal(body.text,'https://academy.example.com');
+ assert.doesNotMatch(body.html,/<h[1-6]|<p>/);
  assert.equal(calls[0].headers['Idempotency-Key'],'lesson-email/delivery-1');
  assert.equal(updates[0].status,'sent');
 });
@@ -46,4 +51,11 @@ test('acceptance followed by database failure keeps same key for retry',async()=
 });
 test('missing email configuration never sends',async()=>{
  const {api,calls}=setup({configured:false});assert.equal(await api.lessonEmailsReady(),false);await api.dispatchLessonEmails();assert.equal(calls.length,0);
+});
+
+test('already attempted legacy deliveries retain their original retry body',async()=>{
+ const {api,calls}=setup({legacy:true});await api.dispatchLessonEmails();
+ const body=JSON.parse(calls[0].body);
+ assert.match(body.html,/شاهد الدرس/);assert.match(body.html,/&lt;img src=x&gt;/);
+ assert.equal(calls[0].headers['Idempotency-Key'],'lesson-email/delivery-1');
 });
