@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -31,10 +31,12 @@ const emptyQuizDraft = { question: '', options: ['', ''], correctIndex: 0 };
 
 export default function LessonsManager({
   courses,
+  emailNotificationsAvailable,
   initialModules,
   initialLessons,
   initialQuizQuestions,
 }: {
+  emailNotificationsAvailable: boolean;
   courses: Course[];
   initialModules: ModuleRow[];
   initialLessons: LessonRow[];
@@ -48,6 +50,38 @@ export default function LessonsManager({
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [lessonForms, setLessonForms] = useState<Record<string, boolean>>({});
   const [lessonDraft, setLessonDraft] = useState(emptyLessonDraft);
+  const [notifyStudents, setNotifyStudents] = useState(emailNotificationsAvailable);
+  const [savingLesson, setSavingLesson] = useState(false);
+  const lessonSaveLock = useRef(false);
+  const [emailMessage, setEmailMessage] = useState('');
+  const [emailStats, setEmailStats] = useState<Record<string, number> | null>(null);
+  const [retryingEmails, setRetryingEmails] = useState(false);
+
+  useEffect(() => {
+    if (!emailNotificationsAvailable) return;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const res = await fetch('/api/admin/lesson-emails');
+        if (res.ok) {
+          const stats = await res.json();
+          if (active) setEmailStats(stats);
+        }
+      } catch { /* A failed status refresh must not interrupt lesson editing. */ }
+    };
+    void refresh();
+    const timer = setInterval(refresh, 5000);
+    return () => { active = false; clearInterval(timer); };
+  }, [emailNotificationsAvailable]);
+
+  async function retryEmails() {
+    setRetryingEmails(true);
+    try {
+      const res = await fetch('/api/admin/lesson-emails', { method: 'POST' });
+      setEmailMessage(res.ok ? 'بدأت معالجة الإشعارات المتبقية.' : 'تعذر بدء الإرسال. تحقق من إعدادات البريد.');
+    } catch { setEmailMessage('تعذر الاتصال. حاول مرة أخرى.'); }
+    finally { setRetryingEmails(false); }
+  }
 
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [editLessonDraft, setEditLessonDraft] = useState(emptyLessonDraft);
@@ -151,28 +185,36 @@ export default function LessonsManager({
   }
 
   async function addLesson(moduleId: string) {
-    if (!lessonDraft.title.trim()) return;
-    const res = await fetch('/api/admin/content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'lesson',
-        moduleId,
-        title: lessonDraft.title.trim(),
-        description: lessonDraft.description.trim() || null,
-        videoId: lessonDraft.videoId.trim() || null,
-        videoProvider: lessonDraft.videoProvider,
-        resourceUrl: lessonDraft.resourceUrl.trim() || null,
-        position: lessons.filter((l) => l.module_id === moduleId).length,
-      }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setLessons([...lessons, data.lesson]);
-      setLessonDraft(emptyLessonDraft);
-      setLessonForms({ ...lessonForms, [moduleId]: false });
-      router.refresh();
-    }
+    if (!lessonDraft.title.trim() || lessonSaveLock.current) return;
+    lessonSaveLock.current = true;
+    setSavingLesson(true);
+    setEmailMessage('');
+    try {
+      const res = await fetch('/api/admin/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'lesson',
+          notifyStudents,
+          moduleId,
+          title: lessonDraft.title.trim(),
+          description: lessonDraft.description.trim() || null,
+          videoId: lessonDraft.videoId.trim() || null,
+          videoProvider: lessonDraft.videoProvider,
+          resourceUrl: lessonDraft.resourceUrl.trim() || null,
+          position: lessons.filter((l) => l.module_id === moduleId).length,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEmailMessage(data.notificationsQueued ? 'تم حفظ الدرس وإضافة إشعارات الطلاب إلى قائمة الإرسال.' : 'تم حفظ الدرس بدون إرسال إشعارات.');
+        setLessons((current) => [...current, data.lesson]);
+        setLessonDraft(emptyLessonDraft);
+        setLessonForms({ ...lessonForms, [moduleId]: false });
+        router.refresh();
+      } else { setEmailMessage(data.error || 'تعذر حفظ الدرس'); }
+    } catch { setEmailMessage('تعذر الاتصال. تحقق من قائمة الدروس قبل المحاولة مجددًا.'); }
+    finally { lessonSaveLock.current = false; setSavingLesson(false); }
   }
 
   function startEditingLesson(lesson: LessonRow) {
@@ -433,6 +475,14 @@ export default function LessonsManager({
         </button>
       </div>
 
+      <div className="mb-5 rounded-xl border border-border p-4 text-sm" role="status">
+        {!emailNotificationsAvailable ? <p className="text-muted">إشعارات الدروس بالبريد غير مفعلة بعد — يلزم إعداد خدمة البريد وقاعدة البيانات.</p> : <>
+          <p>إشعارات البريد: {emailStats?.sent ?? 0} تم قبولها للإرسال · {(emailStats?.pending ?? 0) + (emailStats?.sending ?? 0)} قيد المعالجة · {emailStats?.failed ?? 0} تحتاج إعادة محاولة</p>
+          {!!emailStats?.held && <p className="text-muted mt-2">{emailStats.held} إشعارات معلقة للمراجعة لتجنب الإرسال المكرر أو بسبب إزالة الوصول.</p>}
+          {!!emailStats && ((emailStats.pending ?? 0) + (emailStats.failed ?? 0) > 0) && <button onClick={retryEmails} disabled={retryingEmails} className="btn-ghost mt-2 !py-2 !px-4 text-xs">{retryingEmails ? 'جارٍ البدء...' : 'معالجة الإشعارات المتبقية'}</button>}
+        </>}
+        {emailMessage && <p className="mt-2">{emailMessage}</p>}
+      </div>
       {(savingOrder || orderMessage) && (
         <div className={`text-xs mb-4 ${savingOrder ? 'text-gold' : orderMessage.startsWith('تم ') ? 'text-success' : 'text-[#E4756A]'}`}>
           {savingOrder ? 'جارٍ حفظ الترتيب...' : orderMessage}
@@ -791,12 +841,16 @@ export default function LessonsManager({
                 placeholder="رابط الملف المرفق (اختياري)"
                 className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
               />
+              <label className="flex items-center gap-2 text-sm text-muted">
+                <input type="checkbox" checked={notifyStudents} disabled={!emailNotificationsAvailable || savingLesson} onChange={(e) => setNotifyStudents(e.target.checked)} className="accent-[#C9A84C]" />
+                إشعار طلاب هذه الدورة بالبريد عند إضافة الدرس
+              </label>
               <div className="flex gap-2 justify-end">
                 <button className="btn-ghost !py-2 !px-4 text-xs" onClick={() => setLessonForms({ ...lessonForms, [m.id]: false })}>
                   إلغاء
                 </button>
-                <button className="btn-primary !py-2 !px-4 text-xs" onClick={() => addLesson(m.id)}>
-                  حفظ الدرس
+                <button disabled={savingLesson} className="btn-primary !py-2 !px-4 text-xs disabled:opacity-50" onClick={() => addLesson(m.id)}>
+                  {savingLesson ? 'جارٍ الحفظ...' : 'حفظ الدرس'}
                 </button>
               </div>
             </div>

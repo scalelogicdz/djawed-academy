@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import LessonsManager from '@/components/LessonsManager';
+import { lessonEmailsReady } from '@/lib/lessonEmails';
 import AdminBackButton from '@/components/AdminBackButton';
 
 export default async function AdminLessonsPage() {
@@ -33,6 +34,7 @@ export default async function AdminLessonsPage() {
       <h1 className="font-cairo font-extrabold text-[27px] sm:text-[31px] mb-8">إدارة الدروس</h1>
 
       <LessonsManager
+        emailNotificationsAvailable={await lessonEmailsReady()}
         courses={courses ?? []}
         initialModules={modules ?? []}
         initialLessons={lessons ?? []}

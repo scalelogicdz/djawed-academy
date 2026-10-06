@@ -1,4 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
+import { lessonEmailConfig, lessonEmailsReady, dispatchLessonEmails } from '@/lib/lessonEmails';
+
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
@@ -10,6 +12,8 @@ import {
   isUuid,
   readJsonObject,
 } from '@/lib/security';
+
+export const maxDuration = 60;
 
 async function assertAdmin() {
   const supabase = await createClient();
@@ -106,22 +110,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'بيانات الدرس غير صالحة' }, { status: 400 });
     }
 
-    const { data, error } = await adminClient
-      .from('lessons')
-      .insert({
-        module_id: moduleId,
-        title,
-        description,
-        video_id: videoId,
-        video_provider: videoProvider,
-        resource_url: resourceUrl,
-        position,
-      })
-      .select()
-      .single();
-
+    const notify = body.notifyStudents === true;
+    const config = lessonEmailConfig();
+    if (notify && (!config || !(await lessonEmailsReady()))) {
+      return NextResponse.json({ error: 'إشعارات البريد غير مفعلة بعد. أكمل إعداد خدمة البريد أو ألغِ خيار الإشعار.' }, { status: 503 });
+    }
+    const lesson = {
+      module_id: moduleId, title, description, video_id: videoId,
+      video_provider: videoProvider, resource_url: resourceUrl, position,
+    };
+    const { data, error } = notify && config
+      ? await adminClient.rpc('create_lesson_with_emails', { lesson, email_from: config.from, platform_url: config.url })
+      : await adminClient.from('lessons').insert(lesson).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-    return NextResponse.json({ ok: true, lesson: data });
+    if (notify) after(async () => {
+      try { await dispatchLessonEmails(); } catch { console.error('Lesson email queue requires retry'); }
+    });
+    return NextResponse.json({ ok: true, lesson: data, notificationsQueued: notify });
   }
 
   if (body.type === 'quizQuestion') {
