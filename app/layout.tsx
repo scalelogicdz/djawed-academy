@@ -8,6 +8,10 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Djawed Khalfaoui Academy',
   description: 'أكاديميتك الخاصة لإتقان إعلانات ميتا',
+  icons: {
+    icon: [{ url: '/favicon-gold-v1.png', type: 'image/png' }],
+    apple: '/favicon-gold-v1.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
