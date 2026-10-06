@@ -1,6 +1,6 @@
 # New lesson emails
 
-The admin's Add Lesson form has a Notify students checkbox. Only new lessons trigger emails; edits never do. Recipients are students enrolled in that lesson's course at save time. Each receives a private email with the lesson title in the subject. The body contains only the Djawed Logic image and a plain link to the platform homepage, which opens sign-in or the dashboard. There is no direct lesson button or lesson link. Previously attempted messages retain their original template on retry to preserve provider idempotency.
+The admin's Add Lesson form has a Notify students checkbox. Only new lessons trigger emails; edits never do. Recipients are students enrolled in that lesson's course at save time. Each receives a private email with the lesson title in the subject. The body shows the Arabic new-lesson heading, the introduction, and the lesson title, with a plain platform homepage link immediately below. The link opens sign-in or the dashboard. No logo image is included. There is no direct lesson button or lesson link. Previously attempted messages retain their original template on retry to preserve provider idempotency.
 
 ## Activation
 

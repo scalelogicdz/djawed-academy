@@ -34,13 +34,24 @@ function legacyLessonEmailMessage(title: string, url: string) {
 // change; the provider requires an unchanged body with the same idempotency key.
 const PLATFORM_EMAIL_CUTOVER = '2026-10-06T14:51:11Z';
 
-export function lessonEmailMessage(title: string, lessonUrl: string) {
+function imageLessonEmailMessage(title: string, lessonUrl: string) {
   const platformUrl = new URL(lessonUrl).origin;
   const imageUrl = `${platformUrl}/djawed-logic-logo.png`;
   return {
     subject: `درس جديد في Djawed Logic: ${title}`,
     text: platformUrl,
     html: `<div dir="rtl" lang="ar" style="font-family:Arial,sans-serif;text-align:center;padding:24px"><img src="${escapeEmailHtml(imageUrl)}" alt="Djawed Logic" width="126" height="144" style="display:block;margin:0 auto 20px;max-width:100%;height:auto;border:0"><a href="${escapeEmailHtml(platformUrl)}" dir="ltr" style="font-size:16px;color:#1877f2;text-decoration:underline">${escapeEmailHtml(platformUrl)}</a></div>`,
+  };
+}
+
+const TEXT_EMAIL_CUTOVER = '2026-10-06T15:20:34Z';
+
+export function lessonEmailMessage(title: string, lessonUrl: string) {
+  const platformUrl = new URL(lessonUrl).origin;
+  return {
+    subject: `درس جديد في Djawed Logic: ${title}`,
+    text: `درس جديد على منصتك\n\nأضفنا درسًا جديدًا إلى دورتك:\n${title}\n\n${platformUrl}`,
+    html: `<div dir="rtl" lang="ar" style="font-family:Arial,sans-serif;line-height:1.8;color:#172033"><h2>درس جديد على منصتك</h2><p>أضفنا درسًا جديدًا إلى دورتك:</p><h3>${escapeEmailHtml(title)}</h3><p><a href="${escapeEmailHtml(platformUrl)}" dir="ltr" style="font-size:16px;color:#1877f2;text-decoration:underline">${escapeEmailHtml(platformUrl)}</a></p></div>`,
   };
 }
 
@@ -78,7 +89,9 @@ export async function dispatchLessonEmails() {
       }
       const message = job.first_attempt_at && job.first_attempt_at < PLATFORM_EMAIL_CUTOVER
         ? legacyLessonEmailMessage(job.payload.title, job.payload.url)
-        : lessonEmailMessage(job.payload.title, job.payload.url);
+        : job.first_attempt_at && job.first_attempt_at < TEXT_EMAIL_CUTOVER
+          ? imageLessonEmailMessage(job.payload.title, job.payload.url)
+          : lessonEmailMessage(job.payload.title, job.payload.url);
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${config.key}`, 'Content-Type': 'application/json', 'Idempotency-Key': `lesson-email/${job.id}` },
