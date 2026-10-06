@@ -3,10 +3,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
+const logoExports = {};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/emailLogoV1.ts','utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: logoExports });
 const source = ts.transpileModule(fs.readFileSync('lib/lessonEmails.ts','utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
-function setup({ enrolled = true, providerOk = true, recordFails = false, configured = true, legacy = false, imageTemplate = false } = {}) {
+function setup({ enrolled = true, providerOk = true, recordFails = false, configured = true, legacy = false, imageTemplate = false, textTemplate = false } = {}) {
   const updates = [], calls = [];
-  const job = { first_attempt_at: legacy ? '2026-10-06T14:40:00Z' : imageTemplate ? '2026-10-06T15:00:00Z' : '2026-10-06T16:00:00Z', id:'delivery-1',lesson_id:'lesson-1',student_id:'student-1',recipient:'student@example.com',payload:{from:'Djawed Logic <lessons@example.com>',title:'<img src=x> & درس',url:'https://academy.example.com/lesson/lesson-1'} };
+  const job = { first_attempt_at: legacy ? '2026-10-06T14:40:00Z' : imageTemplate ? '2026-10-06T15:00:00Z' : textTemplate ? '2026-10-06T15:23:00Z' : '2026-10-06T16:00:00Z', id:'delivery-1',lesson_id:'lesson-1',student_id:'student-1',recipient:'student@example.com',payload:{from:'Djawed Logic <lessons@example.com>',title:'<img src=x> & درس',url:'https://academy.example.com/lesson/lesson-1'} };
   let claimed = false;
   const db = {
     rpc: async () => ({data: claimed ? [] : (claimed=true,[job]),error:null}),
@@ -19,11 +21,11 @@ function setup({ enrolled = true, providerOk = true, recordFails = false, config
     }
   };
   const exports = {};
-  vm.runInNewContext(source,{exports,require:()=>({createAdminClient:()=>db}),process:{env:configured?{RESEND_API_KEY:'test-key',RESEND_FROM:job.payload.from,PLATFORM_URL:'https://academy.example.com'}:{}},URL,AbortSignal,Date,console,
+  vm.runInNewContext(source,{exports,require:(name)=>name==='@/lib/emailLogoV1'?logoExports:({createAdminClient:()=>db}),process:{env:configured?{RESEND_API_KEY:'test-key',RESEND_FROM:job.payload.from,PLATFORM_URL:'https://academy.example.com'}:{}},URL,AbortSignal,Date,console,
     setTimeout:fn=>{fn();return 1},fetch:async(url,opts)=>{calls.push({url,...opts});return {ok:providerOk}}});
   return {api:exports,updates,calls,job};
 }
-test('new lesson email restores Arabic text and places a plain platform link below the title',async()=>{
+test('new lesson email places the embedded logo between escaped lesson text and the platform link',async()=>{
  const {api,updates,calls}=setup(); await api.dispatchLessonEmails();
  assert.equal(calls.length,1);const body=JSON.parse(calls[0].body);
  assert.deepEqual(body.to,['student@example.com']);assert.equal(body.cc,undefined);
@@ -32,7 +34,14 @@ test('new lesson email restores Arabic text and places a plain platform link bel
  assert.match(body.html,/<h3>&lt;img src=x&gt; &amp; درس<\/h3>/);
  assert.match(body.html,/href="https:\/\/academy.example.com"/);
  assert.ok(body.html.indexOf('</h3>') < body.html.indexOf('<a href='));
- assert.doesNotMatch(body.html,/<img |شاهد الدرس|<button|background:|\/lesson\//);
+ assert.doesNotMatch(body.html,/شاهد الدرس|<button|background:|\/lesson\//);
+ assert.match(body.html,/<img src="cid:djawed-logic-logo-v1"/);
+ assert.ok(body.html.indexOf('</h3>') < body.html.indexOf('<img '));
+ assert.ok(body.html.indexOf('<img ') < body.html.indexOf('<a href='));
+ assert.equal(body.attachments.length,1);
+ assert.equal(body.attachments[0].content_id,'djawed-logic-logo-v1');
+ assert.equal(body.attachments[0].content_type,'image/png');
+ assert.deepEqual(Buffer.from(body.attachments[0].content,'base64'),fs.readFileSync('public/djawed-logic-logo.png'));
  assert.match(body.text,/https:\/\/academy.example.com$/);
  assert.doesNotMatch(body.text,/\/lesson\//);
  assert.equal(calls[0].headers['Idempotency-Key'],'lesson-email/delivery-1');
@@ -67,4 +76,11 @@ test('previous image template stays unchanged for retries',async()=>{
  const body=JSON.parse(calls[0].body);
  assert.match(body.html,/<img /);assert.doesNotMatch(body.html,/<h2>/);
  assert.equal(body.text,'https://academy.example.com');
+});
+
+test('text-only template stays unchanged for retries',async()=>{
+ const {api,calls}=setup({textTemplate:true});await api.dispatchLessonEmails();
+ const body=JSON.parse(calls[0].body);
+ assert.match(body.html,/<h2>/);assert.doesNotMatch(body.html,/<img /);
+ assert.equal(body.attachments,undefined);
 });
