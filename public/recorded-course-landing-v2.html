@@ -664,6 +664,9 @@ body .video-accent-line{display:none!important}
   box-shadow:0 10px 28px rgba(0,55,140,.28);
   transition:transform .18s ease, background .18s ease;
 }
+.landing-video-toggle.is-hidden .landing-video-icon{
+  opacity:0;
+}
 .landing-video-toggle:hover .landing-video-icon{
   transform:translate(-50%,-50%) scale(1.04);
 }
@@ -1077,6 +1080,7 @@ body .video-accent-line{display:none!important}
 
   function showPlay(){
     isPlaying = false;
+    toggle.classList.remove('is-hidden');
     toggle.setAttribute('aria-label', 'تشغيل الفيديو');
     iconSvg.setAttribute('class', 'play-shape');
     iconSvg.innerHTML = '<path d="M8 5v14l11-7z"/>';
@@ -1084,18 +1088,15 @@ body .video-accent-line{display:none!important}
 
   function showPause(){
     isPlaying = true;
+    toggle.classList.add('is-hidden');
     toggle.setAttribute('aria-label', 'إيقاف الفيديو مؤقتًا');
-    iconSvg.setAttribute('class', 'pause-shape');
-    iconSvg.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
   }
 
   toggle.addEventListener('click', function(){
     if(isPlaying){
       player.pause();
-      showPlay();
     } else {
       player.play();
-      showPause();
     }
   });
 
