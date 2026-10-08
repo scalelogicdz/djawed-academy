@@ -23,6 +23,7 @@ const nextConfig = {
       ...(isDevelopment ? ["'unsafe-eval'"] : []),
       'https://assets.mediadelivery.net',
       'https://connect.facebook.net',
+      'https://analytics.tiktok.com',
     ];
     const connectSources = [
       "'self'",
@@ -30,6 +31,7 @@ const nextConfig = {
       'wss://*.supabase.co',
       'https://formspree.io',
       'https://*.facebook.com',
+      'https://analytics.tiktok.com',
       ...(isDevelopment ? ['http:', 'https:', 'ws:', 'wss:'] : []),
     ];
 
