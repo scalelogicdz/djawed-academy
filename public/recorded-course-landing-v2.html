@@ -609,29 +609,84 @@ body .hero .btn-primary,body .price-card .btn-primary,body .sticky-cta .btn-prim
 body .btn-primary .cta-main{font-size:16px}
 body .btn-primary .cta-sub{font-size:10px}
 
-/* Preserve Bunny video's native square composition. */
+
+
+
+/* Minimal landing-page Bunny player. */
 body .hero .video-slot{
+  position:relative;
   width:min(100%,650px);
   max-width:650px;
   aspect-ratio:1 / 1;
   height:auto;
   margin-left:auto;
   margin-right:auto;
+  border:0!important;
+  outline:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:#000;
+  overflow:hidden;
 }
 body .hero .video-slot iframe{
   display:block;
   width:100%;
   height:100%;
+  border:0;
+  pointer-events:none;
+}
+body .video-accent-line{display:none!important}
+.landing-video-play{
+  position:absolute;
+  inset:50% auto auto 50%;
+  transform:translate(-50%,-50%);
+  width:76px;
+  height:76px;
+  border:0;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:rgba(8,102,255,.94);
+  color:#fff;
+  box-shadow:0 12px 32px rgba(0,55,140,.32);
+  cursor:pointer;
+  z-index:5;
+  transition:opacity .2s ease,transform .2s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.landing-video-play svg{
+  width:31px;
+  height:31px;
+  margin-left:5px;
+  fill:currentColor;
+}
+.landing-video-play:hover{
+  transform:translate(-50%,-50%) scale(1.04);
+}
+.landing-video-play.is-hidden{
+  opacity:0;
+  pointer-events:none;
 }
 @media(max-width:720px){
   body .hero .video-slot{
-    width:100%;
-    max-width:100%;
-    aspect-ratio:1 / 1;
+    width:100vw;
+    max-width:none;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    border-radius:0!important;
+  }
+  .landing-video-play{
+    width:68px;
+    height:68px;
+  }
+  .landing-video-play svg{
+    width:28px;
+    height:28px;
   }
 }
 
 </style>
+<script src="https://assets.mediadelivery.net/playerjs/player-0.1.0.min.js"></script>
 </head>
 <body>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1923945221576047&ev=PageView&noscript=1" alt=""></noscript>
@@ -652,17 +707,20 @@ body .hero .video-slot iframe{
     
 
 </div></div>
-    <div class="video-slot" style="border-radius:22px; overflow:hidden; box-shadow:var(--gold-glow);">
+    <div class="video-slot" id="landingVideoWrap">
       <iframe
+        id="landingBunnyPlayer"
         width="100%" height="100%"
-        src="https://iframe.mediadelivery.net/embed/744754/54a802d0-d7f9-473a-a90e-e28c0a1cec29?autoplay=false"
+        src="https://iframe.mediadelivery.net/embed/744754/54a802d0-d7f9-473a-a90e-e28c0a1cec29?autoplay=false&controls=false&rememberPosition=false&playsinline=true&preload=true"
         title="فيديو شرح الدورة"
         style="display:block; border:0;"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen>
+        allow="autoplay; encrypted-media; picture-in-picture"
+        referrerpolicy="strict-origin-when-cross-origin">
       </iframe>
+      <button type="button" class="landing-video-play" id="landingVideoPlay" aria-label="تشغيل الفيديو">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      </button>
     </div>
-    <div class="video-accent-line" aria-hidden="true"></div>
   
     <div style="text-align:center; margin-top:26px;">
       <a href="#pricing" class="btn-primary"><span class="cta-main">احجز مكالمتك المجانية الآن</span><span class="cta-sub">🔑 التسجيلات تغلق عند نفاذ أماكن هذه الدفعة</span></a>
@@ -995,5 +1053,26 @@ body .hero .video-slot iframe{
  const sticky=document.querySelector('.sticky-cta');sticky.classList.add('hidden');const visible=new Set();if('IntersectionObserver' in window){const observe=new IntersectionObserver(entries=>{entries.forEach(e=>e.isIntersecting?visible.add(e.target):visible.delete(e.target));sticky.classList.toggle('hidden',visible.size>0);},{threshold:.1});document.querySelectorAll('.btn-primary').forEach(el=>{if(!sticky.contains(el))observe.observe(el);});}
 })();
 </script>
+
+<script>
+(function(){
+  // Minimal Bunny landing player
+  var iframe = document.getElementById('landingBunnyPlayer');
+  var playButton = document.getElementById('landingVideoPlay');
+  if(!iframe || !playButton || !window.playerjs || !window.playerjs.Player) return;
+
+  var player = new window.playerjs.Player(iframe);
+
+  playButton.addEventListener('click', function(){
+    player.play();
+    playButton.classList.add('is-hidden');
+  });
+
+  player.on('ended', function(){
+    playButton.classList.remove('is-hidden');
+  });
+})();
+</script>
+
 </body>
 </html>
