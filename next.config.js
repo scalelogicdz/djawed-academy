@@ -22,12 +22,14 @@ const nextConfig = {
       "'unsafe-inline'",
       ...(isDevelopment ? ["'unsafe-eval'"] : []),
       'https://assets.mediadelivery.net',
+      'https://connect.facebook.net',
     ];
     const connectSources = [
       "'self'",
       'https://*.supabase.co',
       'wss://*.supabase.co',
       'https://formspree.io',
+      'https://*.facebook.com',
       ...(isDevelopment ? ['http:', 'https:', 'ws:', 'wss:'] : []),
     ];
 
