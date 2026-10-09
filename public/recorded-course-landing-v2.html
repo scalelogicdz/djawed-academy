@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://iframe.mediadelivery.net">
+<link rel="preconnect" href="https://assets.mediadelivery.net" crossorigin>
+<link rel="dns-prefetch" href="//iframe.mediadelivery.net">
+<link rel="dns-prefetch" href="//assets.mediadelivery.net">
 <title>دورة السبونسور — Djawed Logic</title>
 <!-- TikTok Pixel Code -->
 <script>
@@ -754,6 +758,8 @@ body .video-accent-line{display:none!important}
         width="100%" height="100%"
         src="https://iframe.mediadelivery.net/embed/744754/54a802d0-d7f9-473a-a90e-e28c0a1cec29?autoplay=false&controls=false&rememberPosition=false&playsinline=true&preload=true"
         title="فيديو شرح الدورة"
+        loading="eager"
+        fetchpriority="high"
         style="display:block; border:0;"
         allow="autoplay; encrypted-media; picture-in-picture"
         referrerpolicy="strict-origin-when-cross-origin">
@@ -1108,6 +1114,8 @@ body .video-accent-line{display:none!important}
 
   var player = new window.playerjs.Player(iframe);
   var isPlaying = false;
+  var isReady = false;
+  var pendingPlay = false;
 
   function showPlay(){
     isPlaying = false;
@@ -1123,11 +1131,25 @@ body .video-accent-line{display:none!important}
     toggle.setAttribute('aria-label', 'إيقاف الفيديو مؤقتًا');
   }
 
+  player.on('ready', function(){
+    isReady = true;
+    if(pendingPlay){
+      pendingPlay = false;
+      player.play();
+    }
+  });
+
   toggle.addEventListener('click', function(){
     if(isPlaying){
       player.pause();
-    } else {
+      return;
+    }
+
+    if(isReady){
       player.play();
+    } else {
+      pendingPlay = true;
+      toggle.classList.add('is-hidden');
     }
   });
 
