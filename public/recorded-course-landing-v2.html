@@ -1159,5 +1159,23 @@ body .video-accent-line{display:none!important}
 })();
 </script>
 
+
+<script>
+(function preserveRegistrationAttribution(){
+  var current = new URLSearchParams(window.location.search);
+  if(!current.toString()) return;
+
+  document.querySelectorAll('a[href*="/registration.html"]').forEach(function(link){
+    try {
+      var url = new URL(link.href, window.location.origin);
+      current.forEach(function(value, key){
+        if(!url.searchParams.has(key)) url.searchParams.set(key, value);
+      });
+      link.href = url.toString();
+    } catch(e) {}
+  });
+})();
+</script>
+
 </body>
 </html>
