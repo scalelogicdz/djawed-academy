@@ -666,7 +666,38 @@ body .field .anytime-choice input{min-height:0;padding:0}
     submitBtn.textContent = 'جارٍ الإرسال...';
     submitBtn.classList.remove('enabled');
 
-    fetch('https://formspree.io/f/xrpglrlw', {
+    var params = new URLSearchParams(window.location.search);
+    var source = params.get('utm_source') || '';
+    var sourceLower = source.toLowerCase();
+
+    if(!source){
+      if(params.get('ttclid')) source = 'TikTok';
+      else if(params.get('fbclid')) source = 'Meta';
+      else source = 'Organic';
+    } else if(sourceLower.indexOf('tiktok') !== -1){
+      source = 'TikTok';
+    } else if(sourceLower.indexOf('meta') !== -1 || sourceLower.indexOf('facebook') !== -1 || sourceLower.indexOf('instagram') !== -1){
+      source = 'Meta';
+    }
+
+    var crmPayload = {
+      name: answers.name,
+      whatsapp: answers.whatsapp,
+      source: source,
+      campaign: params.get('utm_campaign') || '',
+      adset: params.get('utm_content') || params.get('adset') || params.get('adgroup') || '',
+      ad: params.get('utm_term') || params.get('ad') || '',
+      stage: answers.stage,
+      level: answers.level,
+      obstacle: answers.obstacle,
+      desiredOutcome: answers['desired-outcome'],
+      contactTime: answers['contact-time'],
+      fbclid: params.get('fbclid') || '',
+      ttclid: params.get('ttclid') || '',
+      landingUrl: document.referrer || window.location.href
+    };
+
+    var formspreeRequest = fetch('https://formspree.io/f/xrpglrlw', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({
@@ -676,18 +707,42 @@ body .field .anytime-choice input{min-height:0;padding:0}
         'المستوى': answers.level,
         'العائق': answers.obstacle,
         'النتيجة المرجوة': answers['desired-outcome'],
-        'وقت التواصل المفضل': answers['contact-time']
+        'وقت التواصل المفضل': answers['contact-time'],
+        'المصدر': source,
+        'الحملة': crmPayload.campaign,
+        'Ad Set / Ad Group': crmPayload.adset,
+        'الإعلان': crmPayload.ad,
+        'fbclid': crmPayload.fbclid,
+        'ttclid': crmPayload.ttclid
       })
-    })
-      .then(function(response){
-        if(response.ok){
-          if(typeof fbq === 'function'){ fbq('track', 'Lead'); }
-          if(typeof ttq !== 'undefined' && typeof ttq.track === 'function'){ ttq.track('Lead'); }
-          var confirmIdx = steps.findIndex(function(s){ return s.getAttribute('data-step') === 'confirm'; });
-          showStep(confirmIdx);
-        } else {
-          throw new Error('submission failed');
+    }).then(function(response){
+      if(!response.ok) throw new Error('formspree failed');
+      return true;
+    });
+
+    var crmRequest = fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(crmPayload)
+    }).then(function(response){
+      if(!response.ok) throw new Error('crm failed');
+      return true;
+    });
+
+    Promise.allSettled([crmRequest, formspreeRequest])
+      .then(function(results){
+        var crmOk = results[0].status === 'fulfilled';
+        var formspreeOk = results[1].status === 'fulfilled';
+
+        if(!crmOk && !formspreeOk){
+          throw new Error('all submissions failed');
         }
+
+        if(typeof fbq === 'function'){ fbq('track', 'Lead'); }
+        if(typeof ttq !== 'undefined' && typeof ttq.track === 'function'){ ttq.track('Lead'); }
+
+        var confirmIdx = steps.findIndex(function(s){ return s.getAttribute('data-step') === 'confirm'; });
+        showStep(confirmIdx);
       })
       .catch(function(){
         submitError.style.display = 'block';
