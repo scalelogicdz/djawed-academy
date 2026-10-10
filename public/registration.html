@@ -592,6 +592,8 @@ body .field .anytime-choice input{min-height:0;padding:0}
   var waField = document.getElementById('fieldWhatsapp');
   var waError = document.getElementById('waError');
   var submitBtn = document.getElementById('submitBtn');
+  var submissionInFlight = false;
+  var leadTracked = false;
 
   // Custom country picker (no native <select>, so styling is fully consistent cross-platform)
   var countryPicker = document.getElementById('countryPicker');
@@ -657,7 +659,8 @@ body .field .anytime-choice input{min-height:0;padding:0}
   waField.addEventListener('input', checkStep5);
 
   submitBtn.addEventListener('click', function(){
-    if(!submitBtn.classList.contains('enabled')) return;
+    if(!submitBtn.classList.contains('enabled') || submissionInFlight) return;
+    submissionInFlight = true;
     answers.name = nameField.value.trim();
     answers.whatsapp = selectedCountryCode + ' ' + waField.value.trim();
 
@@ -738,13 +741,20 @@ body .field .anytime-choice input{min-height:0;padding:0}
           throw new Error('all submissions failed');
         }
 
-        if(typeof fbq === 'function'){ fbq('track', 'Lead'); }
-        if(typeof ttq !== 'undefined' && typeof ttq.track === 'function'){ ttq.track('Lead'); }
+        // Conversion events are tied to the CRM write, so Ads Manager cannot
+        // count a lead that never reached the primary lead database.
+        if(crmOk && !leadTracked){
+          leadTracked = true;
+          if(typeof fbq === 'function'){ fbq('track', 'Lead'); }
+          if(typeof ttq !== 'undefined' && typeof ttq.track === 'function'){ ttq.track('Lead'); }
+        }
 
+        submissionInFlight = false;
         var confirmIdx = steps.findIndex(function(s){ return s.getAttribute('data-step') === 'confirm'; });
         showStep(confirmIdx);
       })
       .catch(function(){
+        submissionInFlight = false;
         submitError.style.display = 'block';
         submitBtn.textContent = 'إرسال والانتهاء';
         submitBtn.classList.add('enabled');
