@@ -1,0 +1,52 @@
+// Run with PGLITE_MODULE=/path/to/@electric-sql/pglite/dist/index.js node tests/community-notifications-db.mjs
+import { readFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
+const { PGlite } = await import(process.env.PGLITE_MODULE || '@electric-sql/pglite');
+const db = new PGlite();
+await db.exec(`create role anon; create role authenticated; create role service_role;
+create schema auth; create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+create table auth.users(id uuid primary key,email text,deleted_at timestamptz);
+create table profiles(id uuid primary key references auth.users(id),display_name text,is_admin boolean);
+create table questions(id uuid primary key default gen_random_uuid(),student_id uuid references profiles(id),body text);
+create table replies(id uuid primary key default gen_random_uuid(),question_id uuid references questions(id),student_id uuid references profiles(id),body text);
+create table notifications(id uuid primary key default gen_random_uuid(),type text,question_id uuid,is_read boolean default false,created_at timestamptz default now(),actor_id uuid,recipient_id uuid);
+`);
+const migration = readFileSync('supabase/community-notifications.sql','utf8');
+await db.exec(migration); await db.exec(migration); // rerun must preserve activation and avoid duplicate triggers
+const ids = ['11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222','33333333-3333-4333-8333-333333333333'];
+for(let i=0;i<3;i++) { await db.query('insert into auth.users values($1,$2,null)',[ids[i],`person${i}@example.com`]); await db.query('insert into profiles values($1,$2,$3)',[ids[i],`Person${i}`,i===0]); }
+const post = async (id) => (await db.query('insert into questions(student_id,body) values($1,$2) returning id',[id,'post'])).rows[0].id;
+const reply = async (author,qid,target=null) => (await db.query('insert into replies(student_id,question_id,body,reply_to_id) values($1,$2,$3,$4) returning id',[author,qid,'reply',target])).rows[0].id;
+const count = async table => Number((await db.query(`select count(*) n from ${table}`)).rows[0].n);
+const adminPost = await post(ids[0]); assert.equal(await count('community_alerts'),2); assert.equal(await count('community_email_jobs'),2);
+await db.query('update questions set body=$1 where id=$2',['edited',adminPost]); assert.equal(await count('community_alerts'),2);
+const studentPost=await post(ids[1]); assert.equal(await count('community_alerts'),2);
+const studentReply=await reply(ids[2],studentPost); assert.equal(await count('community_alerts'),2);
+const targeted=await reply(ids[0],studentPost,studentReply);
+assert.deepEqual((await db.query('select recipient_id from community_alerts where reply_id=$1',[targeted])).rows.map(r=>r.recipient_id),[ids[2]]);
+const direct=await reply(ids[0],studentPost); assert.deepEqual((await db.query('select recipient_id from community_alerts where reply_id=$1',[direct])).rows.map(r=>r.recipient_id),[ids[1]]);
+await reply(ids[0],adminPost); assert.equal(await count('community_alerts'),4);
+await assert.rejects(reply(ids[0],adminPost,studentReply), /same discussion/);
+// Simulate a legacy trigger incorrectly notifying the thread owner about a targeted reply.
+await db.query("insert into notifications(type,question_id,actor_id,recipient_id) values('new_reply',$1,$2,$3)",[studentPost,ids[0],ids[1]]);
+await db.query("select set_config('request.jwt.claim.sub',$1,false)",[ids[1]]);
+await db.exec('set role authenticated');
+assert.equal((await db.query('select * from community_notification_inbox()')).rows.length,2);
+await db.query("select mark_community_notifications_read(null,null)");
+assert.equal((await db.query('select * from community_notification_inbox() where not is_read')).rows.length,0);
+await assert.rejects(db.query('select * from community_email_jobs'), /permission denied/);
+await assert.rejects(db.query("select * from claim_community_email('x','https://example.com')"), /permission denied/);
+await db.exec('reset role');
+assert.equal((await db.query('select count(*) n from community_alerts where recipient_id=$1 and not is_read',[ids[2]])).rows[0].n,2);
+const jobs=(await db.query("select * from claim_community_email('Djawed <notify@example.com>','https://academy.example.com')")).rows;
+assert.equal(jobs.length,1);assert.equal(jobs[0].payload.url,'https://academy.example.com');
+assert.equal((await db.query("select * from claim_community_email('x','https://example.com')")).rows.length,0);
+await db.query("update community_email_jobs set status='failed',locked_until=null where id=$1",[jobs[0].id]);
+await db.exec("update community_notification_settings set next_send_at=now()-interval '1 second'");
+const retry=(await db.query("select * from claim_community_email('changed','https://changed.example.com')")).rows[0];
+assert.equal(retry.id,jobs[0].id);assert.deepEqual(retry.payload,jobs[0].payload);
+await db.query("update community_email_jobs set status='failed',locked_until=null,first_attempt_at=now()-interval '24 hours' where id=$1",[jobs[0].id]);
+await db.exec("update community_notification_settings set next_send_at=now()-interval '1 second'");
+await db.query("select * from claim_community_email('x','https://example.com')");
+assert.equal((await db.query('select status from community_email_jobs where id=$1',[jobs[0].id])).rows[0].status,'held');
+await db.close();console.log('PASS: post audience, targeted replies, self exclusion, edits, cross-thread rejection, recipient privacy, read state, queue leases and immutable retries');

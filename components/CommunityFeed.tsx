@@ -106,6 +106,8 @@ export default function CommunityFeed({
   const [justArrivedId, setJustArrivedId] = useState<string | null>(null);
   const [questions, setQuestions] = useState(initialQuestions);
   const [replies, setReplies] = useState(initialReplies);
+  const [replyTargets, setReplyTargets] = useState<Record<string, { id: string; name: string } | undefined>>({});
+  const [replyErrors, setReplyErrors] = useState<Record<string, string>>({});
   const [newQuestion, setNewQuestion] = useState('');
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [posting, setPosting] = useState(false);
@@ -143,10 +145,13 @@ export default function CommunityFeed({
     if (!highlightedId) return;
     setJustArrivedId(highlightedId);
     setExpandedIds((prev) => new Set(prev).add(highlightedId));
-    const el = questionRefs.current[highlightedId];
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const scroll = setTimeout(() => {
+      const replyId = window.location.hash.slice(1);
+      const el = replyId.startsWith('reply-') ? document.getElementById(replyId) : questionRefs.current[highlightedId];
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 320);
     const timeout = setTimeout(() => setJustArrivedId(null), 3000);
-    return () => clearTimeout(timeout);
+    return () => { clearTimeout(timeout); clearTimeout(scroll); };
   }, [highlightedId, questions]);
 
   function toggleExpanded(questionId: string) {
@@ -185,21 +190,28 @@ export default function CommunityFeed({
     if (!body || replyPostingId === questionId) return;
 
     setReplyPostingId(questionId);
-    const response = await fetch('/api/community/posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'reply', questionId, body }),
-    });
-    const data = await response.json();
-    setReplyPostingId(null);
+    setReplyErrors(prev => ({ ...prev, [questionId]: '' }));
+    try {
+      const response = await fetch('/api/community/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'reply', questionId, body, replyToId: replyTargets[questionId]?.id ?? null }),
+      });
+      const data = await response.json();
 
-    if (response.ok && data.reply) {
-      setReplies([
-        ...replies,
-        { ...data.reply, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } },
-      ]);
-      setReplyDrafts({ ...replyDrafts, [questionId]: '' });
-    }
+      if (response.ok && data.reply) {
+        setReplies(prev => [
+          ...prev,
+          { ...data.reply, profiles: { display_name: currentUserDisplayName, is_admin: currentUserIsAdmin } },
+        ]);
+        setReplyTargets(prev => ({ ...prev, [questionId]: undefined }));
+        setReplyDrafts(prev => ({ ...prev, [questionId]: '' }));
+      } else {
+        setReplyErrors(prev => ({ ...prev, [questionId]: data.error || copy.editError }));
+      }
+    } catch {
+      setReplyErrors(prev => ({ ...prev, [questionId]: copy.editError }));
+    } finally { setReplyPostingId(null); }
   }
 
   function startEditingQuestion(question: Question) {
@@ -351,7 +363,7 @@ export default function CommunityFeed({
                       const rIsAdmin = r.profiles?.is_admin;
                       const rIsCurrentUser = r.student_id === currentUserId;
                       return (
-                        <div key={r.id} className={`reply-card ${rIsAdmin ? 'admin' : ''}`}>
+                        <div id={`reply-${r.id}`} key={r.id} className={`scroll-mt-24 reply-card ${rIsAdmin ? 'admin' : ''}`}>
                           <div className="flex items-center gap-2.5 mb-2.5">
                             <Link href={`/profile/${r.student_id}`} className={`avatar-ring ${rIsAdmin ? 'admin' : ''} hover:border-gold transition`} style={{ width: 34, height: 34, fontSize: 13 }} aria-label={`${copy.viewProfile}: ${r.profiles?.display_name ?? ''}`}>{rIsAdmin ? 'DK' : initial(r.profiles?.display_name ?? '')}</Link>
                             <div className="flex-1 min-w-0">
@@ -360,11 +372,14 @@ export default function CommunityFeed({
                             </div>
                           </div>
                           <p className="leading-7 text-[14px] sm:text-[14.5px] whitespace-pre-wrap break-words" dir="auto">{r.body}</p>
+                          {!rIsCurrentUser && <button type="button" className="mt-2 text-xs text-gold hover:underline" onClick={() => setReplyTargets(prev => ({ ...prev, [q.id]: { id: r.id, name: r.profiles?.display_name || copy.user } }))}>{language === 'ar' ? 'الرد على' : language === 'fr' ? 'Répondre à' : 'Reply to'} {r.profiles?.display_name || copy.user}</button>}
                         </div>
                       );
                     })}
                   </div>
 
+                  {replyTargets[q.id] && <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-gold/10 px-3 py-2 text-xs text-gold"><span>{language === 'ar' ? 'الرد على:' : language === 'fr' ? 'Réponse à :' : 'Replying to:'} {replyTargets[q.id]?.name}</span><button type="button" onClick={() => setReplyTargets(prev => ({ ...prev, [q.id]: undefined }))}>{language === 'ar' ? 'إلغاء' : language === 'fr' ? 'Annuler' : 'Cancel'}</button></div>}
+                  {replyErrors[q.id] && <p role="alert" className="mt-2 text-sm text-red-400">{replyErrors[q.id]}</p>}
                   <div className="compose-bar mt-4">
                     <input value={replyDrafts[q.id] ?? ''} onChange={(e) => setReplyDrafts({ ...replyDrafts, [q.id]: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && replyPostingId !== q.id && submitReply(q.id)} placeholder={copy.replyPlaceholder} className="compose-input" />
                     <button className="compose-send" onClick={() => submitReply(q.id)} disabled={replyPostingId === q.id || !(replyDrafts[q.id] ?? '').trim()} aria-busy={replyPostingId === q.id} aria-label={copy.sendReply}>

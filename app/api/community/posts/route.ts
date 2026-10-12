@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { dispatchCommunityEmails } from '@/lib/communityEmails';
+import { NextResponse, after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
@@ -9,6 +10,13 @@ import {
 } from '@/lib/security';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
+
+function dispatchAlerts(isAdmin: boolean) {
+  if (isAdmin) after(async () => {
+    try { await dispatchCommunityEmails(); } catch { console.error('Community email queue requires retry'); }
+  });
+}
 
 const IMAGE_BUCKET = 'community-images';
 
@@ -65,6 +73,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) return NextResponse.json({ error: 'تعذر نشر السؤال' }, { status: 400 });
+    dispatchAlerts(current.isAdmin);
     return NextResponse.json({ ok: true, question: data });
   }
 
@@ -74,8 +83,9 @@ export async function POST(request: Request) {
 
     const questionId = isUuid(body.questionId) ? body.questionId : null;
     const text = cleanText(body.body, 1, 5000);
+    const replyToId = body.replyToId == null ? null : isUuid(body.replyToId) ? body.replyToId : false;
 
-    if (!questionId || !text) {
+    if (replyToId === false || !questionId || !text) {
       return NextResponse.json({ error: 'بيانات الرد غير صالحة' }, { status: 400 });
     }
 
@@ -87,17 +97,24 @@ export async function POST(request: Request) {
 
     if (!question) return NextResponse.json({ error: 'السؤال غير موجود' }, { status: 404 });
 
+    if (replyToId) {
+      const { data: target } = await current.supabase.from('replies').select('id').eq('id', replyToId).eq('question_id', questionId).maybeSingle();
+      if (!target) return NextResponse.json({ error: 'الرد المحدد غير موجود في هذا النقاش' }, { status: 400 });
+    }
+
     const { data, error } = await current.supabase
       .from('replies')
       .insert({
         body: text,
         question_id: questionId,
+        ...(replyToId ? { reply_to_id: replyToId } : {}),
         student_id: current.user.id,
       })
       .select('id, body, created_at, question_id, student_id')
       .single();
 
     if (error) return NextResponse.json({ error: 'تعذر نشر الرد' }, { status: 400 });
+    dispatchAlerts(current.isAdmin);
     return NextResponse.json({ ok: true, reply: data });
   }
 

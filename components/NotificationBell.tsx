@@ -8,7 +8,9 @@ import type { Language } from '@/lib/i18n';
 
 type NotificationRow = {
   id: string;
-  type: 'new_question' | 'new_reply';
+  type: 'new_question' | 'new_reply' | 'admin_post' | 'admin_reply';
+  source?: 'legacy' | 'community';
+  reply_id?: string | null;
   question_id: string;
   is_read: boolean;
   created_at: string;
@@ -53,6 +55,7 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
   const router = useRouter();
   const { language } = useLanguage();
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
+  const [totalUnread, setTotalUnread] = useState(0);
   const [open, setOpen] = useState(false);
   const [renderDropdown, setRenderDropdown] = useState(false);
   const [animatedOpen, setAnimatedOpen] = useState(false);
@@ -90,51 +93,54 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
           newReply: (name: string) => `${name} ردّ على سؤالك`,
         };
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = totalUnread;
 
   useEffect(() => {
     let active = true;
 
+    let loading = false;
     async function loadInitial() {
-      const { data } = await supabase
-        .from('notifications')
-        .select('id, type, question_id, is_read, created_at, actor_id, profiles!notifications_actor_id_fkey(display_name)')
-        .eq('recipient_id', currentUserId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      if (!active || !data) return;
-      setNotifications(
-        (data as any[]).map((n) => ({
-          ...n,
-          actor_display_name: Array.isArray(n.profiles) ? n.profiles[0]?.display_name : n.profiles?.display_name,
-        }))
-      );
+      if (loading) return;
+      loading = true;
+      try {
+        const response = await fetch('/api/notifications', { cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          if (active) { setNotifications(data.notifications); setTotalUnread(data.unreadCount); }
+          return;
+        }
+        if ((await response.json()).error !== 'migration_required') return;
+        // Keep the existing bell usable until the database migration is applied.
+        const { data } = await supabase.from('notifications')
+          .select('id, type, question_id, is_read, created_at, actor_id, profiles!notifications_actor_id_fkey(display_name)')
+          .eq('recipient_id', currentUserId).order('created_at', { ascending: false }).limit(30);
+        if (active && data) {
+          setNotifications((data as any[]).map(n => ({ ...n, source: 'legacy', actor_display_name: Array.isArray(n.profiles) ? n.profiles[0]?.display_name : n.profiles?.display_name })));
+          setTotalUnread(data.filter(n => !n.is_read).length);
+        }
+      } catch { /* Retain the last successful inbox during network interruptions. */ }
+      finally { loading = false; }
     }
     loadInitial();
+    function refresh() { if (document.visibilityState === 'visible') void loadInitial(); }
+    const interval = window.setInterval(refresh, 30000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
 
     const channel = supabase
       .channel('notifications-' + currentUserId)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${currentUserId}` },
-        async (payload) => {
-          const row = payload.new as NotificationRow;
-          let actorName: string | null = null;
-          if (row.actor_id) {
-            const { data: actorProfile } = await supabase
-              .from('profiles')
-              .select('display_name')
-              .eq('id', row.actor_id)
-              .single();
-            actorName = actorProfile?.display_name ?? null;
-          }
-          setNotifications((prev) => [{ ...row, actor_display_name: actorName }, ...prev]);
-        }
+        () => { void loadInitial(); }
       )
       .subscribe();
 
     return () => {
       active = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
       supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -197,34 +203,39 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  async function markRead(body: { id?: string; source?: string; all?: boolean }) {
+    try {
+      const response = await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (response.ok) return true;
+      if (body.source === 'community' || (await response.json()).error !== 'migration_required') return false;
+      let query = supabase.from('notifications').update({ is_read: true }).eq('recipient_id', currentUserId);
+      if (body.id) query = query.eq('id', body.id);
+      const { error } = await query;
+      return !error;
+    } catch { return false; }
+  }
   async function handleClickNotification(n: NotificationRow) {
     setOpen(false);
-    if (!n.is_read) {
-      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x)));
-      await supabase.from('notifications').update({ is_read: true }).eq('id', n.id);
+    if (!n.is_read && await markRead({ id: n.id, source: n.source ?? 'legacy' })) {
+      setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
+      setTotalUnread(prev => Math.max(0, prev - 1));
     }
-    router.push(`/community?q=${n.question_id}`);
+    router.push(`/community?q=${n.question_id}${n.reply_id ? `#reply-${n.reply_id}` : ''}`);
   }
-
   async function handleMarkAllRead() {
     if (unreadCount === 0 || markingAllRead) return;
-
     setMarkingAllRead(true);
-    const previous = notifications;
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-
-    const { error } = await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('recipient_id', currentUserId)
-      .eq('is_read', false);
-
-    if (error) setNotifications(previous);
+    if (await markRead({ all: true })) {
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setTotalUnread(0);
+    }
     setMarkingAllRead(false);
   }
 
   function messageFor(n: NotificationRow) {
     const name = n.actor_display_name ?? copy.someone;
+    if (n.type === 'admin_post') return language === 'ar' ? 'نشر جواد منشورًا جديدًا في المجتمع.' : language === 'fr' ? 'Djawed a publié dans la communauté.' : 'Djawed published a new community post.';
+    if (n.type === 'admin_reply') return language === 'ar' ? 'ردّ جواد على تعليقك في المجتمع.' : language === 'fr' ? 'Djawed vous a répondu dans la communauté.' : 'Djawed replied to you in the community.';
     if (n.type === 'new_question') return copy.newQuestion(name);
     return copy.newReply(name);
   }
