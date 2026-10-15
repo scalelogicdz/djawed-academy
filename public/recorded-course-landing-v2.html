@@ -732,6 +732,17 @@ body .video-accent-line{display:none!important}
 
 </style>
 <script src="https://assets.mediadelivery.net/playerjs/player-0.1.0.min.js"></script>
+<style>
+/* Featured voice feedback, ahead of the written testimonials. */
+.feedback-audio{margin:28px auto 8px;padding:24px;background:#fff;border:1px solid #cbdff3;border-radius:20px;box-shadow:0 4px 12px rgba(21,67,111,.04),0 14px 32px rgba(21,67,111,.075);text-align:right}
+.feedback-audio-heading{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.feedback-audio-icon{display:grid;place-items:center;flex-shrink:0;width:48px;height:48px;border-radius:14px;color:#0866ff;background:#edf5ff;border:1px solid #d4e5fa}
+.feedback-audio-label{color:#0866ff;font-size:12px;font-weight:700;margin-bottom:3px}
+.feedback-audio h3{font-size:clamp(17px,2.8vw,22px);line-height:1.6;color:#15365e}
+.feedback-audio-player{display:block;width:100%;height:54px;border-radius:12px;color-scheme:light}
+.feedback-audio-player:focus-visible{outline:2px solid #0866ff;outline-offset:4px}
+@media(max-width:480px){.feedback-audio{padding:20px 16px;border-radius:18px}.feedback-audio-heading{gap:10px}.feedback-audio-icon{width:42px;height:42px}}
+</style>
 </head>
 <body>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1923945221576047&ev=PageView&noscript=1" alt=""></noscript>
@@ -858,6 +869,17 @@ body .video-accent-line{display:none!important}
   <div class="wrap-narrow">
     <div class="center">
     <h2 style="font-size:clamp(28px,4.2vw,42px); margin-bottom:0; font-weight:800;">ماذا قال عنا <span style="color:var(--gold);">المشتركون</span></h2></div>
+    <article class="feedback-audio" aria-labelledby="feedbackAudioTitle">
+      <div class="feedback-audio-heading">
+        <span class="feedback-audio-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></span>
+        <div><p class="feedback-audio-label">تقييم صوتي</p><h3 id="feedbackAudioTitle">اسمع تجربة أحد المشتركين</h3></div>
+      </div>
+      <audio controls preload="none" aria-label="استمع إلى التقييم الصوتي لأحد المشتركين" class="feedback-audio-player" dir="ltr">
+        <source src="/audio/student-feedback-2026-10.mp3" type="audio/mpeg">
+        <source src="/audio/student-feedback-2026-10.ogg" type="audio/ogg">
+        متصفحك لا يدعم تشغيل الصوت. <a href="/audio/student-feedback-2026-10.mp3">تحميل التسجيل</a>
+      </audio>
+    </article>
     <div class="testi-carousel-wrap">
       <div class="testi-carousel" id="testiCarousel">
         <div class="testi-track" id="testiTrack">
