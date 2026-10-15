@@ -6,7 +6,7 @@ const ts = require('typescript');
 function load(path, requireMock = require) {
   const exports = {};
   const source = ts.transpileModule(fs.readFileSync(path, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
   vm.runInNewContext(source, { exports, require: requireMock, Set, Map, Date, console });
   return exports;
