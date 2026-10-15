@@ -2,6 +2,8 @@
 
 import { Fragment, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { StudentProgressSummary } from '@/lib/studentProgress';
+import { ProgressBar, StudentProgressDetails, progressLabels, activityDate } from '@/components/StudentProgressView';
 
 type Student = { id: string; full_name: string; display_name: string; email: string; created_at: string };
 type Course = { id: string; title: string };
@@ -11,12 +13,21 @@ export default function StudentsManager({
   initialStudents,
   courses,
   initialEnrollments,
+  progressByStudent,
+  progressError,
 }: {
   initialStudents: Student[];
   courses: Course[];
   initialEnrollments: Enrollment[];
+  progressByStudent: Record<string, StudentProgressSummary>;
+  progressError: string | null;
 }) {
   const router = useRouter();
+  const [search, setSearch] = useState('');
+  const [progressFilter, setProgressFilter] = useState('all');
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
+  const [savingEnrollment, setSavingEnrollment] = useState(false);
+  const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
   const [students, setStudents] = useState(initialStudents);
   const [enrollments, setEnrollments] = useState(initialEnrollments);
   const [showForm, setShowForm] = useState(false);
@@ -47,21 +58,27 @@ export default function StudentsManager({
   }
 
   async function toggleEnrollment(studentId: string, courseId: string) {
+    if (savingEnrollment) return;
     const enrolled = isEnrolled(studentId, courseId);
-    if (enrolled) {
-      setEnrollments(enrollments.filter((e) => !(e.student_id === studentId && e.course_id === courseId)));
-      await fetch('/api/admin/enrollments', {
-        method: 'DELETE',
+    const previous = enrollments;
+    setSavingEnrollment(true);
+    setEnrollmentError(null);
+    setEnrollments(current => enrolled
+      ? current.filter(e => !(e.student_id === studentId && e.course_id === courseId))
+      : [...current, { student_id: studentId, course_id: courseId }]);
+    try {
+      const response = await fetch('/api/admin/enrollments', {
+        method: enrolled ? 'DELETE' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentId, courseId }),
       });
-    } else {
-      setEnrollments([...enrollments, { student_id: studentId, course_id: courseId }]);
-      await fetch('/api/admin/enrollments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId, courseId }),
-      });
+      if (!response.ok) throw new Error('تعذر تحديث الوصول للدورة');
+      router.refresh();
+    } catch {
+      setEnrollments(previous);
+      setEnrollmentError('تعذر تحديث الوصول للدورة. حاول مرة أخرى.');
+    } finally {
+      setSavingEnrollment(false);
     }
   }
 
@@ -175,6 +192,21 @@ export default function StudentsManager({
     ]);
   }
 
+  const query = search.trim().toLocaleLowerCase();
+  const visibleStudents = students.filter(student => {
+    const matchesName = !query || [student.full_name, student.display_name, student.email]
+      .some(value => (value ?? '').toLocaleLowerCase().includes(query));
+    const summary = progressByStudent[student.id];
+    const matchesProgress = progressFilter === 'all' ||
+      (progressFilter === 'follow_up' && summary?.needsFollowUp) ||
+      (progressFilter === 'not_started' && summary && summary.total > 0 && summary.completed === 0) ||
+      (progressFilter === 'complete' && summary?.status === 'complete') ||
+      (progressFilter === 'in_progress' && summary && summary.completed > 0 && summary.completed < summary.total);
+    return matchesName && matchesProgress;
+  });
+  const followUpCount = students.filter(student => progressByStudent[student.id]?.needsFollowUp).length;
+  const completedCount = students.filter(student => progressByStudent[student.id]?.status === 'complete').length;
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -183,6 +215,32 @@ export default function StudentsManager({
           {showForm ? 'إلغاء' : '+ إضافة طالب'}
         </button>
       </div>
+
+      {progressError && <p role="alert" className="mb-5 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-200">{progressError}</p>}
+      {!progressError && <div className="mb-5 grid gap-3 sm:grid-cols-3">
+        {[['إجمالي الطلاب', students.length], ['قد يحتاجون متابعة', followUpCount], ['أكملوا الدروس', completedCount]].map(([label, value]) => (
+          <div key={label} className="card px-5 py-4"><p className="text-xs text-muted mb-2">{label}</p>
+            <p className="text-2xl font-bold text-gold">{value}</p></div>
+        ))}
+      </div>}
+      <div className="mb-5 grid gap-3 sm:grid-cols-[1fr_220px]">
+        <div><label htmlFor="student-search" className="block text-xs text-muted mb-2">البحث عن طالب</label>
+          <input id="student-search" type="search" value={search} onChange={event => setSearch(event.target.value)}
+            placeholder="الاسم أو البريد الإلكتروني" className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm" /></div>
+        <div><label htmlFor="student-progress-filter" className="block text-xs text-muted mb-2">تصفية التقدم</label>
+          <select id="student-progress-filter" value={progressFilter} onChange={event => setProgressFilter(event.target.value)}
+            disabled={!!progressError} className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm">
+            <option value="all">جميع الطلاب</option><option value="follow_up">قد يحتاجون متابعة</option>
+            <option value="not_started">لم يُكملوا درسًا بعد</option><option value="in_progress">بدأوا الدورة</option>
+            <option value="complete">أكملوا الدروس</option>
+          </select></div>
+      </div>
+      <p className="mb-4 text-xs text-muted leading-6">
+        إشارة المتابعة: أسبوع دون نشاط مسجّل أو دون إكمال درس، للدورات غير المكتملة.
+        إكمال الدروس ليس تقييمًا للفهم؛ إجابات الاختبار الذاتي غير محفوظة.
+      </p>
+      <p className="mb-4 text-xs text-muted">عرض {visibleStudents.length} من {students.length} طالب</p>
+      {enrollmentError && <p role="alert" className="mb-4 text-sm text-red-400">{enrollmentError}</p>}
 
       {showForm && (
         <form onSubmit={submitNewStudent} className="card p-7 mb-8 text-right">
@@ -266,7 +324,7 @@ export default function StudentsManager({
       {studentEditError && <p className="text-sm text-red-400 mb-4">{studentEditError}</p>}
 
       <div className="card overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[960px] text-sm">
           <thead>
             <tr className="border-b border-border text-muted text-xs">
               <th className="text-right p-4 font-medium">الاسم</th>
@@ -275,11 +333,13 @@ export default function StudentsManager({
                   {c.title}
                 </th>
               ))}
+              <th className="text-right p-4 font-medium">التقدم في الدروس</th>
+              <th className="text-right p-4 font-medium">النشاط والمتابعة</th>
               <th className="text-center p-4 font-medium">إجراءات</th>
             </tr>
           </thead>
           <tbody>
-            {students.map((s) => (
+            {visibleStudents.map((s) => (
               <Fragment key={s.id}>
               <tr className="border-b border-border last:border-0">
                 <td className="p-4">
@@ -291,6 +351,8 @@ export default function StudentsManager({
                   <td key={c.id} className="text-center p-4">
                     <button
                       onClick={() => toggleEnrollment(s.id, c.id)}
+                      disabled={savingEnrollment}
+                      aria-label={(isEnrolled(s.id, c.id) ? 'إلغاء الوصول إلى ' : 'منح الوصول إلى ') + c.title + ' للطالب ' + s.full_name}
                       className={`w-6 h-6 rounded-md border transition ${
                         isEnrolled(s.id, c.id) ? 'bg-gold border-gold text-[#0A0F1A]' : 'border-border'
                       }`}
@@ -299,6 +361,32 @@ export default function StudentsManager({
                     </button>
                   </td>
                 ))}
+                <td className="p-4 min-w-[180px]">
+                  {progressByStudent[s.id] ? <div>
+                    <div className="mb-2 flex justify-between gap-2">
+                      <span className="font-bold">{progressByStudent[s.id].percent}%</span>
+                      <span className="text-xs text-muted">{progressByStudent[s.id].completed} / {progressByStudent[s.id].total} درس</span>
+                    </div>
+                    <ProgressBar percent={progressByStudent[s.id].percent} label={'تقدم ' + s.full_name} />
+                    <p className="mt-2 text-xs text-muted">{Math.max(0, progressByStudent[s.id].total - progressByStudent[s.id].completed)} درس متبقٍ</p>
+                    <button type="button" aria-expanded={expandedStudentId === s.id} aria-controls={'progress-' + s.id}
+                      onClick={() => setExpandedStudentId(expandedStudentId === s.id ? null : s.id)}
+                      className="mt-3 text-xs font-semibold text-gold underline underline-offset-4">
+                      {expandedStudentId === s.id ? 'إخفاء التفاصيل' : 'عرض تفاصيل التقدم'}
+                    </button>
+                  </div> : <span className="text-xs text-muted">بيانات التقدم غير متوفرة</span>}
+                </td>
+                <td className="p-4 min-w-[190px]">
+                  {progressByStudent[s.id] && <div>
+                    <span className={progressByStudent[s.id].needsFollowUp
+                      ? 'inline-flex rounded-lg border border-amber-400/30 bg-amber-400/10 px-2 py-1 text-xs text-amber-200'
+                      : 'inline-flex rounded-lg border border-border px-2 py-1 text-xs text-muted'}>
+                      {progressLabels[progressByStudent[s.id].status]}
+                    </span>
+                    <p className="mt-3 text-[11px] text-muted">آخر نشاط مسجّل</p>
+                    <p className="mt-1 text-xs">{activityDate(progressByStudent[s.id].lastActivityAt)}</p>
+                  </div>}
+                </td>
                 <td className="text-center p-4">
                   <div className="flex items-center justify-center gap-2">
                     <button
@@ -319,9 +407,16 @@ export default function StudentsManager({
                   </div>
                 </td>
               </tr>
+              {expandedStudentId === s.id && progressByStudent[s.id] && (
+                <tr id={'progress-' + s.id} className="border-b border-border bg-white/[0.015]">
+                  <td colSpan={courses.length + 4} className="p-5">
+                    <StudentProgressDetails summary={progressByStudent[s.id]} />
+                  </td>
+                </tr>
+              )}
               {editingStudentId === s.id && (
                 <tr className="border-b border-border bg-white/[0.015]">
-                  <td colSpan={courses.length + 2} className="p-4 sm:p-5">
+                  <td colSpan={courses.length + 4} className="p-4 sm:p-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs text-muted mb-2">الاسم الكامل</label>
@@ -386,6 +481,9 @@ export default function StudentsManager({
               )}
               </Fragment>
             ))}
+            {visibleStudents.length === 0 && <tr><td colSpan={courses.length + 4} className="p-8 text-center text-muted">
+              لا يوجد طلاب يطابقون البحث أو التصفية.
+            </td></tr>}
           </tbody>
         </table>
       </div>

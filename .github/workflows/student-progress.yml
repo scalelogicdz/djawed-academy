@@ -1,0 +1,26 @@
+name: Student progress checks
+on:
+  pull_request:
+    paths:
+      - 'app/admin/students/page.tsx'
+      - 'components/StudentsManager.tsx'
+      - 'components/StudentProgressView.tsx'
+      - 'lib/studentProgress.ts'
+      - 'tests/student-progress.test.cjs'
+      - '.github/workflows/student-progress.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/student-progress.test.cjs tests/module-visibility.test.cjs
+      - run: npx tsc --noEmit
