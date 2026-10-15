@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
@@ -7,6 +7,10 @@ import {
   cleanText,
   readJsonObject,
 } from '@/lib/security';
+
+import { notifySupportRequest } from '@/lib/supportEmails';
+
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -37,14 +41,18 @@ export async function POST(request: Request) {
   }
 
   const adminClient = createAdminClient();
-  const { error } = await adminClient.from('support_requests').insert({
+  const { data: saved, error } = await adminClient.from('support_requests').insert({
     student_id: user.id,
     name,
     email,
     subject,
     message,
-  });
+  }).select('id').single();
 
   if (error) return NextResponse.json({ error: 'تعذر إرسال طلب الدعم' }, { status: 400 });
+  if (saved?.id) after(async () => {
+    try { await notifySupportRequest({ id: saved.id, name, subject }); }
+    catch { console.error('Support request saved, but email notification failed', { requestId: saved.id }); }
+  });
   return NextResponse.json({ ok: true });
 }
