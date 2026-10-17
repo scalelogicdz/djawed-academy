@@ -1,3 +1,4 @@
+import { notifyOwnerCommunityActivity } from '@/lib/ownerCommunityEmails';
 import { dispatchCommunityEmails } from '@/lib/communityEmails';
 import { NextResponse, after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
@@ -12,7 +13,11 @@ import {
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-function dispatchAlerts(isAdmin: boolean) {
+function dispatchAlerts(isAdmin: boolean, type: 'question' | 'reply', id: string) {
+  if (!isAdmin) after(async () => {
+    try { await notifyOwnerCommunityActivity(type, id); }
+    catch { console.error('Community activity saved, but owner email failed', { type, id }); }
+  });
   if (isAdmin) after(async () => {
     try { await dispatchCommunityEmails(); } catch { console.error('Community email queue requires retry'); }
   });
@@ -73,7 +78,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) return NextResponse.json({ error: 'تعذر نشر السؤال' }, { status: 400 });
-    dispatchAlerts(current.isAdmin);
+    dispatchAlerts(current.isAdmin, 'question', data.id);
     return NextResponse.json({ ok: true, question: data });
   }
 
@@ -114,7 +119,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) return NextResponse.json({ error: 'تعذر نشر الرد' }, { status: 400 });
-    dispatchAlerts(current.isAdmin);
+    dispatchAlerts(current.isAdmin, 'reply', data.id);
     return NextResponse.json({ ok: true, reply: data });
   }
 

@@ -14,7 +14,7 @@ export function supportEmailMessage(notice: SupportNotice, platformUrl: string) 
     attachments: [{ filename: 'djawed-logic-logo.png', content: EMAIL_LOGO_V1, content_type: 'image/png', content_id: 'djawed-logic-logo-v1' }],
   };
 }
-export async function notifySupportRequest(notice: SupportNotice) {
+export async function sendOwnerEmail(idempotencyKey: string, message: (platformUrl: string) => ReturnType<typeof supportEmailMessage>) {
   const config = lessonEmailConfig();
   if (!config) throw new Error('Support email configuration unavailable');
   let recipient: string | null = null;
@@ -32,12 +32,12 @@ export async function notifySupportRequest(notice: SupportNotice) {
     recipient = cleanEmail(data.user?.email);
     if (!recipient) throw new Error('Support recipient has no email');
   }
-  const body = JSON.stringify({ from: config.from, to: [recipient], ...supportEmailMessage(notice, config.url) });
+  const body = JSON.stringify({ from: config.from, to: [recipient], ...message(config.url) });
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${config.key}`, 'Content-Type': 'application/json', 'Idempotency-Key': `support-email/v1/${notice.id}` },
+        headers: { Authorization: `Bearer ${config.key}`, 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
         body, signal: AbortSignal.timeout(8_000),
       });
       if (response.ok) return;
@@ -48,4 +48,8 @@ export async function notifySupportRequest(notice: SupportNotice) {
     if (attempt < 2) await new Promise(resolve => setTimeout(resolve, (attempt + 1) * 1000));
   }
   throw new Error('Support email delivery failed after retries');
+}
+
+export async function notifySupportRequest(notice: SupportNotice) {
+  return sendOwnerEmail(`support-email/v1/${notice.id}`, url => supportEmailMessage(notice, url));
 }
