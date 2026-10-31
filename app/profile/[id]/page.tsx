@@ -136,6 +136,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
               </div>
             </div>
             <ProfileEditor profile={profile} />
+            <Link href="/devices" className="btn-ghost inline-flex mt-5">إدارة المتصفحات المسجّلة</Link>
           </div>
         )}
       </section>

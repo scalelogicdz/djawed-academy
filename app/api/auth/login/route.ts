@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
+import { browserToken, DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS, DEVICE_LIMIT_MESSAGE, registerBrowser, sameOrigin, verifiedIdentity } from '@/lib/accountAccess';
 import {
   checkRateLimit,
   cleanEmail,
@@ -8,6 +10,7 @@ import {
 } from '@/lib/security';
 
 export async function POST(request: Request) {
+  if (!sameOrigin(request)) return NextResponse.json({error:'طلب غير صالح'}, {status:403});
   const body = await readJsonObject(request, 4 * 1024);
   if (!body) {
     return NextResponse.json({ error: 'بيانات الدخول غير صالحة' }, { status: 400 });
@@ -40,5 +43,16 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true });
+  try {
+    const identity = await verifiedIdentity(supabase);
+    if (!identity) throw new Error('session');
+    const jar = await cookies();
+    const token = browserToken(jar.get(DEVICE_COOKIE)?.value);
+    jar.set(DEVICE_COOKIE, token, DEVICE_COOKIE_OPTIONS);
+    const access = await registerBrowser(identity.user.id,identity.sessionId,token,request.headers.get('user-agent')||'');
+    if (!access.allowed) return NextResponse.json({error:DEVICE_LIMIT_MESSAGE,redirect:'/devices'}, {status:403});
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({error:'تعذّر التحقق من الأجهزة حاليًا. حاول مجددًا بعد قليل.'}, {status:503});
+  }
 }

@@ -15,6 +15,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
+    try {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -25,12 +26,15 @@ export default function LoginPage() {
     setLoading(false);
 
     if (!response.ok) {
+      if (data.redirect === '/devices') { router.push('/devices'); router.refresh(); return; }
       setError(data.error || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
       return;
     }
 
     router.push('/dashboard');
     router.refresh();
+    } catch { setError('تعذّر الاتصال. حاول مجددًا.'); }
+    finally { setLoading(false); }
   }
 
   return (

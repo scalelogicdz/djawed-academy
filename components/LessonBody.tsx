@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useLanguage } from '@/components/LanguageProvider';
+import useViewingSession from '@/components/useViewingSession';
 
 type Lesson = {
   id: string;
@@ -45,7 +46,8 @@ export default function LessonBody({
   const [completed, setCompleted] = useState(isCompleted);
   const [saving, setSaving] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
+  const viewing = useViewingSession(lesson.id);
+  const hasStarted = !!viewing.url;
   const [playerReady, setPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -135,14 +137,9 @@ export default function LessonBody({
   const backArrow = language === 'ar' ? '→' : '←';
   const nextArrow = language === 'ar' ? '←' : '→';
 
-  const BUNNY_LIBRARY_ID = '744754';
-  const embedUrl =
-    lesson.video_provider === 'vimeo'
-      ? `https://player.vimeo.com/video/${lesson.video_id}?autoplay=0`
-      : `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${lesson.video_id}?autoplay=false`;
+  const embedUrl = viewing.url ?? '';
 
   useEffect(() => {
-    setHasStarted(false);
     setPlayerReady(false);
     setIsPlaying(false);
     setVideoEnded(false);
@@ -303,7 +300,8 @@ export default function LessonBody({
             ) : (
               <button
                 type="button"
-                onClick={() => setHasStarted(true)}
+                onClick={viewing.start}
+                disabled={viewing.starting}
                 className="absolute inset-0 w-full h-full rounded-[17px] sm:rounded-[18px] flex flex-col items-center justify-center gap-3 overflow-hidden text-text group"
               >
                 {thumbnailUrl ? (
@@ -321,7 +319,7 @@ export default function LessonBody({
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 </span>
-                <span className="relative z-10 font-heading font-bold text-[16px] sm:text-[17px] drop-shadow-md">{copy.startVideo}</span>
+                <span className="relative z-10 font-heading font-bold text-[16px] sm:text-[17px] drop-shadow-md">{viewing.starting ? copy.preparing : copy.startVideo}</span>
                 <span className="relative z-10 text-[11.5px] sm:text-[12px] text-white/65">{copy.pauseAnytime}</span>
               </button>
             )
@@ -330,6 +328,8 @@ export default function LessonBody({
           )}
         </div>
       </div>
+
+      {viewing.error && <p role="alert" className="mt-4 rounded-xl border border-border p-4 text-sm text-text">{viewing.error} <Link href="/devices" className="text-gold underline">إدارة الأجهزة</Link></p>}
 
       {hasStarted && lesson.video_id && lesson.video_provider !== 'vimeo' && (
         <div className="mt-3 flex justify-center">

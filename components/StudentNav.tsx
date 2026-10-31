@@ -84,7 +84,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
   async function handleLogout() {
     if (loggingOut) return;
     setLoggingOut(true);
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
     router.push('/login');
     router.refresh();
   }
