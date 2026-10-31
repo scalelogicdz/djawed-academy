@@ -19,6 +19,7 @@ test('proxy redirects third browsers and blocks their API requests; recovery is 
 test('missing browser cookie is established before registration, and API failures fail closed',async()=>{
  const f=proxyFixture();const r=await f.proxy(new NextRequest('https://academy.example.com/dashboard'));assert.equal(r.status,307);assert.equal(f.checks,0);assert.ok(r.headers.get('set-cookie').includes('HttpOnly'));
  const api=await f.proxy(new NextRequest('https://academy.example.com/api/profile'));assert.equal(api.status,403);assert.equal(f.checks,0);
+ const recovery=await f.proxy(new NextRequest('https://academy.example.com/devices'));assert.equal(recovery.status,307);assert.equal(f.checks,0);
  const broken=proxyFixture({fail:true});assert.equal((await broken.proxy(new NextRequest('https://academy.example.com/dashboard',{headers:{cookie:'djawed-browser-v1='+'a'.repeat(64)}}))).status,503);
 });
 test('anonymous users cannot reach private APIs or recovery; lead submission remains public',async()=>{

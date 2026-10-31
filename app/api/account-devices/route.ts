@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { lessonEmailConfig, escapeEmailHtml } from '@/lib/lessonEmails';
 import { readJsonObject, isUuid } from '@/lib/security';
-import { browserLabel, browserToken, DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS, registerBrowser, sameOrigin, tokenHash, verificationHash, verifiedIdentity } from '@/lib/accountAccess';
+import { browserLabel, DEVICE_COOKIE, registerBrowser, sameOrigin, tokenHash, verificationHash, verifiedIdentity } from '@/lib/accountAccess';
 
 export const dynamic = 'force-dynamic';
 const json = (data: unknown, status = 200) => NextResponse.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -13,8 +13,8 @@ async function context() {
   const identity = await verifiedIdentity(await createClient());
   if (!identity) return null;
   const jar = await cookies();
-  const token = browserToken(jar.get(DEVICE_COOKIE)?.value);
-  jar.set(DEVICE_COOKIE, token, DEVICE_COOKIE_OPTIONS);
+  const token = jar.get(DEVICE_COOKIE)?.value;
+  if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
   return { ...identity, token, hash: tokenHash(token) };
 }
 export async function GET(request: Request) {

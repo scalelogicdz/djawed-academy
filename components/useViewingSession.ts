@@ -21,6 +21,11 @@ export default function useViewingSession(lessonId:string){
       const data=await r.json();
       if(!r.ok)throw new Error(data.error||'تعذّر بدء المشاهدة');
       if(run!==generation.current){if(data.leaseId)release(data.leaseId);return;}
+      if(document.visibilityState==='hidden'){
+        release(data.leaseId);
+        setError('توقفت المشاهدة أثناء وجود الصفحة في الخلفية. اضغط للمتابعة.');
+        return;
+      }
       lease.current=data.leaseId;setUrl(data.url);
     }catch(e){if(run===generation.current)setError(e instanceof Error&&e.name!=='TimeoutError'?e.message:'تعذّر الاتصال. حاول مجددًا.');}
     finally{startingRef.current=false;setStarting(false);}

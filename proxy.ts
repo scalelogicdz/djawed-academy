@@ -41,7 +41,15 @@ export async function proxy(request: NextRequest) {
   }
   const { user, sessionId } = identity;
   // Recovery remains available to authenticated accounts on a blocked browser.
-  if (path === '/api/account-devices' || path === '/devices') return finish(NextResponse.next({ request }));
+  if (path === '/api/account-devices' || path === '/devices') {
+    const token = request.cookies.get(DEVICE_COOKIE)?.value;
+    if (!token || !/^[a-f0-9]{64}$/.test(token)) {
+      if (path.startsWith('/api/')) return finish(NextResponse.json({error:'أعد تحميل صفحة الأجهزة أولًا.',code:'DEVICE_REQUIRED'}, {status:403}));
+      changedCookies.push({name:DEVICE_COOKIE,value:browserToken(),options:DEVICE_COOKIE_OPTIONS});
+      return finish(NextResponse.redirect(request.nextUrl));
+    }
+    return finish(NextResponse.next({ request }));
+  }
   try {
     const existingToken = request.cookies.get(DEVICE_COOKIE)?.value;
     if (!existingToken || !/^[a-f0-9]{64}$/.test(existingToken)) {

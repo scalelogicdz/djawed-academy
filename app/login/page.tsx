@@ -16,23 +16,23 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
-
-    setLoading(false);
-
-    if (!response.ok) {
-      if (data.redirect === '/devices') { router.push('/devices'); router.refresh(); return; }
-      setError(data.error || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
-      return;
-    }
-
-    router.push('/dashboard');
-    router.refresh();
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        if (data.redirect === '/devices') {
+          router.push('/devices');
+          router.refresh();
+          return;
+        }
+        setError(data.error || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+        return;
+      }
+      router.push('/dashboard');
+      router.refresh();
     } catch { setError('تعذّر الاتصال. حاول مجددًا.'); }
     finally { setLoading(false); }
   }

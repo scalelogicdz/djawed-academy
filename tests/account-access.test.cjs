@@ -62,3 +62,8 @@ test('hidden pages stop viewing so browser timer throttling cannot keep an old p
  const h=playerHarness(p=>response(true,p.action==='start'?{leaseId:'lease-1',url:'https://player.example/1'}:{}));
  await h.result.start();await flush();await h.hide();assert.equal(h.result.url,null);assert.ok(h.calls.some(c=>c.action==='stop'));h.destroy();
 });
+test('a delayed start cannot mount a player after the page has gone into the background',async()=>{
+ let resolveStart;const h=playerHarness(p=>p.action==='start'?new Promise(r=>resolveStart=r):response(true,{}));
+ const started=h.result.start();await h.hide();resolveStart(response(true,{leaseId:'late-hidden',url:'https://player.example'}));await started;await flush();
+ assert.equal(h.result.url,null);assert.ok(h.calls.some(c=>c.action==='stop'&&c.leaseId==='late-hidden'));h.destroy();
+});
