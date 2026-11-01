@@ -142,4 +142,3 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
     </>
   );
 }
-
