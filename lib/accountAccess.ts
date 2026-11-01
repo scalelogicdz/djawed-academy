@@ -1,28 +1,17 @@
-import { createHash, createHmac, randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { createAdminClient } from '@/lib/supabase/admin';
 
+// Observational cookie: never grants or blocks account access.
 export const DEVICE_COOKIE = 'djawed-browser-v1';
-export const DEVICE_COOKIE_OPTIONS = {
-  httpOnly: true, secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const, path: '/', maxAge: 365 * 24 * 60 * 60,
-};
-export const DEVICE_LIMIT_MESSAGE = 'هذا الحساب مسجّل على متصفحين بالفعل. لاستعمال هذا المتصفح، استبدل متصفحًا قديمًا بعد التحقق من بريدك الإلكتروني.';
-export const VIEWING_STOP_MESSAGE = 'توقفت المشاهدة لأن الدرس فُتح في جلسة أخرى على حسابك. يمكنك المتابعة هنا لإيقاف الجلسة الأخرى.';
-export function browserToken(value?: string) {
-  return value && /^[a-f0-9]{64}$/.test(value) ? value : randomBytes(32).toString('hex');
-}
+export const DEVICE_COOKIE_OPTIONS = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const, path: '/', maxAge: 365 * 24 * 60 * 60 };
+export const VIEWING_STOP_MESSAGE = 'توقفت المشاهدة لأن جلسة أخرى بدأت مشاهدة درس على حسابك. يمكنك الضغط على بدء الفيديو للمتابعة هنا.';
+export function browserToken(value?: string) { return value && /^[a-f0-9]{64}$/.test(value) ? value : randomBytes(32).toString('hex'); }
 export function tokenHash(value: string) { return createHash('sha256').update(value).digest('hex'); }
-export function verificationHash(id: string, code: string) {
-  return createHmac('sha256', process.env.SUPABASE_SERVICE_ROLE_KEY!)
-    .update(`device-replacement:${id}:${code}`).digest('hex');
-}
 export function browserLabel(ua: string) {
   const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'متصفح';
   const os = /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Windows/.test(ua) ? 'Windows' : /Macintosh/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : '';
   return [browser, os].filter(Boolean).join(' · ');
 }
-// Only inspect the session claim AFTER getUser has validated the JWT with Auth.
 export async function verifiedIdentity(client: SupabaseClient) {
   const { data: { user }, error } = await client.auth.getUser();
   if (error || !user) return null;
@@ -34,14 +23,4 @@ export async function verifiedIdentity(client: SupabaseClient) {
     return { user, sessionId: claims.session_id as string };
   } catch { return null; }
 }
-export async function registerBrowser(userId: string, sessionId: string, token: string, ua: string) {
-  const { data, error } = await createAdminClient().rpc('register_account_browser', {
-    p_user: userId, p_session: sessionId, p_hash: tokenHash(token), p_label: browserLabel(ua),
-  });
-  if (error || !data) throw new Error('Account access service unavailable');
-  return data as { allowed: boolean; disabled?: boolean; reason?: string; browserId?: string };
-}
-export function sameOrigin(request: Request) {
-  const origin = request.headers.get('origin');
-  return origin === new URL(request.url).origin && request.headers.get('sec-fetch-site') !== 'cross-site';
-}
+export function sameOrigin(request: Request) { return request.headers.get('origin') === new URL(request.url).origin && request.headers.get('sec-fetch-site') !== 'cross-site'; }

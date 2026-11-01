@@ -25,7 +25,7 @@ test('mutating endpoints require a same-origin browser request',()=>{
  assert.equal(h.sameOrigin(req('https://academy.example.com')),true);assert.equal(h.sameOrigin(req('https://attacker.example')),false);assert.equal(h.sameOrigin(req()),false);
 });
 
-function playerHarness(fetcher){
+function playerHarness(fetcher,acceptTakeover=false){
  let cursor=0,scheduled=false,dead=false,result;const slots=[],pending=[],timers=new Map(),events=new Map();let nextTimer=0;
  const equal=(a,b)=>a&&b&&a.length===b.length&&a.every((v,i)=>v===b[i]);
  function queue(){if(!scheduled&&!dead){scheduled=true;queueMicrotask(()=>{scheduled=false;if(!dead)render();});}}
@@ -36,7 +36,7 @@ function playerHarness(fetcher){
   useEffect(fn,deps){const i=cursor++;if(!slots[i]||!equal(slots[i].deps,deps)){const old=slots[i];slots[i]={deps};pending.push(()=>{old?.cleanup?.();slots[i].cleanup=fn();});}},
  };
  const document={visibilityState:'visible',addEventListener:(n,f)=>events.set(n,f),removeEventListener:(n,f)=>{if(events.get(n)===f)events.delete(n);}};
- const window={setInterval:(fn,ms)=>{timers.set(++nextTimer,{fn,ms});return nextTimer;},clearInterval:id=>timers.delete(id),addEventListener:document.addEventListener,removeEventListener:document.removeEventListener};
+ const window={confirm:()=>acceptTakeover,setInterval:(fn,ms)=>{timers.set(++nextTimer,{fn,ms});return nextTimer;},clearInterval:id=>timers.delete(id),addEventListener:document.addEventListener,removeEventListener:document.removeEventListener};
  const calls=[];const hook=load('components/useViewingSession.ts',{react},{document,window,fetch:async(url,options)=>{const payload=JSON.parse(options.body);calls.push(payload);return fetcher(payload);}}).default;
  function render(){cursor=0;result=hook('11111111-1111-4111-8111-111111111111');while(pending.length)pending.shift()();}render();
  return {get result(){return result;},calls,async tick(){for(const t of [...timers.values()])if(t.ms===5000)await t.fn();await flush();},async hide(){document.visibilityState='hidden';events.get('visibilitychange')?.();await flush();},destroy(){dead=true;for(const s of slots)s.cleanup?.();}};
@@ -66,4 +66,12 @@ test('a delayed start cannot mount a player after the page has gone into the bac
  let resolveStart;const h=playerHarness(p=>p.action==='start'?new Promise(r=>resolveStart=r):response(true,{}));
  const started=h.result.start();await h.hide();resolveStart(response(true,{leaseId:'late-hidden',url:'https://player.example'}));await started;await flush();
  assert.equal(h.result.url,null);assert.ok(h.calls.some(c=>c.action==='stop'&&c.leaseId==='late-hidden'));h.destroy();
+});
+test('taking over an active viewer requires the student to confirm',async()=>{
+ for(const accept of [false,true]){
+  const h=playerHarness(p=>p.action==='start'&&!p.takeover?response(false,{code:'active'}):response(true,{leaseId:'new',url:'https://player.example'}),accept);
+  await h.result.start();await flush();
+  assert.equal(h.calls.filter(c=>c.action==='start').length,accept?2:1);
+  assert.equal(h.result.url,accept?'https://player.example':null);h.destroy();
+ }
 });

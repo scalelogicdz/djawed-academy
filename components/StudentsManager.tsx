@@ -4,6 +4,7 @@ import { Fragment, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { StudentProgressSummary } from '@/lib/studentProgress';
 import { ProgressBar, StudentProgressDetails, progressLabels, activityDate } from '@/components/StudentProgressView';
+import { BrowserConnectionBadge, useBrowserConnections } from '@/components/BrowserConnections';
 
 type Student = { id: string; full_name: string; display_name: string; email: string; created_at: string };
 type Course = { id: string; title: string };
@@ -23,6 +24,7 @@ export default function StudentsManager({
   progressError: string | null;
 }) {
   const router = useRouter();
+  const browserPresence = useBrowserConnections();
   const [search, setSearch] = useState('');
   const [progressFilter, setProgressFilter] = useState('all');
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
@@ -333,6 +335,7 @@ export default function StudentsManager({
                   {c.title}
                 </th>
               ))}
+              <th className="text-right p-4 font-medium">المتصفحات النشطة<div className="mt-1 font-normal">آخر 90 ثانية</div></th>
               <th className="text-right p-4 font-medium">التقدم في الدروس</th>
               <th className="text-right p-4 font-medium">النشاط والمتابعة</th>
               <th className="text-center p-4 font-medium">إجراءات</th>
@@ -361,6 +364,7 @@ export default function StudentsManager({
                     </button>
                   </td>
                 ))}
+                <td className="p-4 min-w-[180px]"><BrowserConnectionBadge browsers={browserPresence.connections[s.id]||[]} status={browserPresence.status}/></td>
                 <td className="p-4 min-w-[180px]">
                   {progressByStudent[s.id] ? <div>
                     <div className="mb-2 flex justify-between gap-2">
@@ -409,14 +413,14 @@ export default function StudentsManager({
               </tr>
               {expandedStudentId === s.id && progressByStudent[s.id] && (
                 <tr id={'progress-' + s.id} className="border-b border-border bg-white/[0.015]">
-                  <td colSpan={courses.length + 4} className="p-5">
+                  <td colSpan={courses.length + 5} className="p-5">
                     <StudentProgressDetails summary={progressByStudent[s.id]} />
                   </td>
                 </tr>
               )}
               {editingStudentId === s.id && (
                 <tr className="border-b border-border bg-white/[0.015]">
-                  <td colSpan={courses.length + 4} className="p-4 sm:p-5">
+                  <td colSpan={courses.length + 5} className="p-4 sm:p-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs text-muted mb-2">الاسم الكامل</label>

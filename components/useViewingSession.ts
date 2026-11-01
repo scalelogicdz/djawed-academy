@@ -17,8 +17,13 @@ export default function useViewingSession(lessonId:string){
     startingRef.current=true;setStarting(true);setError('');
     const run=++generation.current;
     try{
-      const r=await fetch('/api/viewing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'start',lessonId}),signal:AbortSignal.timeout(10000)});
-      const data=await r.json();
+      const requestStart=(takeover=false)=>fetch('/api/viewing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'start',lessonId,takeover}),signal:AbortSignal.timeout(10000)});
+      let r=await requestStart();
+      let data=await r.json();
+      if(!r.ok&&data.code==='active'){
+        if(run!==generation.current||!window.confirm('حسابك يشاهد درسًا في جلسة أخرى. هل تريد المتابعة هنا وإيقاف الجلسة الأخرى؟'))return;
+        r=await requestStart(true);data=await r.json();
+      }
       if(!r.ok)throw new Error(data.error||'تعذّر بدء المشاهدة');
       if(run!==generation.current){if(data.leaseId)release(data.leaseId);return;}
       if(document.visibilityState==='hidden'){

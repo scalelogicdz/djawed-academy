@@ -4,7 +4,7 @@ on:
     paths: ['app/**', 'components/**', 'lib/**', 'proxy.ts', 'supabase/account-access.sql', 'tests/**', '.github/workflows/account-access.yml']
   push:
     branches: [main]
-    paths: ['app/api/account-devices/**', 'app/api/viewing/**', 'lib/accountAccess.ts', 'components/useViewingSession.ts', 'supabase/account-access.sql']
+    paths: ['app/api/viewing/**', 'app/api/presence/**', 'app/api/admin/browser-connections/**', 'lib/accountAccess.ts', 'lib/browserConnections.ts', 'components/BrowserConnections.tsx', 'components/useViewingSession.ts', 'supabase/account-access.sql']
 jobs:
   verify:
     runs-on: ubuntu-latest

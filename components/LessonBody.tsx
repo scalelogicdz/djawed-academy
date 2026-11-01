@@ -329,7 +329,7 @@ export default function LessonBody({
         </div>
       </div>
 
-      {viewing.error && <p role="alert" className="mt-4 rounded-xl border border-border p-4 text-sm text-text">{viewing.error} <Link href="/devices" className="text-gold underline">إدارة الأجهزة</Link></p>}
+      {viewing.error && <p role="alert" className="mt-4 rounded-xl border border-border p-4 text-sm text-text">{viewing.error}</p>}
 
       {hasStarted && lesson.video_id && lesson.video_provider !== 'vimeo' && (
         <div className="mt-3 flex justify-center">

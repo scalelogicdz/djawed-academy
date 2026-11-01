@@ -1,9 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { DEVICE_COOKIE, sameOrigin, tokenHash, verifiedIdentity, VIEWING_STOP_MESSAGE } from '@/lib/accountAccess';
+import { sameOrigin, verifiedIdentity, VIEWING_STOP_MESSAGE } from '@/lib/accountAccess';
 import { isUuid, readJsonObject } from '@/lib/security';
 import { hiddenModuleIds } from '@/lib/moduleVisibility';
 import { computeLockedLessonIds } from '@/lib/lessonLocking';
@@ -15,8 +14,6 @@ export async function POST(request:Request){
   try {
     const client=await createClient();const identity=await verifiedIdentity(client);
     if(!identity)return json({error:'سجّل الدخول أولًا'},401);
-    const token=(await cookies()).get(DEVICE_COOKIE)?.value;
-    if(!token||!/^[a-f0-9]{64}$/.test(token))return json({error:'المتصفح غير مسجّل'},403);
     const body=await readJsonObject(request,2048);
     if(!body||!isUuid(body.lessonId)||!['start','heartbeat','stop'].includes(String(body.action)))return json({error:'طلب غير صالح'},400);
     const action=body.action as string;
@@ -45,11 +42,11 @@ export async function POST(request:Request){
       }
     }
     const leaseId=action==='start'?randomUUID():body.leaseId;
-    const {data,error}=await createAdminClient().rpc('account_viewing_lease',{
-      p_user:identity.user.id,p_session:identity.sessionId,p_hash:tokenHash(token),p_lease:leaseId,p_lesson:body.lessonId,p_action:action,
+    const {data,error}=await createAdminClient().rpc('manage_lesson_viewing',{
+      p_user:identity.user.id,p_session:identity.sessionId,p_lease:leaseId,p_lesson:body.lessonId,p_action:action,p_takeover:body.takeover===true,
     });
     if(error||!data)throw new Error('lease');
-    if(!data.allowed)return json({error:data.reason==='device'?'تم استبدال هذا المتصفح. افتح صفحة الأجهزة.':VIEWING_STOP_MESSAGE,code:data.reason},409);
+    if(!data.allowed)return json({error:data.reason==='active'?'حسابك يشاهد درسًا في جلسة أخرى. هل تريد المتابعة هنا؟':VIEWING_STOP_MESSAGE,code:data.reason},409);
     return json({ok:true,leaseId,...(url?{url}:{})});
   } catch { return json({error:'تعذّر التحقق من جلسة المشاهدة. حاول مجددًا.'},503); }
 }
