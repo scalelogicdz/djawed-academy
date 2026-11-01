@@ -1,0 +1,26 @@
+name: Account access checks
+on:
+  pull_request:
+    paths: ['app/**', 'components/**', 'lib/**', 'proxy.ts', 'supabase/account-access.sql', 'tests/**', '.github/workflows/account-access.yml']
+  push:
+    branches: [main]
+    paths: ['app/api/viewing/**', 'app/api/presence/**', 'app/api/admin/browser-connections/**', 'lib/accountAccess.ts', 'lib/browserConnections.ts', 'components/BrowserConnections.tsx', 'components/useViewingSession.ts', 'supabase/account-access.sql']
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit --incremental false
+      - run: node --test tests/*.test.cjs
+      - run: npm install --no-save --no-package-lock --ignore-scripts @electric-sql/pglite@0.3.14
+      - run: node --test tests/account-access-db.mjs
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: build-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: build-placeholder

@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { cookies } from 'next/headers';
+import { browserLabel, browserToken, DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS, tokenHash, sameOrigin } from '@/lib/accountAccess';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
+  if (!sameOrigin(request)) return NextResponse.json({error:'طلب غير صالح'}, {status:403});
   const supabase = await createClient();
   const {
     data: { user },
@@ -31,7 +34,7 @@ export async function POST(request: Request) {
       body.path.startsWith('/') &&
       body.path.length <= 300
     ) {
-      path = body.path;
+      path = body.path.split('?')[0].split('#')[0];
     }
   } catch {
     // Keep the safe default path.
@@ -50,5 +53,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'تعذر تحديث حالة الاتصال' }, { status: 400 });
   }
 
+  const jar=await cookies();
+  const token=browserToken(jar.get(DEVICE_COOKIE)?.value);
+  jar.set(DEVICE_COOKIE,token,DEVICE_COOKIE_OPTIONS);
+  const {error:browserError}=await adminClient.rpc('record_browser_connection',{
+    p_user:user.id,p_hash:tokenHash(token),p_label:browserLabel(request.headers.get('user-agent')||''),p_path:path,
+  });
+  if(browserError)return NextResponse.json({error:'تعذّر تحديث المتصفحات النشطة'}, {status:503});
   return NextResponse.json({ ok: true, tracked: true });
 }

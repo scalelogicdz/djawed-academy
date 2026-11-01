@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import {BrowserConnectionBadge,useBrowserConnections} from '@/components/BrowserConnections';
 
 type OnlineStudent = {
   id: string;
@@ -22,6 +23,7 @@ function pageLabel(path: string) {
 }
 
 export default function AdminLiveUsersPanel() {
+  const browserPresence=useBrowserConnections();
   const [online, setOnline] = useState<OnlineStudent[]>([]);
   const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'error'>('connecting');
 
@@ -113,6 +115,7 @@ export default function AdminLiveUsersPanel() {
                   {student.name}
                 </div>
                 <div className="text-muted2 text-[11px] mt-0.5">{pageLabel(student.path)}</div>
+                <div className="mt-2 text-xs text-muted">إجمالي المتصفحات: <BrowserConnectionBadge count={browserPresence.connections[student.id]||0} status={browserPresence.status}/></div>
               </div>
 
               <span className="text-[10.5px] font-semibold text-success whitespace-nowrap">

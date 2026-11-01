@@ -1,7 +1,11 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { browserToken, DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS } from '@/lib/accountAccess';
 
 export async function proxy(request: NextRequest) {
+  const token=browserToken(request.cookies.get(DEVICE_COOKIE)?.value);
+  request.cookies.set(DEVICE_COOKIE,token);
+  function finish(result:NextResponse){result.cookies.set(DEVICE_COOKIE,token,DEVICE_COOKIE_OPTIONS);return result;}
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
@@ -37,11 +41,11 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/admin');
 
   if (isProtected && !user) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return finish(NextResponse.redirect(new URL('/login', request.url)));
   }
 
   if (path.startsWith('/login') && user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return finish(NextResponse.redirect(new URL('/dashboard', request.url)));
   }
 
   if (path.startsWith('/admin') && user) {
@@ -52,13 +56,14 @@ export async function proxy(request: NextRequest) {
       .single();
 
     if (!profile?.is_admin) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return finish(NextResponse.redirect(new URL('/dashboard', request.url)));
     }
   }
 
-  return response;
+  return finish(response);
 }
 
 export const config = {
   matcher: ['/dashboard/:path*', '/course-content/:path*', '/lesson/:path*', '/community/:path*', '/admin/:path*', '/login'],
 };
+

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { cookies } from 'next/headers';
+import { browserLabel, browserToken, DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS, tokenHash } from '@/lib/accountAccess';
 import {
   checkRateLimit,
   cleanEmail,
@@ -31,7 +34,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return NextResponse.json(
@@ -40,5 +43,19 @@ export async function POST(request: Request) {
     );
   }
 
+  // Count successful logins even if the student never opens a visible course page.
+  // History collection must not prevent legitimate login if the database is unavailable.
+  try {
+    if(data.user){
+      const jar=await cookies();
+      const token=browserToken(jar.get(DEVICE_COOKIE)?.value);
+      jar.set(DEVICE_COOKIE,token,DEVICE_COOKIE_OPTIONS);
+      const result=await createAdminClient().rpc('record_browser_connection',{
+        p_user:data.user.id,p_hash:tokenHash(token),p_label:browserLabel(request.headers.get('user-agent')||''),p_path:'/login',
+      });
+      if(result.error)console.error('Browser login history could not be saved');
+    }
+  } catch { console.error('Browser login history could not be saved'); }
   return NextResponse.json({ ok: true });
 }
+
