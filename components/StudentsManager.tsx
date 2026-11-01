@@ -218,7 +218,7 @@ export default function StudentsManager({
         </button>
       </div>
 
-      {progressError && <p role="alert" className="mb-5 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-200">{progressError}</p>}
+      {progressError && <p role="alert" className="mb-5 rounded-xl border border-gold/30 bg-gold/10 p-4 text-sm text-gold">{progressError}</p>}
       {!progressError && <div className="mb-5 grid gap-3 sm:grid-cols-3">
         {[['إجمالي الطلاب', students.length], ['قد يحتاجون متابعة', followUpCount], ['أكملوا الدروس', completedCount]].map(([label, value]) => (
           <div key={label} className="card px-5 py-4"><p className="text-xs text-muted mb-2">{label}</p>
@@ -383,7 +383,7 @@ export default function StudentsManager({
                 <td className="p-4 min-w-[190px]">
                   {progressByStudent[s.id] && <div>
                     <span className={progressByStudent[s.id].needsFollowUp
-                      ? 'inline-flex rounded-lg border border-amber-400/30 bg-amber-400/10 px-2 py-1 text-xs text-amber-200'
+                      ? 'inline-flex rounded-lg border border-gold/30 bg-gold/10 px-2 py-1 text-xs text-gold'
                       : 'inline-flex rounded-lg border border-border px-2 py-1 text-xs text-muted'}>
                       {progressLabels[progressByStudent[s.id].status]}
                     </span>
