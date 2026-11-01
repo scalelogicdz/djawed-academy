@@ -335,7 +335,7 @@ export default function StudentsManager({
                   {c.title}
                 </th>
               ))}
-              <th className="text-right p-4 font-medium">المتصفحات النشطة<div className="mt-1 font-normal">آخر 90 ثانية</div></th>
+              <th className="text-right p-4 font-medium">إجمالي المتصفحات</th>
               <th className="text-right p-4 font-medium">التقدم في الدروس</th>
               <th className="text-right p-4 font-medium">النشاط والمتابعة</th>
               <th className="text-center p-4 font-medium">إجراءات</th>
@@ -364,7 +364,7 @@ export default function StudentsManager({
                     </button>
                   </td>
                 ))}
-                <td className="p-4 min-w-[180px]"><BrowserConnectionBadge browsers={browserPresence.connections[s.id]||[]} status={browserPresence.status}/></td>
+                <td className="p-4"><BrowserConnectionBadge count={browserPresence.connections[s.id]||0} status={browserPresence.status}/></td>
                 <td className="p-4 min-w-[180px]">
                   {progressByStudent[s.id] ? <div>
                     <div className="mb-2 flex justify-between gap-2">

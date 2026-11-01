@@ -115,7 +115,7 @@ export default function AdminLiveUsersPanel() {
                   {student.name}
                 </div>
                 <div className="text-muted2 text-[11px] mt-0.5">{pageLabel(student.path)}</div>
-                <div className="mt-2"><BrowserConnectionBadge browsers={browserPresence.connections[student.id]||[]} status={browserPresence.status}/></div>
+                <div className="mt-2 text-xs text-muted">إجمالي المتصفحات: <BrowserConnectionBadge count={browserPresence.connections[student.id]||0} status={browserPresence.status}/></div>
               </div>
 
               <span className="text-[10.5px] font-semibold text-success whitespace-nowrap">

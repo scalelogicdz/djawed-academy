@@ -63,6 +63,7 @@ test('students cannot inspect other browser connections or write presence/leases
  await db.exec('set role authenticated');
  try{
   await assert.rejects(db.query('select * from public.browser_connections'),/permission denied/);
+  await assert.rejects(db.query('select * from public.browser_connection_counts()'),/permission denied/);
   await assert.rejects(db.query('select public.record_browser_connection($1,$2,$3,$4)',[randomUUID(),hash('a'),'Chrome','/dashboard']),/permission denied/);
   await assert.rejects(db.query('select public.manage_lesson_viewing($1,$2,$3,$4,$5,$6)',[randomUUID(),randomUUID(),randomUUID(),randomUUID(),'start',true]),/permission denied/);
  }finally{await db.exec('reset role');}
@@ -73,11 +74,13 @@ test('upgrade removes the rejected browser-blocking policy and disables old sett
  assert.equal((await db.query("select count(*)::int n from pg_policies where policyname='registered browser required'")).rows[0].n,0);
  assert.equal((await db.query('select enabled from public.account_access_settings')).rows[0].enabled,false);
 });
-test('closing a tab expires presence after 90 seconds; older hashes are pruned without deleting active ones',async()=>{
+test('all-time counts retain old browsers and never increase for repeat visits from the same browser',async()=>{
  const f=await fixture();await db.query('select public.record_browser_connection($1,$2,$3,$4)',[f.u,hash('old'),'Safari','/dashboard']);
- await db.query("update public.browser_connections set last_seen_at=now()-interval '91 seconds' where user_id=$1",[f.u]);
- assert.equal((await db.query("select count(*)::int n from public.browser_connections where user_id=$1 and last_seen_at>=now()-interval '90 seconds'",[f.u])).rows[0].n,0);
- await db.query("update public.browser_connections set last_seen_at=now()-interval '31 days' where user_id=$1",[f.u]);
+ await db.query("update public.browser_connections set last_seen_at=now()-interval '400 days' where user_id=$1",[f.u]);
+ assert.equal(Number((await db.query('select browser_count from public.browser_connection_counts() where user_id=$1',[f.u])).rows[0].browser_count),1);
  await db.query('select public.record_browser_connection($1,$2,$3,$4)',[f.u,hash('new'),'Chrome','/lesson/example']);
- assert.equal((await db.query('select count(*)::int n from public.browser_connections where user_id=$1',[f.u])).rows[0].n,1);
+ assert.equal(Number((await db.query('select browser_count from public.browser_connection_counts() where user_id=$1',[f.u])).rows[0].browser_count),2);
+ await db.query('select public.record_browser_connection($1,$2,$3,$4)',[f.u,hash('new'),'Chrome','/login']);
+ await db.query('select public.record_browser_connection($1,$2,$3,$4)',[f.u,hash('old'),'Safari','/dashboard']);
+ assert.equal(Number((await db.query('select browser_count from public.browser_connection_counts() where user_id=$1',[f.u])).rows[0].browser_count),2);
 });

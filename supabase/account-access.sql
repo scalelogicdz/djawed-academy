@@ -45,8 +45,12 @@ begin
   insert into public.browser_connections(user_id,browser_hash,label,last_seen_path)
     values(p_user,p_hash,left(p_label,100),left(p_path,300))
     on conflict(user_id,browser_hash) do update set label=excluded.label,last_seen_at=now(),last_seen_path=excluded.last_seen_path;
-  delete from public.browser_connections where user_id=p_user and last_seen_at<now()-interval '30 days';
 end $$;
+create or replace function public.browser_connection_counts()
+returns table(user_id uuid,browser_count bigint)
+language sql stable security definer set search_path = '' as $$
+  select b.user_id,count(*) from public.browser_connections b group by b.user_id;
+$$;
 create or replace function public.manage_lesson_viewing(p_user uuid,p_session uuid,p_lease uuid,p_lesson uuid,p_action text,p_takeover boolean default false)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare v public.lesson_viewing_leases;
@@ -75,8 +79,10 @@ begin
   return jsonb_build_object('allowed',true);
 end $$;
 revoke all on function public.record_browser_connection(uuid,text,text,text) from public,anon,authenticated;
+revoke all on function public.browser_connection_counts() from public,anon,authenticated;
 revoke all on function public.manage_lesson_viewing(uuid,uuid,uuid,uuid,text,boolean) from public,anon,authenticated;
 grant execute on function public.record_browser_connection(uuid,text,text,text) to service_role;
+grant execute on function public.browser_connection_counts() to service_role;
 grant execute on function public.manage_lesson_viewing(uuid,uuid,uuid,uuid,text,boolean) to service_role;
 commit;
 -- AFTER deploying the updated app:

@@ -1,21 +1,14 @@
 import { createAdminClient } from '@/lib/supabase/admin';
-export const ACTIVE_BROWSER_WINDOW_MS = 90_000;
-export type ActiveBrowser = { id: string; label: string; lastSeenAt: string; path: string };
-export async function activeBrowserConnections(now=Date.now()) {
+
+// Cumulative distinct browsers since tracking began; not current online sessions.
+export async function browserConnectionCounts() {
   const db=createAdminClient();
-  const result:Record<string,ActiveBrowser[]>={};
-  const cutoff=new Date(now-ACTIVE_BROWSER_WINDOW_MS).toISOString();
+  const counts:Record<string,number>={};
   for(let offset=0;;offset+=500){
-    const {data,error}=await db.from('browser_connections')
-      .select('id,user_id,label,last_seen_at,last_seen_path').gte('last_seen_at',cutoff)
-      .order('user_id').order('id').range(offset,offset+499);
-    if(error)throw new Error('Browser presence unavailable');
-    for(const row of data||[]){
-      const list=result[row.user_id]??=[];
-      list.push({id:row.id,label:row.label,lastSeenAt:row.last_seen_at,path:row.last_seen_path});
-      result[row.user_id]=list;
-    }
+    const {data,error}=await db.rpc('browser_connection_counts').order('user_id').range(offset,offset+499);
+    if(error)throw new Error('Browser counts unavailable');
+    for(const row of data||[])counts[row.user_id]=Number(row.browser_count);
     if((data||[]).length<500)break;
   }
-  return result;
+  return counts;
 }
