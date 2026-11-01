@@ -481,7 +481,7 @@ export default function LessonsManager({
             key={c.id}
             onClick={() => setSelectedCourse(c.id)}
             className={`px-4 py-2 rounded-lg text-sm font-cairo font-semibold transition ${
-              selectedCourse === c.id ? 'bg-gradient-to-br from-gold to-goldSoft text-[#0A0F1A]' : 'text-muted border border-border'
+              selectedCourse === c.id ? 'bg-gradient-to-br from-gold to-goldSoft text-white' : 'text-muted border border-border'
             }`}
           >
             {c.title}
@@ -885,7 +885,7 @@ export default function LessonsManager({
                 className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
               />
               <label className="flex items-center gap-2 text-sm text-muted">
-                <input type="checkbox" checked={notifyStudents} disabled={!emailNotificationsAvailable || savingLesson} onChange={(e) => setNotifyStudents(e.target.checked)} className="accent-[#C9A84C]" />
+                <input type="checkbox" checked={notifyStudents} disabled={!emailNotificationsAvailable || savingLesson} onChange={(e) => setNotifyStudents(e.target.checked)} className="accent-[#075EDC]" />
                 إشعار طلاب هذه الدورة بالبريد عند إضافة الدرس
               </label>
               <div className="flex gap-2 justify-end">

@@ -108,7 +108,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
           aria-label="Djawed Logic"
           title="Djawed Logic"
         >
-          <img src="/djawed-logic-logo.png" alt="Djawed Logic" className="h-10 w-auto sm:h-11 block" />
+          <img src="/djawed-logic-logo.png" alt="Djawed Logic" className="brand-logo h-10 w-auto sm:h-11 block" />
         </Link>
 
         <div className="hidden md:flex md:order-2 items-center gap-1.5 flex-1 mx-4 overflow-x-auto">

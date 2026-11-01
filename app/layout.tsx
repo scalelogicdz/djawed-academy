@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   title: 'Djawed Khalfaoui Academy',
   description: 'أكاديميتك الخاصة لإتقان إعلانات ميتا',
   icons: {
-    icon: [{ url: '/favicon-gold-v1.png', type: 'image/png' }],
-    apple: '/favicon-gold-v1.png',
+    icon: [{ url: '/favicon-blue-v1.png', type: 'image/png' }],
+    apple: '/favicon-blue-v1.png',
   },
 };
 

@@ -314,7 +314,7 @@ export default function LessonBody({
                   <div className="absolute inset-0 bg-gradient-to-br from-surface2 to-[#070A10]" />
                 )}
                 <div className="absolute inset-0 bg-black/40" />
-                <span className="relative z-10 w-16 h-16 sm:w-[70px] sm:h-[70px] rounded-full bg-[#C9A84C] text-[#100C02] flex items-center justify-center shadow-[0_10px_32px_rgba(201,168,76,0.35)] transition-transform duration-200 group-hover:scale-105">
+                <span className="relative z-10 w-16 h-16 sm:w-[70px] sm:h-[70px] rounded-full bg-[#075EDC] text-[#FFFFFF] flex items-center justify-center shadow-[0_10px_32px_rgba(8, 102, 255,0.35)] transition-transform duration-200 group-hover:scale-105">
                   <svg width="27" height="27" viewBox="0 0 24 24" fill="currentColor" className="translate-x-[1px]">
                     <path d="M8 5v14l11-7z" />
                   </svg>
@@ -370,7 +370,7 @@ export default function LessonBody({
             onClick={toggleComplete}
             disabled={saving || !canMarkComplete}
             aria-busy={saving}
-            className="w-full sm:w-auto sm:min-w-[210px] inline-flex items-center justify-center gap-2 rounded-xl bg-[#C9A84C] px-6 py-3.5 font-heading text-[15px] sm:text-[16px] font-bold text-[#100C02] shadow-[0_8px_24px_rgba(201,168,76,0.2)] transition hover:bg-[#D4B15E] disabled:bg-[#C9A84C] disabled:text-[#100C02] disabled:cursor-not-allowed disabled:opacity-55"
+            className="w-full sm:w-auto sm:min-w-[210px] inline-flex items-center justify-center gap-2 rounded-xl bg-[#075EDC] px-6 py-3.5 font-heading text-[15px] sm:text-[16px] font-bold text-[#FFFFFF] shadow-[0_8px_24px_rgba(8, 102, 255,0.2)] transition hover:bg-[#0866FF] disabled:bg-[#075EDC] disabled:text-[#FFFFFF] disabled:cursor-not-allowed disabled:opacity-55"
           >
             {saving && <LoadingSpinner size={17} />}
             {saving ? copy.saving : completed ? copy.completed : copy.markComplete}

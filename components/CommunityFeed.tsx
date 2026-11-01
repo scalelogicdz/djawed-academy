@@ -51,7 +51,7 @@ function ChatIcon() {
 
 function SendIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#100C02" strokeWidth="2.2">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2">
       <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -274,7 +274,7 @@ export default function CommunityFeed({
         <div className="compose-bar">
           <input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !posting && submitQuestion()} placeholder={copy.questionPlaceholder} className="compose-input" />
           <button className="compose-send" onClick={submitQuestion} disabled={posting || !newQuestion.trim()} aria-busy={posting} aria-label={copy.publish}>
-            {posting ? <LoadingSpinner size={17} className="text-[#100C02]" /> : <SendIcon />}
+            {posting ? <LoadingSpinner size={17} className="text-[#FFFFFF]" /> : <SendIcon />}
           </button>
         </div>
       </div>
@@ -295,7 +295,7 @@ export default function CommunityFeed({
         const canOpenMenu = isOwner || currentUserIsAdmin;
 
         return (
-          <div key={q.id} ref={(el) => { questionRefs.current[q.id] = el; }} className={`rounded-[22px] border bg-[#111925] px-4 sm:px-6 py-5 sm:py-6 text-start shadow-[0_18px_42px_-30px_rgba(0,0,0,0.9)] transition-all duration-500 ${justArrivedId === q.id ? 'border-gold/60 shadow-[0_0_0_1px_rgba(212,177,94,0.16),0_18px_42px_-28px_rgba(212,177,94,0.28)]' : 'border-white/[0.07] hover:border-white/[0.11]'}`}>
+          <div key={q.id} ref={(el) => { questionRefs.current[q.id] = el; }} className={`rounded-[22px] border bg-[#111925] px-4 sm:px-6 py-5 sm:py-6 text-start shadow-[0_18px_42px_-30px_rgba(0,0,0,0.9)] transition-all duration-500 ${justArrivedId === q.id ? 'border-gold/60 shadow-[0_0_0_1px_rgba(8, 102, 255,0.16),0_18px_42px_-28px_rgba(8, 102, 255,0.28)]' : 'border-white/[0.07] hover:border-white/[0.11]'}`}>
             <div className="relative flex items-start gap-3.5 mb-4">
               <Link href={`/profile/${q.student_id}`} className={`avatar-ring ${isAdminAuthor ? 'admin' : ''} flex-shrink-0 hover:border-gold transition`} aria-label={`${copy.viewProfile}: ${q.profiles?.display_name ?? ''}`} title={copy.viewProfile}>
                 {isAdminAuthor ? 'DK' : initial(q.profiles?.display_name ?? '')}
@@ -336,7 +336,7 @@ export default function CommunityFeed({
                 <textarea value={editDraft} onChange={(e) => setEditDraft(e.target.value)} rows={4} className="w-full bg-white/[0.02] border border-border rounded-xl px-4 py-3 text-[15px] leading-7 focus:outline-none focus:border-gold resize-y text-start" dir="auto" />
                 <div className="flex flex-wrap gap-2 justify-start">
                   <button type="button" onClick={cancelEditingQuestion} disabled={savingEdit} className="px-4 py-2 rounded-lg border border-border text-muted text-sm hover:text-text hover:border-white/[0.12] transition">{copy.cancel}</button>
-                  <button type="button" onClick={() => saveQuestionEdit(q.id)} disabled={savingEdit || !editDraft.trim()} aria-busy={savingEdit} className="inline-flex min-w-[118px] items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#C9A84C] text-[#100C02] font-bold text-sm disabled:opacity-60">
+                  <button type="button" onClick={() => saveQuestionEdit(q.id)} disabled={savingEdit || !editDraft.trim()} aria-busy={savingEdit} className="inline-flex min-w-[118px] items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#075EDC] text-[#FFFFFF] font-bold text-sm disabled:opacity-60">
                     {savingEdit && <LoadingSpinner size={14} />}{savingEdit ? copy.saving : copy.saveEdit}
                   </button>
                 </div>
@@ -383,7 +383,7 @@ export default function CommunityFeed({
                   <div className="compose-bar mt-4">
                     <input value={replyDrafts[q.id] ?? ''} onChange={(e) => setReplyDrafts({ ...replyDrafts, [q.id]: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && replyPostingId !== q.id && submitReply(q.id)} placeholder={copy.replyPlaceholder} className="compose-input" />
                     <button className="compose-send" onClick={() => submitReply(q.id)} disabled={replyPostingId === q.id || !(replyDrafts[q.id] ?? '').trim()} aria-busy={replyPostingId === q.id} aria-label={copy.sendReply}>
-                      {replyPostingId === q.id ? <LoadingSpinner size={17} className="text-[#100C02]" /> : <SendIcon />}
+                      {replyPostingId === q.id ? <LoadingSpinner size={17} className="text-[#FFFFFF]" /> : <SendIcon />}
                     </button>
                   </div>
                 </div>

@@ -35,7 +35,7 @@ export default function LoginPage() {
 
   return (
     <section className="max-w-[420px] mx-auto mt-16 px-4 text-center">
-      <div className="w-14 h-14 border border-goldDim rounded-2xl flex items-center justify-center mx-auto mb-6 font-cairo font-extrabold text-gold text-xl bg-gradient-to-b from-[rgba(212,177,94,0.1)] to-transparent">
+      <div className="w-14 h-14 border border-goldDim rounded-2xl flex items-center justify-center mx-auto mb-6 font-cairo font-extrabold text-gold text-xl bg-gradient-to-b from-[rgba(8, 102, 255,0.1)] to-transparent">
         DK
       </div>
       <h1 className="font-cairo font-extrabold text-2xl mb-2">Djawed Khalfaoui Academy</h1>

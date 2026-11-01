@@ -294,7 +294,7 @@ export default function StudentsManager({
                 <label
                   key={c.id}
                   className={`px-4 py-2 rounded-lg border text-sm cursor-pointer transition ${
-                    checked ? 'border-gold bg-[rgba(212,177,94,0.08)] text-gold' : 'border-border text-muted'
+                    checked ? 'border-gold bg-[rgba(8, 102, 255,0.08)] text-gold' : 'border-border text-muted'
                   }`}
                 >
                   <input
@@ -357,7 +357,7 @@ export default function StudentsManager({
                       disabled={savingEnrollment}
                       aria-label={(isEnrolled(s.id, c.id) ? 'إلغاء الوصول إلى ' : 'منح الوصول إلى ') + c.title + ' للطالب ' + s.full_name}
                       className={`w-6 h-6 rounded-md border transition ${
-                        isEnrolled(s.id, c.id) ? 'bg-gold border-gold text-[#0A0F1A]' : 'border-border'
+                        isEnrolled(s.id, c.id) ? 'bg-gold border-gold text-white' : 'border-border'
                       }`}
                     >
                       {isEnrolled(s.id, c.id) ? '✓' : ''}
