@@ -95,7 +95,7 @@ export default function CourseAccordion({
                 <div
                   className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-heading font-extrabold text-[16px] sm:text-[17px] flex-shrink-0 ${
                     isCurrentModule
-                      ? 'bg-gold text-[#0b0e14]'
+                      ? 'bg-gold text-white'
                       : 'bg-surface2 border border-gold/40 text-gold'
                   }`}
                 >
@@ -175,7 +175,7 @@ export default function CourseAccordion({
                                 : 'border-white/[0.08] bg-[#181F29] hover:border-gold/30 hover:bg-[#1B232E]'
                           } ${
                             isHighlighted
-                              ? '!border-gold/65 !bg-gold/[0.055] shadow-[0_0_0_1px_rgba(212,177,94,0.06),0_12px_28px_-24px_rgba(212,177,94,0.28)]'
+                              ? '!border-gold/65 !bg-gold/[0.055] shadow-[0_0_0_1px_rgba(8, 102, 255,0.06),0_12px_28px_-24px_rgba(8, 102, 255,0.28)]'
                               : ''
                           }`}
                         >

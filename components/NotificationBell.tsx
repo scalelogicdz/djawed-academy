@@ -253,7 +253,7 @@ export default function NotificationBell({ currentUserId }: { currentUserId: str
           <path d="M13.73 21a2 2 0 0 1-3.46 0" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute top-0 left-0 min-w-[16px] h-4 px-1 rounded-full bg-gold text-[#0A0F1A] text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute top-0 left-0 min-w-[16px] h-4 px-1 rounded-full bg-gold text-white text-[10px] font-bold flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

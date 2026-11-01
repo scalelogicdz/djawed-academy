@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --gold-glow: rgba(212, 177, 94, 0.1);
+  --gold-glow: rgba(8, 102, 255, 0.1);
   --surface-border: rgba(255, 255, 255, 0.075);
   --surface-highlight: rgba(255, 255, 255, 0.035);
   --interaction-fast: 150ms;
   --interaction-base: 190ms;
   --interaction-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --focus-ring: rgba(212, 177, 94, 0.62);
+  --focus-ring: rgba(8, 102, 255, 0.62);
 }
 
 * {
@@ -24,7 +24,7 @@ body {
   position: relative;
   background:
     radial-gradient(circle at top right, rgba(33, 46, 69, 0.22), transparent 34%),
-    radial-gradient(circle at bottom left, rgba(212, 177, 94, 0.045), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(8, 102, 255, 0.045), transparent 28%),
     #080b12;
   color: #f7f7f4;
   min-height: 100vh;
@@ -86,15 +86,15 @@ body::after {
   transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 .list-item:hover {
-  border-color: rgba(212, 177, 94, 0.24);
+  border-color: rgba(8, 102, 255, 0.24);
   background: linear-gradient(180deg, rgba(30, 42, 63, 0.96), rgba(22, 32, 49, 0.98));
 }
 .list-item.active {
   background: linear-gradient(180deg, rgba(30, 39, 55, 0.98), rgba(22, 30, 44, 0.98));
-  border: 1px solid rgba(212, 177, 94, 0.42);
+  border: 1px solid rgba(8, 102, 255, 0.42);
   box-shadow:
     0 8px 24px -16px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(212, 177, 94, 0.04),
+    0 0 0 1px rgba(8, 102, 255, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.045);
 }
 
@@ -114,19 +114,19 @@ body::after {
   font-family: 'Cairo', sans-serif;
 }
 .module-tab:hover {
-  border-color: rgba(212, 177, 94, 0.24);
+  border-color: rgba(8, 102, 255, 0.24);
   color: #f7f7f4;
 }
 .module-tab.active {
-  background: rgba(212, 177, 94, 0.085);
-  border-color: rgba(212, 177, 94, 0.44);
-  color: #d4b15e;
+  background: rgba(8, 102, 255, 0.085);
+  border-color: rgba(8, 102, 255, 0.44);
+  color: #0866FF;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #d4b15e, #c9a84c);
-  color: #100c02;
+  background: linear-gradient(135deg, #0866FF, #075EDC);
+  color: #FFFFFF;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 11px;
   padding: 14px 28px;
@@ -135,12 +135,12 @@ body::after {
   font-size: 16px;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  box-shadow: 0 10px 24px -14px rgba(212, 177, 94, 0.62);
+  box-shadow: 0 10px 24px -14px rgba(8, 102, 255, 0.62);
 }
 .btn-primary:hover {
   transform: translateY(-1px);
   filter: brightness(1.04);
-  box-shadow: 0 12px 28px -14px rgba(212, 177, 94, 0.72);
+  box-shadow: 0 12px 28px -14px rgba(8, 102, 255, 0.72);
 }
 .btn-primary:disabled {
   opacity: 0.52;
@@ -162,13 +162,13 @@ body::after {
   transition: 0.2s;
 }
 .btn-ghost:hover {
-  border-color: rgba(212, 177, 94, 0.34);
-  background: rgba(212, 177, 94, 0.055);
-  color: #d4b15e;
+  border-color: rgba(8, 102, 255, 0.34);
+  background: rgba(8, 102, 255, 0.055);
+  color: #0866FF;
 }
 
 .eyebrow {
-  color: #d4b15e;
+  color: #0866FF;
   font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.075em;
@@ -182,16 +182,16 @@ body::after {
   content: '';
   width: 18px;
   height: 1px;
-  background: rgba(212, 177, 94, 0.8);
+  background: rgba(8, 102, 255, 0.8);
 }
 
 .coach-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(212, 177, 94, 0.08);
-  border: 1px solid rgba(212, 177, 94, 0.28);
-  color: #d4b15e;
+  background: rgba(8, 102, 255, 0.08);
+  border: 1px solid rgba(8, 102, 255, 0.28);
+  color: #0866FF;
   font-size: 11px;
   font-weight: 700;
   padding: 3px 10px;
@@ -215,8 +215,8 @@ body::after {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
 }
 .avatar-ring.admin {
-  border-color: rgba(212, 177, 94, 0.62);
-  box-shadow: 0 0 0 3px rgba(212, 177, 94, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  border-color: rgba(8, 102, 255, 0.62);
+  box-shadow: 0 0 0 3px rgba(8, 102, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.055);
 }
 
 .reply-toggle {
@@ -235,9 +235,9 @@ body::after {
   transition: 0.2s;
 }
 .reply-toggle:hover {
-  background: rgba(212, 177, 94, 0.055);
-  border-color: rgba(212, 177, 94, 0.28);
-  color: #d4b15e;
+  background: rgba(8, 102, 255, 0.055);
+  border-color: rgba(8, 102, 255, 0.28);
+  color: #0866FF;
 }
 
 .compose-bar {
@@ -252,8 +252,8 @@ body::after {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .compose-bar:focus-within {
-  border-color: rgba(212, 177, 94, 0.42);
-  box-shadow: 0 0 0 3px rgba(212, 177, 94, 0.045);
+  border-color: rgba(8, 102, 255, 0.42);
+  box-shadow: 0 0 0 3px rgba(8, 102, 255, 0.045);
 }
 .compose-input {
   flex: 1;
@@ -273,14 +273,14 @@ body::after {
   height: 38px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #d4b15e, #c9a84c);
+  background: linear-gradient(135deg, #0866FF, #075EDC);
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   cursor: pointer;
   transition: transform 0.2s ease, filter 0.2s ease;
-  box-shadow: 0 7px 18px -12px rgba(212, 177, 94, 0.7);
+  box-shadow: 0 7px 18px -12px rgba(8, 102, 255, 0.7);
 }
 .compose-send:hover {
   transform: scale(1.04);
@@ -300,8 +300,8 @@ body::after {
   border: 1px solid rgba(255, 255, 255, 0.055);
 }
 .reply-card.admin {
-  background: rgba(212, 177, 94, 0.045);
-  border: 1px solid rgba(212, 177, 94, 0.2);
+  background: rgba(8, 102, 255, 0.045);
+  border: 1px solid rgba(8, 102, 255, 0.2);
 }
 
 /* Platform-wide interaction system */
@@ -441,4 +441,22 @@ summary:focus-visible,
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Blue brand accents: match the course landing page. */
+.text-gold,
+.eyebrow,
+.coach-badge,
+.module-tab.active {
+  color: #6ea7ff;
+}
+.btn-primary {
+  background: #0866ff;
+  color: #fff;
+}
+.compose-send {
+  color: #fff;
+}
+.brand-logo {
+  filter: brightness(0) saturate(100%) invert(29%) sepia(99%) saturate(4533%) hue-rotate(213deg) brightness(101%) contrast(104%);
 }

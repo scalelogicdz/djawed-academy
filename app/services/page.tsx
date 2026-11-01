@@ -72,7 +72,7 @@ export default async function ServicesPage() {
 
                 <div className="mt-auto pt-6 flex justify-center">
                   <span
-                    className="inline-flex items-center justify-center gap-2 min-w-[170px] rounded-xl border border-gold/45 bg-gold/[0.08] px-5 py-3 text-[14px] font-bold font-cairo text-gold transition duration-200 group-hover:bg-gold group-hover:text-[#0A0F1A] group-hover:border-gold"
+                    className="inline-flex items-center justify-center gap-2 min-w-[170px] rounded-xl border border-gold/45 bg-gold/[0.08] px-5 py-3 text-[14px] font-bold font-cairo text-gold transition duration-200 group-hover:bg-gold group-hover:text-white group-hover:border-gold"
                   >
                     <span>{content.cta}</span>
                     <span className="text-[16px]">←</span>

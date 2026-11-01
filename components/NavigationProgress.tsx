@@ -97,7 +97,7 @@ export default function NavigationProgress() {
       aria-hidden="true"
     >
       <div
-        className="h-full bg-gradient-to-r from-goldDim via-gold to-[#F0D48C] shadow-[0_0_12px_rgba(212,177,94,0.75)]"
+        className="h-full bg-gradient-to-r from-goldDim via-gold to-[#6EA7FF] shadow-[0_0_12px_rgba(8, 102, 255,0.75)]"
         style={{
           width: `${progress}%`,
           transition:

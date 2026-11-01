@@ -175,7 +175,7 @@ export default function ProfileEditor({ profile }: { profile: EditableProfile })
             onClick={save}
             disabled={saving || displayName.trim().length < 2}
             aria-busy={saving}
-            className="inline-flex w-full sm:w-auto sm:min-w-[170px] items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-gold to-goldSoft text-[#0A0F1A] font-bold text-sm shadow-[0_12px_26px_-18px_rgba(212,177,94,0.7)] disabled:opacity-50 transition"
+            className="inline-flex w-full sm:w-auto sm:min-w-[170px] items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-gold to-goldSoft text-white font-bold text-sm shadow-[0_12px_26px_-18px_rgba(8, 102, 255,0.7)] disabled:opacity-50 transition"
           >
             {saving && <LoadingSpinner size={15} />}
             {saving ? copy.saving : copy.save}
