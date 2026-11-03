@@ -26,6 +26,7 @@ export default function LessonBody({
   thumbnailUrl,
   prevLessonId,
   nextLessonId,
+  nextModuleLessonId,
   isCompleted,
   isLocked,
   requiredLessonTitle,
@@ -35,6 +36,7 @@ export default function LessonBody({
   thumbnailUrl: string | null;
   prevLessonId: string | null;
   nextLessonId: string | null;
+  nextModuleLessonId?: string | null;
   isCompleted: boolean;
   isLocked: boolean;
   requiredLessonTitle: string | null;
@@ -78,6 +80,7 @@ export default function LessonBody({
         continueLearning: 'Continuer',
         nextLesson: 'Leçon suivante',
         wellDone: 'Bravo',
+        nextModule: 'Module suivant',
         backToCourse: 'Retour au contenu du cours',
       }
     : language === 'en'
@@ -105,6 +108,7 @@ export default function LessonBody({
           continueLearning: 'Continue learning',
           nextLesson: 'Next lesson',
           wellDone: 'Well done',
+          nextModule: 'Next module',
           backToCourse: 'Back to course content',
         }
       : {
@@ -131,6 +135,7 @@ export default function LessonBody({
           continueLearning: 'متابعة التعلم',
           nextLesson: 'الدرس التالي',
           wellDone: 'أحسنت',
+          nextModule: 'الوحدة التالية',
           backToCourse: 'العودة إلى محتوى الدورة',
         };
 
@@ -400,12 +405,12 @@ export default function LessonBody({
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-muted group-hover:text-gold">{nextArrow}</span>
           </Link>
         ) : !nextLessonId && completed ? (
-          <Link href={`/course-content?lesson=${lesson.id}`} className={`${navButtonClass} sm:justify-end`}>
+          <Link href={nextModuleLessonId ? `/lesson/${nextModuleLessonId}` : `/course-content?lesson=${lesson.id}`} className={`${navButtonClass} sm:justify-end`}>
             <span className="min-w-0 text-start flex-1 sm:flex-none">
               <span className="block text-[11px] text-success/80 mb-0.5">{copy.wellDone}</span>
-              <span className="block text-[13.5px] sm:text-[14px] font-bold text-success">{copy.backToCourse}</span>
+              <span className="block text-[13.5px] sm:text-[14px] font-bold text-success">{nextModuleLessonId ? copy.nextModule : copy.backToCourse}</span>
             </span>
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-success/15 bg-success/[0.05] text-success">✓</span>
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-success/15 bg-success/[0.05] text-success">{nextModuleLessonId ? nextArrow : '✓'}</span>
           </Link>
         ) : (
           <div className="hidden sm:block" />
