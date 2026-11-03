@@ -38,11 +38,10 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
   const allModules = (fetchedModules ?? []).filter(module => !hidden.has(module.id));
   if (!currentModule || hidden.has(currentModule.id)) notFound();
 
-  const moduleIds = (allModules ?? []).map((module) => module.id);
-  const { data: allLessons } = await supabase
+  const { data: orderedLessons } = await supabase
     .from('lessons')
     .select('id, title, module_id, position')
-    .in('module_id', moduleIds.length ? moduleIds : ['00000000-0000-0000-0000-000000000000'])
+    .eq('module_id', lesson.module_id)
     .order('position', { ascending: true });
 
   const { data: progressRows } = await supabase
@@ -51,18 +50,16 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
     .eq('student_id', user.id);
   const completedIds = new Set((progressRows ?? []).map((row) => row.lesson_id));
 
-  const flatOrder = allLessons ?? [];
-  const currentIndex = flatOrder.findIndex((item) => item.id === lesson.id);
-  const prevLesson = currentIndex > 0 ? flatOrder[currentIndex - 1] : null;
-  const nextLesson = currentIndex >= 0 && currentIndex < flatOrder.length - 1 ? flatOrder[currentIndex + 1] : null;
-
-  const lockedIds = computeLockedLessonIds(flatOrder, completedIds);
-  const isCurrentLocked = lockedIds.has(lesson.id);
-  const requiredLesson = isCurrentLocked ? findRequiredLesson(lesson.id, flatOrder, completedIds) : null;
-
-  const moduleIndex = (allModules ?? []).findIndex((module) => module.id === currentModule?.id);
-  const moduleLessons = flatOrder.filter((item) => item.module_id === lesson.module_id);
+  const moduleLessons = orderedLessons ?? [];
   const lessonIndexInModule = moduleLessons.findIndex((item) => item.id === lesson.id);
+  const prevLesson = lessonIndexInModule > 0 ? moduleLessons[lessonIndexInModule - 1] : null;
+  const nextLesson = lessonIndexInModule >= 0 ? moduleLessons[lessonIndexInModule + 1] ?? null : null;
+
+  const lockedIds = computeLockedLessonIds(moduleLessons, completedIds);
+  const isCurrentLocked = lockedIds.has(lesson.id);
+  const requiredLesson = isCurrentLocked ? findRequiredLesson(lesson.id, moduleLessons, completedIds) : null;
+
+  const moduleIndex = allModules.findIndex((module) => module.id === currentModule.id);
 
   return (
     <section className="max-w-[1020px] mx-auto px-4 sm:px-6 py-5 sm:py-9">
