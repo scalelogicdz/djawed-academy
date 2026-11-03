@@ -61,6 +61,25 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
 
   const moduleIndex = allModules.findIndex((module) => module.id === currentModule.id);
 
+  let nextModuleLessonId: string | null = null;
+  if (moduleIndex >= 0 && lessonIndexInModule >= 0 && !nextLesson) {
+    const laterModuleIds = allModules.slice(moduleIndex + 1).map((module) => module.id);
+    if (laterModuleIds.length) {
+      const { data: laterLessons } = await supabase
+        .from('lessons')
+        .select('id, module_id')
+        .in('module_id', laterModuleIds)
+        .order('position', { ascending: true });
+      for (const moduleId of laterModuleIds) {
+        const firstLesson = laterLessons?.find((item) => item.module_id === moduleId);
+        if (firstLesson) {
+          nextModuleLessonId = firstLesson.id;
+          break;
+        }
+      }
+    }
+  }
+
   return (
     <section className="max-w-[1020px] mx-auto px-4 sm:px-6 py-5 sm:py-9">
       <div className="mb-5 sm:mb-7 rounded-[20px] border border-white/[0.07] bg-white/[0.018] px-4 sm:px-5 py-4 sm:py-5 shadow-[0_14px_34px_-28px_rgba(0,0,0,0.9)]">
@@ -110,6 +129,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
         thumbnailUrl={currentModule?.thumbnail_url ?? null}
         prevLessonId={prevLesson?.id ?? null}
         nextLessonId={nextLesson?.id ?? null}
+        nextModuleLessonId={nextModuleLessonId}
         isCompleted={completedIds.has(lesson.id)}
         isLocked={isCurrentLocked}
         requiredLessonTitle={requiredLesson?.title ?? null}
