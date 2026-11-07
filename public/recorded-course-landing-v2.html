@@ -744,12 +744,18 @@ body .video-accent-line{display:none!important}
 </style>
 <style>
 /* Compact course price — registration offer */
-body .course-price-offer{margin:24px 0 0;padding:22px 16px 18px;border:1px solid rgba(8,102,255,.18);border-radius:16px;background:linear-gradient(145deg,#fff,#f4f8ff);box-shadow:0 6px 20px rgba(8,102,255,.04);text-align:center}
-body .course-price-offer .course-price-title{margin:0 0 10px;color:var(--text);font-family:'Cairo',sans-serif;font-size:17px;font-weight:700;line-height:1.5}
-body .course-price-amount{display:flex;align-items:baseline;justify-content:center;gap:9px;margin:0;color:#0866ff;line-height:1.2;font-family:'Cairo',sans-serif;font-variant-numeric:tabular-nums}
-body .course-price-amount strong{font-size:clamp(42px,10vw,56px);font-weight:900;letter-spacing:-1px}
-body .course-price-amount span{font-size:22px;font-weight:700}
-body .course-price-offer .course-price-access{margin:9px 0 0;color:var(--muted);font-size:14px;line-height:1.6}
+body .course-price-offer{position:relative;isolation:isolate;overflow:hidden;margin:22px 0 0;padding:24px 20px;border:1px solid #244976;border-radius:18px;background:radial-gradient(ellipse at 50% 0,rgba(8,102,255,.16),transparent 70%),#0b1d35;box-shadow:0 14px 32px -16px rgba(11,29,53,.45),inset 0 1px 0 rgba(255,255,255,.06);text-align:center}
+body .course-price-offer::before{content:"";position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,#5398ff,transparent);pointer-events:none}
+body .course-price-offer .course-price-title{margin:0 0 12px;color:#edf4ff;font-family:'Cairo',sans-serif;font-size:16px;font-weight:600;line-height:1.5}
+body .course-price-amount{display:flex;align-items:baseline;justify-content:center;gap:9px;margin:0;color:#fff;line-height:1.15;font-family:'Cairo',sans-serif;font-variant-numeric:tabular-nums}
+body .course-price-amount strong{font-size:clamp(46px,11vw,60px);font-weight:900;letter-spacing:-1.5px}
+body .course-price-amount span{font-size:22px;font-weight:600;color:#a8c9fa}
+body .course-price-offer .course-price-access{margin:8px 0 0;color:#acbdd2;font-size:14px;line-height:1.6}
+body .price-card .course-price-offer .btn-primary{display:flex;width:100%;max-width:360px;margin:20px auto 0!important;min-height:64px;background:linear-gradient(135deg,#1777ff,#075edc);color:#fff;border:1px solid rgba(145,192,255,.25);box-shadow:0 8px 24px rgba(0,72,200,.25);animation:none}
+body .price-card .course-price-offer .btn-primary:hover{background:linear-gradient(135deg,#2a85ff,#0967ee);transform:translateY(-1px)}
+body .course-price-offer .btn-primary .cta-main{color:#fff}
+body .course-price-offer .btn-primary .cta-sub{color:#d8e8ff}
+@media(max-width:400px){body .course-price-offer{padding:22px 14px}body .price-card .course-price-offer .btn-primary .cta-main{font-size:17px}body .price-card .course-price-offer .btn-primary .cta-sub{font-size:10px}}
 </style>
 </head>
 <body>
@@ -1021,9 +1027,8 @@ body .course-price-offer .course-price-access{margin:9px 0 0;color:var(--muted);
         <p class="course-price-title">استثمر في مهارة تبقى معاك</p>
         <p class="course-price-amount"><strong dir="ltr">7,500</strong><span>دج</span></p>
         <p class="course-price-access">وصول مدى الحياة للدروس</p>
+        <a href="https://course.djawedkhalfaoui.com/registration.html" class="btn-primary btn-block" style="margin-top:24px;"><span class="cta-main">احجز مكالمتك المجانية الآن</span><span class="cta-sub">🔑 التسجيلات تغلق عند نفاذ أماكن هذه الدفعة</span></a>
       </div>
-
-      <a href="https://course.djawedkhalfaoui.com/registration.html" class="btn-primary btn-block" style="margin-top:24px;"><span class="cta-main">احجز مكالمتك المجانية الآن</span><span class="cta-sub">🔑 التسجيلات تغلق عند نفاذ أماكن هذه الدفعة</span></a>
 
       
     </div>
