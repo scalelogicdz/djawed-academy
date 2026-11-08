@@ -1212,7 +1212,7 @@ body section:not(.hero) .center>h2+ .sub{margin-top:0}
   const activity=new IntersectionObserver(entries=>entries.forEach(entry=>entry.target.classList.toggle('sweep-pause',!entry.isIntersecting)),{threshold:.05});
   document.querySelectorAll('.hero-network,.art-signal,.analytics-sweep').forEach(el=>activity.observe(el));
  }
- const sticky=document.querySelector('.sticky-cta');sticky.classList.add('hidden');const visible=new Set();if('IntersectionObserver' in window){const observe=new IntersectionObserver(entries=>{entries.forEach(e=>e.isIntersecting?visible.add(e.target):visible.delete(e.target));sticky.classList.toggle('hidden',visible.size>0);},{threshold:.1});document.querySelectorAll('.btn-primary').forEach(el=>{if(!sticky.contains(el))observe.observe(el);});}
+ const sticky=document.querySelector('.sticky-cta');sticky.classList.add('hidden');const visible=new Set();if('IntersectionObserver' in window){const observe=new IntersectionObserver(entries=>{entries.forEach(e=>e.isIntersecting?visible.add(e.target):visible.delete(e.target));sticky.classList.toggle('hidden',visible.size>0);},{threshold:.1});document.querySelectorAll('.btn-primary,.course-price-offer').forEach(el=>{if(!sticky.contains(el))observe.observe(el);});}
 })();
 </script>
 
@@ -1301,6 +1301,21 @@ button.addEventListener('click',function(){opener=button;expanded.replaceChildre
 document.querySelector('.platform-preview-close').addEventListener('click',function(){dialog.close();});
 dialog.addEventListener('click',function(e){if(e.target===dialog){var r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
 dialog.addEventListener('close',function(){expanded.replaceChildren();if(opener)opener.focus();});
+})();
+</script>
+<script>
+(function(){
+ var stickyLink=document.querySelector('.sticky-cta a[href="#pricing"]');
+ var offer=document.querySelector('#pricing .course-price-offer');
+ var card=document.querySelector('#pricing .price-card');
+ if(!stickyLink||!offer||!card)return;
+ stickyLink.addEventListener('click',function(event){
+  event.preventDefault();
+  var viewportHeight=window.visualViewport?window.visualViewport.height:window.innerHeight;
+  var targetBottom=card.getBoundingClientRect().bottom+window.scrollY;
+  var top=Math.max(0,targetBottom-viewportHeight+16);
+  window.scrollTo({top:top,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+ });
 })();
 </script>
 </body>
