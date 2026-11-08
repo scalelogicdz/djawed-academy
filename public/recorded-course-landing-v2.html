@@ -1311,9 +1311,7 @@ dialog.addEventListener('close',function(){expanded.replaceChildren();if(opener)
  if(!stickyLink||!offer||!card)return;
  stickyLink.addEventListener('click',function(event){
   event.preventDefault();
-  var viewportHeight=window.visualViewport?window.visualViewport.height:window.innerHeight;
-  var targetBottom=card.getBoundingClientRect().bottom+window.scrollY;
-  var top=Math.max(0,targetBottom-viewportHeight+16);
+  var top=Math.max(0,card.getBoundingClientRect().top+window.scrollY-28);
   window.scrollTo({top:top,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
  });
 })();
