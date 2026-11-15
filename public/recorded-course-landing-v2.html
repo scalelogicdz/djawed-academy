@@ -791,6 +791,54 @@ body .learning-platform-gallery figcaption{font-size:16px;line-height:1.6;font-w
 body section:not(.hero) .center>h2+ .sub{margin-top:0}
 @media(max-width:720px){body section:not(.hero) h2,body .learning-platform #learningPlatformTitle{font-size:26px!important;line-height:1.5!important;font-weight:800!important;margin-bottom:20px!important}}
 </style>
+
+<style id="djawed-feedback-carousel-theme">
+/* Shared approved Djawed Logic carousel identity. Scoped to feedback only. */
+#student-feedback{
+  background-color:#f6fbff;
+  background-image:linear-gradient(rgba(45,151,255,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(45,151,255,.10) 1px,transparent 1px),linear-gradient(130deg,#fff 8%,#d9efff 30%,#f9fcff 50%,#c4e8ff 76%,#fff 96%);
+  background-size:64px 64px,64px 64px,100% 100%;
+}
+#student-feedback .testi-card,#student-feedback .feedback-audio{
+  color:#080e50;
+  background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(234,246,255,.78));
+  border:1px solid rgba(255,255,255,.95);
+  box-shadow:inset 0 2px 5px #fff,0 12px 30px rgba(48,141,215,.13);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  border-radius:38px;
+}
+#student-feedback .testi-card{
+  width:min(85vw,380px);padding:30px 24px;gap:20px;
+  background-image:linear-gradient(rgba(45,151,255,.065) 1px,transparent 1px),linear-gradient(90deg,rgba(45,151,255,.065) 1px,transparent 1px),linear-gradient(145deg,rgba(255,255,255,.92),rgba(220,240,255,.87));
+  background-size:48px 48px,48px 48px,100% 100%;
+}
+#student-feedback .testi-brand{display:flex;align-items:center;gap:9px;color:#080e50;font:800 17px/1.3 Arial,sans-serif;text-align:left;flex-shrink:0}
+#student-feedback .testi-brand-symbol{display:block;flex:0 0 32px;width:32px;height:38px;background:#0754ff;-webkit-mask:url('/djawed-logic-logo.png') center/contain no-repeat;mask:url('/djawed-logic-logo.png') center/contain no-repeat}
+#student-feedback .testi-brand-dots{display:flex;gap:3px;margin-left:auto}
+#student-feedback .testi-brand-dots i{display:block;width:6px;height:6px;border:2px solid #080e50;border-radius:50%}
+#student-feedback .testi-quote-mark{font:96px/.8 Georgia,serif;color:#0754ff;opacity:1;direction:ltr;text-align:left;height:56px;margin-top:12px}
+#student-feedback .testi-text{color:#080e50;font-size:16px;line-height:2;overflow-wrap:anywhere}
+#student-feedback .testi-footer{border:0;padding-top:6px;gap:0}
+#student-feedback .testi-avatar{display:none}
+#student-feedback .testi-name{color:#080e50;font-weight:800;font-size:14px}
+#student-feedback .testi-brand-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:24px}
+#student-feedback .testi-website{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border:1.5px solid #0754ff;border-radius:99px;color:#080e50;font:12px/1.4 Arial,sans-serif;white-space:nowrap}
+#student-feedback .testi-website svg{color:#0754ff;flex-shrink:0}
+#student-feedback .testi-brand-arrow{display:grid;place-items:center;width:28px;height:28px;border:1.5px solid #0754ff;border-radius:50%;font:27px/1 Arial,sans-serif;color:#0754ff}
+#student-feedback .feedback-audio{padding:24px;border-radius:28px}
+#student-feedback .feedback-audio .testi-brand{margin-bottom:22px}
+#student-feedback .feedback-audio-heading h3{color:#080e50}
+#student-feedback .feedback-audio-icon{color:#0754ff;background:rgba(255,255,255,.65);border-color:#c1e0ff}
+#student-feedback .carousel-dots .dot.active:after{background:#0754ff}
+#student-feedback .testi-carousel:focus-visible{outline:2px solid #0754ff;outline-offset:4px}
+@media(max-width:380px){
+ #student-feedback .testi-card{padding:25px 18px;border-radius:30px}
+ #student-feedback .testi-brand{font-size:15px}
+ #student-feedback .testi-text{font-size:15px}
+ #student-feedback .testi-website{font-size:11px}
+}
+</style>
+
 </head>
 <body>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1923945221576047&ev=PageView&noscript=1" alt=""></noscript>
@@ -924,11 +972,12 @@ body section:not(.hero) .center>h2+ .sub{margin-top:0}
 <dialog class="platform-preview-dialog" aria-label="صورة مكبرة من المنصة"><button type="button" class="platform-preview-close" aria-label="إغلاق الصورة">×</button><div class="platform-preview-expanded"></div></dialog>
 
 <!-- TESTIMONIALS -->
-<section>
+<section id="student-feedback" class="feedback-brand-section">
   <div class="wrap-narrow">
     <div class="center">
     <h2 style="font-size:clamp(28px,4.2vw,42px); margin-bottom:0; font-weight:800;">ماذا قال عنا <span style="color:var(--gold);">المشتركون</span></h2></div>
     <article class="feedback-audio" aria-labelledby="feedbackAudioTitle">
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
       <div class="feedback-audio-heading">
         <span class="feedback-audio-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></span>
         <div><h3 id="feedbackAudioTitle">اسمع تجربة أحد المشتركين</h3></div>
@@ -940,6 +989,7 @@ body section:not(.hero) .center>h2+ .sub{margin-top:0}
       </audio>
     </article>
     <article class="feedback-audio" aria-labelledby="feedbackAudioTitle2">
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
       <div class="feedback-audio-heading">
         <span class="feedback-audio-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></span>
         <div><h3 id="feedbackAudioTitle2">تجربة صوتية أخرى من أحد المشتركين</h3></div>
@@ -951,6 +1001,7 @@ body section:not(.hero) .center>h2+ .sub{margin-top:0}
       </audio>
     </article>
     <article class="feedback-audio" aria-labelledby="feedbackAudioTitle3">
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
       <div class="feedback-audio-heading">
         <span class="feedback-audio-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></span>
         <div><h3 id="feedbackAudioTitle3">رأي آخر من أحد المشتركين</h3></div>
@@ -965,68 +1016,84 @@ body section:not(.hero) .center>h2+ .sub{margin-top:0}
       <div class="testi-carousel" id="testiCarousel">
         <div class="testi-track" id="testiTrack">
         <div class="testi-card">
-          <div class="testi-quote-mark">"</div>
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="testi-quote-mark" aria-hidden="true">“</div>
           <div class="testi-text">ولا عندي الفهم الصحيح لعالم ميتا من أعماقه، فهمت السيستم تاعو كيفاش يخدم كيفاش يخمم وكيفاش يتصرف، المغالطات والفوضى لي صارية في سوشل ميديا على اعلانات ميتا كامل تمحاو وخرجت من البروڨرام بالأسس الصحيحة وبالمعلومات الصحيحة.</div>
           <div class="testi-footer">
             <div class="testi-avatar" aria-hidden="true">“</div>
             <span class="testi-name">طالب في الدورة</span>
           </div>
+<div class="testi-brand-footer" dir="ltr"><span class="testi-website"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20M4 6h16M4 18h16"/></svg>djawedkhalfaoui.com</span><span class="testi-brand-arrow" aria-hidden="true">↗</span></div>
         </div>
         <div class="testi-card">
-          <div class="testi-quote-mark">"</div>
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="testi-quote-mark" aria-hidden="true">“</div>
           <div class="testi-text">خويا جواد بلا مجاملة، كانت دورة بروفيسيونال من جميع النواحي و قيمة أكثر من سعرها، استفدت بزاف صوالح، منقلك غير بارك الله فيك.</div>
           <div class="testi-footer">
             <div class="testi-avatar" aria-hidden="true">“</div>
             <span class="testi-name">طالب في الدورة</span>
           </div>
+<div class="testi-brand-footer" dir="ltr"><span class="testi-website"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20M4 6h16M4 18h16"/></svg>djawedkhalfaoui.com</span><span class="testi-brand-arrow" aria-hidden="true">↗</span></div>
         </div>
         <div class="testi-card">
-          <div class="testi-quote-mark">"</div>
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="testi-quote-mark" aria-hidden="true">“</div>
           <div class="testi-text">أصبحت أعرف أسرار الخوارزميات وكيف أجعل الإعلانات تظهر للأشخاص المهتمين فعلاً بدلاً من العشوائية.</div>
           <div class="testi-footer">
             <div class="testi-avatar" aria-hidden="true">“</div>
             <span class="testi-name">طالب في الدورة</span>
           </div>
+<div class="testi-brand-footer" dir="ltr"><span class="testi-website"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20M4 6h16M4 18h16"/></svg>djawedkhalfaoui.com</span><span class="testi-brand-arrow" aria-hidden="true">↗</span></div>
         </div>
         <div class="testi-card">
-          <div class="testi-quote-mark">"</div>
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="testi-quote-mark" aria-hidden="true">“</div>
           <div class="testi-text">الدورة متكاملة وغنية بالمعلومات القيّمة، الأستاذ جواد شرح المحتوى بطريقة واضحة واحترافية، ومكّنني من فهم هذا المجال بشكل ممتاز واكتساب أساس قوي للانطلاق بثقة.</div>
           <div class="testi-footer">
             <div class="testi-avatar" aria-hidden="true">“</div>
             <span class="testi-name">طالب في الدورة</span>
           </div>
+<div class="testi-brand-footer" dir="ltr"><span class="testi-website"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20M4 6h16M4 18h16"/></svg>djawedkhalfaoui.com</span><span class="testi-brand-arrow" aria-hidden="true">↗</span></div>
         </div>
         <div class="testi-card">
-          <div class="testi-quote-mark">"</div>
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="testi-quote-mark" aria-hidden="true">“</div>
           <div class="testi-text">أكثر حاجة استفدت منها هي الوضوح، الدورة نحّاتلي التشتت وعطاتني صورة واضحة باش نبدا بأسس صحيحة وبلا عشوائية.</div>
           <div class="testi-footer">
             <div class="testi-avatar" aria-hidden="true">“</div>
             <span class="testi-name">طالب في الدورة</span>
           </div>
+<div class="testi-brand-footer" dir="ltr"><span class="testi-website"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20M4 6h16M4 18h16"/></svg>djawedkhalfaoui.com</span><span class="testi-brand-arrow" aria-hidden="true">↗</span></div>
         </div>
         <div class="testi-card">
-          <div class="testi-quote-mark">"</div>
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="testi-quote-mark" aria-hidden="true">“</div>
           <div class="testi-text">كان عندي فكرة عن الإعلانات لأني درستها وحدي في يوتيوب، لكن الدورة رتّبتلي الأفكار وسهّلتلي الأمور، وكاين أشياء ضنيتها صعيبة وسهلتلي، وكلش صار أوضح.</div>
           <div class="testi-footer">
             <div class="testi-avatar" aria-hidden="true">“</div>
             <span class="testi-name">طالب في الدورة</span>
           </div>
+<div class="testi-brand-footer" dir="ltr"><span class="testi-website"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20M4 6h16M4 18h16"/></svg>djawedkhalfaoui.com</span><span class="testi-brand-arrow" aria-hidden="true">↗</span></div>
         </div>
         <div class="testi-card">
-          <div class="testi-quote-mark">"</div>
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="testi-quote-mark" aria-hidden="true">“</div>
           <div class="testi-text">تعلمت كل ما له علاقة بالتجارة الإلكترونية وكيفية إنشاء وإطلاق حملات إعلانية.</div>
           <div class="testi-footer">
             <div class="testi-avatar" aria-hidden="true">“</div>
             <span class="testi-name">طالب في الدورة</span>
           </div>
+<div class="testi-brand-footer" dir="ltr"><span class="testi-website"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20M4 6h16M4 18h16"/></svg>djawedkhalfaoui.com</span><span class="testi-brand-arrow" aria-hidden="true">↗</span></div>
         </div>
         <div class="testi-card">
-          <div class="testi-quote-mark">"</div>
+<div class="testi-brand" dir="ltr"><span class="testi-brand-symbol" aria-hidden="true"></span><span>Djawed Logic</span><span class="testi-brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+          <div class="testi-quote-mark" aria-hidden="true">“</div>
           <div class="testi-text">تعلمت الطريقة الأصح لعمل إعلانات ممولة بطريقة احترافية.</div>
           <div class="testi-footer">
             <div class="testi-avatar" aria-hidden="true">“</div>
             <span class="testi-name">طالب في الدورة</span>
           </div>
+<div class="testi-brand-footer" dir="ltr"><span class="testi-website"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20M4 6h16M4 18h16"/></svg>djawedkhalfaoui.com</span><span class="testi-brand-arrow" aria-hidden="true">↗</span></div>
         </div></div>
       </div>
     </div>
