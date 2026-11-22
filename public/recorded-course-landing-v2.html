@@ -890,6 +890,20 @@ body .wf-faq-card h2{text-align:center;margin:0 0 20px}
  body .wf-mobile-bar .wf-scroll-cta{width:auto;min-width:140px;min-height:48px;padding:10px 18px;font-size:16px;border-radius:13px}
 }
 @media(prefers-reduced-motion:reduce){body .wf-scroll-cta{transition:none}body .wf-scroll-cta:hover{transform:none}.wf-scroll-cta::before{display:none}}
+
+/* CHANGE 6: Premium 3D orange signup buttons (all CTAs) with a slow, soft light sweep */
+body .wf-card .wf-cta,body .wf-scroll-cta{background:linear-gradient(180deg,#FF8A1A,#E86400);border:1px solid #D95E00;border-radius:14px;color:#fff;font-size:clamp(17px,4.6vw,20px);font-weight:800;letter-spacing:.2px;text-shadow:0 1px 1px rgba(0,0,0,.18);margin-bottom:3px;-webkit-tap-highlight-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 3px 0 #B84F00,0 10px 22px -6px rgba(232,100,0,.45);transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;animation:none}
+body .wf-card .wf-cta::before,body .wf-card .wf-cta:hover::before,body .wf-scroll-cta::before,body .wf-scroll-cta:hover::before{width:30%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:wf-cta-shine 4.5s ease-in-out infinite}
+@media(hover:hover){body .wf-card .wf-cta:hover,body .wf-scroll-cta:hover{transform:translateY(-1px);filter:brightness(1.05);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 4px 0 #B84F00,0 14px 28px -6px rgba(232,100,0,.5)}}
+body .wf-card .wf-cta:active,body .wf-scroll-cta:active{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 1px 0 #B84F00,0 4px 10px -4px rgba(232,100,0,.4)}
+@keyframes wf-cta-shine{0%{left:-65%}30%,100%{left:130%}}
+@media(max-width:768px){
+ .wf-mobile-bar{padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+ body .wf-mobile-bar .wf-scroll-cta{width:100%;min-height:52px;padding:10px 16px;font-size:18px;border-radius:14px;margin-bottom:3px}
+}
+@media(prefers-reduced-motion:reduce){body .wf-card .wf-cta::before,body .wf-scroll-cta::before{animation:none;display:none}}
+/* CHANGE 7: Mid-page CTAs (after curriculum + testimonials) are desktop-only; mobile uses the sticky bar */
+@media(max-width:768px){.wf-scroll-wrap.wf-desktop-only{display:none}}
 </style>
 
 </head>
@@ -910,7 +924,6 @@ body .wf-faq-card h2{text-align:center;margin:0 0 20px}
 <div class="hero-intro"><div class="hero-intro-copy">    <div class="eyebrow">دورة تعلم السبونسور (إعلانات ميطا)</div>
 
     <!-- CHANGE 3: Hero offer pill -->
-    <div class="wf-hero-pill">خصم 70% لفترة محدودة</div>
     <h1 class="hero-message"><span class="hero-line">وكتاه رايح تفيق بلي لي</span><span class="hero-line">يديرلك سبونسور <span class="hero-emphasis">ماهوش</span></span><span class="hero-line hero-emphasis">خير عليك؟</span></h1>
     <p class="hero-promise">رايحين نعلموك وزيد نتابعوك حتى توصل للنتائج</p>
     
@@ -1003,7 +1016,7 @@ body .wf-faq-card h2{text-align:center;margin:0 0 20px}
       </div>
     </div>
     <!-- CHANGE 1: Curriculum scroll CTA -->
-    <div class="wf-scroll-wrap"><a class="wf-scroll-cta" href="#pricing" data-pricing-scroll><span>سجّل الآن بخصم <bdi dir="ltr">70%</bdi></span><span aria-hidden="true">←</span></a></div>
+    <div class="wf-scroll-wrap wf-desktop-only"><a class="wf-scroll-cta" href="#pricing" data-pricing-scroll><span>سجّل الآن بخصم <bdi dir="ltr">70%</bdi></span><span aria-hidden="true">←</span></a></div>
   </div>
 </section>
 
@@ -1150,7 +1163,7 @@ body .wf-faq-card h2{text-align:center;margin:0 0 20px}
       <button class="dot" data-index="7" aria-label="8"></button>
     </div>
     <!-- CHANGE 1: Testimonials scroll CTA -->
-    <div class="wf-scroll-wrap"><a class="wf-scroll-cta" href="#pricing" data-pricing-scroll><span>سجّل الآن بخصم <bdi dir="ltr">70%</bdi></span><span aria-hidden="true">←</span></a></div>
+    <div class="wf-scroll-wrap wf-desktop-only"><a class="wf-scroll-cta" href="#pricing" data-pricing-scroll><span>سجّل الآن بخصم <bdi dir="ltr">70%</bdi></span><span aria-hidden="true">←</span></a></div>
   </div>
 </section>
 
@@ -1241,7 +1254,6 @@ body .wf-faq-card h2{text-align:center;margin:0 0 20px}
 
 <!-- CHANGE 2: Mobile-only signup bar; hidden until visibility is calculated -->
 <aside class="wf-mobile-bar" dir="rtl" aria-label="التسجيل في الدورة" hidden>
-  <div class="wf-mobile-price"><strong><bdi dir="ltr">7,500</bdi> دج</strong><del dir="ltr">25,000</del></div>
   <a class="wf-scroll-cta" href="#pricing" data-pricing-scroll>سجّل الآن</a>
 </aside>
 <footer>Djawed Khalfaoui © 2026</footer>
