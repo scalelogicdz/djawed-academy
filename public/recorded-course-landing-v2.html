@@ -793,22 +793,36 @@ body section:not(.hero) .center>h2+ .sub{margin-top:0}
 </style>
 
 <style id="white-friday-offer-style">
-body .course-price-offer.white-friday-offer{
- padding:28px 24px;border:1px solid #a8ccff;border-radius:22px;
- background:radial-gradient(ellipse at 100% 0,rgba(8,102,255,.10),transparent 58%),linear-gradient(155deg,#fff 25%,#eff6ff);
- box-shadow:0 16px 36px -20px rgba(8,74,175,.30),inset 0 1px 0 #fff;
-}
-body .white-friday-offer::before{left:0;right:0;height:3px;background:linear-gradient(90deg,#a9d9ff,#0866ff,#a9d9ff)}
-body .white-friday-offer .wf-offer-heading{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;margin:0 0 18px}
-body .white-friday-offer .wf-label{font:800 12px/1.4 Arial,sans-serif;letter-spacing:2px;color:#15365e}
-body .white-friday-offer .wf-discount{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#0866ff;color:#fff;border-radius:999px;font-size:13px;font-weight:800;line-height:1.5;box-shadow:0 4px 12px rgba(8,102,255,.15)}
-body .white-friday-offer .course-price-title{color:#15365e;font-size:clamp(20px,5vw,25px);font-weight:800;margin:0 0 16px;line-height:1.6}
-body .white-friday-offer .wf-original-price{margin:0 0 6px;font-size:15px;line-height:1.7;color:#65768e}
-body .white-friday-offer .wf-original-price del{font-size:19px;font-weight:600;text-decoration-thickness:1.5px;text-decoration-color:#8a98ac}
-body .white-friday-offer .course-price-amount strong{font-size:clamp(50px,12vw,68px);font-weight:900;letter-spacing:-2px}
-body .white-friday-offer .wf-saving{display:table;margin:12px auto 0;padding:4px 12px;border-radius:8px;background:#e6f0ff;color:#1255ac;font-size:13px;font-weight:700;line-height:1.6}
-body .white-friday-offer .course-price-access{margin-top:14px;font-size:13px;color:#50627a}
-@media(max-width:400px){body .course-price-offer.white-friday-offer{padding:24px 14px}body .white-friday-offer .wf-offer-heading{gap:8px}body .white-friday-offer .wf-label{font-size:11px;letter-spacing:1.5px}}
+.wf-card,.wf-card *{box-sizing:border-box}
+body .wf-card{--blue:#0a66ff;--navy:#102347;position:relative;isolation:isolate;width:min(100%,420px);margin:24px auto;padding:30px 24px 24px;overflow:hidden;direction:rtl;text-align:center;font-family:"Cairo",sans-serif;color:var(--navy);background:linear-gradient(150deg,#fff 35%,#edf5ff);border:1px solid #b9d6ff;border-radius:26px;box-shadow:0 18px 45px -24px #0a66ff66,inset 0 1px 0 #fff}
+.wf-card::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,#b9ddff,var(--blue),#b9ddff);pointer-events:none}
+.wf-card p,.wf-card h2{margin:0}
+.wf-card .wf-badge{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:210px;padding:12px 24px;color:#fff;background:var(--blue);border-radius:18px;box-shadow:0 8px 24px #0a66ff30}
+.wf-badge span{font-size:22px;font-weight:800}
+.wf-badge strong{font-size:clamp(42px,12vw,54px);font-weight:900;line-height:1.15}
+.wf-card .wf-header{margin-top:22px}
+.wf-card .wf-label{display:inline-block;padding:7px 14px;border:1px solid #d3e5ff;border-radius:999px;background:#f3f8ff;color:var(--blue);font:800 11px/1.4 Arial,sans-serif;letter-spacing:2.5px}
+.wf-card h2{margin-top:10px;font-size:clamp(23px,6vw,29px);font-weight:900;line-height:1.5;color:var(--navy)}
+.wf-card .wf-prices{margin-top:22px}
+.wf-card .wf-old{display:inline-block;position:relative;padding:0 5px;color:#788598;font-size:24px;font-weight:700;text-decoration:none}
+.wf-old::after{content:"";position:absolute;top:50%;inset-inline:0;height:3px;border-radius:3px;background:var(--blue);transform:rotate(-9deg)}
+.wf-card .wf-price{display:flex;justify-content:center;align-items:baseline;gap:9px;margin-top:8px;color:var(--blue);line-height:1.2}
+.wf-price strong{font-size:clamp(58px,17vw,78px);font-weight:900;letter-spacing:-3px;font-variant-numeric:lining-nums tabular-nums}
+.wf-price span{font-size:25px;font-weight:800}
+.wf-card .wf-saving{display:inline-flex;align-items:center;justify-content:center;gap:7px;margin-top:14px;padding:8px 15px;background:#e7f1ff;border:1px solid #a9ceff;border-radius:11px;color:#064fc7;font-size:16px;font-weight:800}
+.wf-card .wf-benefits{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 16px;margin:20px 0;padding:0;list-style:none;font-size:13px;font-weight:600}
+.wf-benefits li{display:inline-flex;align-items:center;gap:5px}
+.wf-benefits span{color:var(--blue);font-weight:900}
+.wf-card .wf-urgency{display:inline-flex;align-items:center;gap:7px;margin-bottom:14px;color:#9a520b;font-size:13px;font-weight:700}
+.wf-urgency svg{flex-shrink:0}
+.wf-card .wf-cta{position:relative;display:flex;justify-content:center;align-items:center;gap:10px;width:100%;min-height:62px;padding:16px 12px;overflow:hidden;border:1px solid #ffffff30;border-radius:15px;background:linear-gradient(120deg,#0a66ff,#0753d4);box-shadow:0 10px 24px #0a66ff35;color:#fff;font-size:clamp(16px,4.5vw,20px);font-weight:800;line-height:1.6;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease}
+.wf-cta::before{content:"";position:absolute;inset:-50% auto -50% -65%;width:40%;background:linear-gradient(90deg,transparent,#ffffff38,transparent);transform:skewX(-20deg);pointer-events:none}
+@media(hover:hover){.wf-card .wf-cta:hover{transform:translateY(-2px);box-shadow:0 14px 30px #0a66ff45}.wf-cta:hover::before{animation:wf-shine .8s ease}}
+.wf-cta:focus-visible{outline:3px solid var(--navy);outline-offset:4px}
+.wf-card .wf-note{margin-top:12px;color:#60718a;font-size:11px;line-height:1.8}
+@keyframes wf-shine{to{left:130%}}
+@media(max-width:360px){body .wf-card{padding:26px 16px 20px}.wf-card .wf-badge{min-width:190px}}
+@media(prefers-reduced-motion:reduce){.wf-card .wf-cta{transition:none}.wf-card .wf-cta:hover{transform:none}.wf-card .wf-cta::before{animation:none;display:none}}
 </style>
 
 </head>
@@ -1088,15 +1102,28 @@ body .white-friday-offer .course-price-access{margin-top:14px;font-size:13px;col
 
 
       
-      <div class="course-price-offer white-friday-offer" aria-label="عرض الجمعة البيضاء: خصم 70 بالمئة، من 25000 إلى 7500 دينار">
-        <div class="wf-offer-heading"><span class="wf-label" lang="en" dir="ltr">WHITE FRIDAY</span><span class="wf-discount">خصم <bdi dir="ltr">70%</bdi></span></div>
-        <p class="course-price-title">عرض الجمعة البيضاء</p>
-        <p class="wf-original-price">بدلاً من <del><bdi dir="ltr">25,000</bdi> دج</del></p>
-        <p class="course-price-amount"><strong dir="ltr">7,500</strong><span>دج</span></p>
-        <p class="wf-saving">وفّر <bdi dir="ltr">17,500</bdi> دج</p>
-        <p class="course-price-access">دفعة واحدة · وصول مدى الحياة للدروس</p>
-        <a href="https://course.djawedkhalfaoui.com/registration.html" class="btn-primary btn-block" style="margin-top:24px;"><span class="cta-main">سجّل في الدورة</span><span class="cta-sub">🔑 التسجيلات تغلق عند نفاذ أماكن هذه الدفعة</span></a>
-      </div>
+      <section class="wf-card" dir="rtl" lang="ar" aria-labelledby="wf-title">
+        <div class="wf-badge"><span>خصم</span><strong dir="ltr">70%</strong></div>
+        <header class="wf-header">
+          <span class="wf-label" lang="en" dir="ltr">WHITE FRIDAY</span>
+          <h2 id="wf-title">عرض الجمعة البيضاء</h2>
+        </header>
+        <div class="wf-prices">
+          <del class="wf-old" aria-label="السعر الأصلي 25000 دينار"><bdi dir="ltr">25,000</bdi> دج</del>
+          <p class="wf-price" aria-label="سعر العرض 7500 دينار"><strong dir="ltr">7,500</strong><span>دج</span></p>
+        </div>
+        <p class="wf-saving"><span aria-hidden="true">✓</span><span>وفّر <bdi dir="ltr">17,500</bdi> دج</span></p>
+        <ul class="wf-benefits">
+          <li><span aria-hidden="true">✓</span> دفعة واحدة</li>
+          <li><span aria-hidden="true">✓</span> وصول مدى الحياة للدروس</li>
+        </ul>
+        <p class="wf-urgency">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          أماكن محدودة لهذه الدفعة
+        </p>
+        <a class="wf-cta" href="https://course.djawedkhalfaoui.com/registration.html"><span>سجّل الآن بخصم <bdi dir="ltr">70%</bdi></span><span aria-hidden="true">←</span></a>
+        <p class="wf-note">التسجيلات تغلق عند اكتمال الدفعة</p>
+      </section>
 
       
     </div>
