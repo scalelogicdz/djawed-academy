@@ -825,6 +825,27 @@ body .wf-card{--blue:#0a66ff;--navy:#102347;position:relative;isolation:isolate;
 @media(prefers-reduced-motion:reduce){.wf-card .wf-cta{transition:none}.wf-card .wf-cta:hover{transform:none}.wf-card .wf-cta::before{animation:none;display:none}}
 </style>
 
+
+<style id="pricing-spacing-fixes">
+#pricing .wf-card{margin:24px auto 0}
+#pricing .wf-prices{margin-top:11px;display:flex;flex-direction:column;align-items:center;gap:6px}
+#pricing .wf-old{padding:0;line-height:1.3;text-decoration-line:line-through;text-decoration-color:#0a66ff;text-decoration-thickness:2px}
+#pricing .wf-old::after{content:none}
+#pricing .wf-price{display:inline-flex;align-items:baseline;justify-content:center;gap:7px;margin:0;font-size:clamp(58px,17vw,78px);line-height:1.2}
+#pricing .wf-price strong{font-size:1em;line-height:inherit}
+#pricing .wf-price>span{font-size:.37em;line-height:inherit}
+#pricing .wf-saving{background:#0a66ff;border-color:#0a66ff;color:#fff}
+@media(max-width:480px){
+ #pricing .wf-card{padding:22px 18px 20px}
+ #pricing .wf-header{margin-top:16px}
+ #pricing .wf-card h2{margin-top:8px}
+ #pricing .wf-benefits{margin:16px 0}
+ #pricing .wf-saving{margin-top:12px}
+ #pricing .wf-urgency{margin-bottom:12px}
+ #pricing .wf-note{margin-top:10px}
+}
+</style>
+
 </head>
 <body>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1923945221576047&ev=PageView&noscript=1" alt=""></noscript>
@@ -1093,7 +1114,6 @@ body .wf-card{--blue:#0a66ff;--navy:#102347;position:relative;isolation:isolate;
       
 
       <ul class="value-list">
-        <li><span class="check">✓</span> دفع مرة واحدة و وصول مدى الحياة للدروس</li>
         <li><span class="check">✓</span> تحديثات مستمرة لمواكبة الجديد</li>
         <li><span class="check">✓</span> إستشارات مجانية</li>
         <li><span class="check">✓</span> مجتمع مخصص لطرح و الإجابة على أسئلتك</li>
@@ -1102,6 +1122,8 @@ body .wf-card{--blue:#0a66ff;--navy:#102347;position:relative;isolation:isolate;
 
 
       
+    </div>
+
       <section class="wf-card" dir="rtl" lang="ar" aria-labelledby="wf-title">
         <div class="wf-badge"><span>خصم</span><strong dir="ltr">70%</strong></div>
         <header class="wf-header">
@@ -1124,9 +1146,6 @@ body .wf-card{--blue:#0a66ff;--navy:#102347;position:relative;isolation:isolate;
         <a class="wf-cta" href="https://course.djawedkhalfaoui.com/registration.html"><span>سجّل الآن بخصم <bdi dir="ltr">70%</bdi></span><span aria-hidden="true">←</span></a>
         <p class="wf-note">التسجيلات تغلق عند اكتمال الدفعة</p>
       </section>
-
-      
-    </div>
   </div>
 </section>
 
