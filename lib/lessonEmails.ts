@@ -95,7 +95,9 @@ export async function dispatchLessonEmails() {
       const { data: module } = await db.from('modules').select('course_id').eq('id', lesson?.module_id).single();
       const { data: enrollment, error: enrollmentError } = await db.from('enrollments').select('id').eq('student_id', job.student_id).eq('course_id', module?.course_id).maybeSingle();
       if (enrollmentError) throw new Error('Enrollment lookup failed');
-      if (!enrollment) {
+      const {data:recipient,error:recipientError}=await db.from('profiles').select('*').eq('id',job.student_id).single();
+      if(recipientError)throw new Error('Recipient lookup failed');
+      if (!enrollment || recipient?.access_mode==='trial') {
         await db.from('lesson_email_jobs').update({ status: 'held', locked_until: null }).eq('id', job.id);
         continue;
       }

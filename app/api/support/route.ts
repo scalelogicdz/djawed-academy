@@ -1,3 +1,4 @@
+import { getPlatformAccess } from '@/lib/trialAccess';
 import { NextResponse, after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (!user) return NextResponse.json({ error: 'غير مصرح' }, { status: 401 });
+  if ((await getPlatformAccess(supabase, user.id)).mode !== 'full') return NextResponse.json({ error: 'Full access required' }, { status: 403 });
 
   const rate = checkRateLimit(`support:${user.id}`, 5, 10 * 60_000);
   if (!rate.allowed) {

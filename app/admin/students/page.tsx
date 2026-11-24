@@ -9,7 +9,7 @@ import AdminBackButton from '@/components/AdminBackButton';
 
 export const dynamic = 'force-dynamic';
 
-type StudentRow = { id: string; full_name: string; display_name: string; created_at: string };
+type StudentRow = { id: string; full_name: string; display_name: string; created_at: string; access_mode?: 'full' | 'trial'; trial_expires_at?: string | null };
 type PageResult = { data: unknown[] | null; error: { code?: string; message: string } | null };
 async function allRows<T>(page: (from: number, to: number) => PromiseLike<PageResult>, optionalPresence = false): Promise<T[]> {
   const rows: T[] = [];
@@ -35,6 +35,7 @@ export default async function AdminStudentsPage() {
   const { data: viewer } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
   if (!viewer?.is_admin) redirect('/dashboard');
   const adminClient = createAdminClient();
+  const {data: trialReady} = await adminClient.rpc('trial_access_ready');
 
   async function authDirectory() {
     const users: { id: string; email: string; last_sign_in_at: string | null }[] = [];
@@ -51,7 +52,7 @@ export default async function AdminStudentsPage() {
 
   const [students, courses, enrollments, accounts] = await Promise.all([
     allRows<StudentRow>((from, to) => supabase.from('profiles')
-      .select('id, full_name, display_name, created_at').eq('is_admin', false)
+      .select('*').eq('is_admin', false)
       .order('created_at', { ascending: false }).order('id').range(from, to)),
     allRows<ProgressCourse>((from, to) => supabase.from('courses').select('id, title').order('id').range(from, to)),
     allRows<ProgressEnrollment>((from, to) => supabase.from('enrollments')
@@ -95,7 +96,7 @@ export default async function AdminStudentsPage() {
       <p className="text-sm text-muted leading-7 mb-8">
         تابع الدروس المكتملة وآخر نشاط مسجّل لتعرف من قد يحتاج إلى تواصلك.
       </p>
-      <StudentsManager initialStudents={studentsWithEmail} courses={courses}
+      <StudentsManager trialReady={trialReady === true} initialStudents={studentsWithEmail} courses={courses}
         initialEnrollments={enrollments} progressByStudent={progressByStudent} progressError={progressError} />
     </section>
   );

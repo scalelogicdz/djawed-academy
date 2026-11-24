@@ -56,6 +56,7 @@ test('notice escapes user content and contains only a platform homepage link',()
 function routeSetup({ user=true, saveError=false, deliveryError=false }={}) {
  const tasks=[], notices=[]; let saved=0;
  const api=load('app/api/support/route.ts',{
+ '@/lib/trialAccess':{getPlatformAccess:async()=>({mode:'full'})},
  'next/server':{NextResponse:{json:(body,options)=>({body,status:options?.status??200})},after:fn=>tasks.push(fn)},
  '@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:user?{id:'student'}:null}})}})},
  '@/lib/supabase/admin':{createAdminClient:()=>({from:()=>({insert:value=>{saved++; return {select:()=>({single:async()=>({data:saveError?null:{id:'request-1'},error:saveError?{}:null})})};}})})},

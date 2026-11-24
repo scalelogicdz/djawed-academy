@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { getPlatformAccess } from '@/lib/trialAccess';
 import { browserToken, DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS } from '@/lib/accountAccess';
 
 export async function proxy(request: NextRequest) {
@@ -38,7 +39,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/course-content') ||
     path.startsWith('/lesson') ||
     path.startsWith('/community') ||
-    path.startsWith('/admin');
+    path.startsWith('/admin') || path.startsWith('/support') || path.startsWith('/services') || path.startsWith('/profile') || path.startsWith('/guidelines');
 
   if (isProtected && !user) {
     return finish(NextResponse.redirect(new URL('/login', request.url)));
@@ -60,10 +61,20 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  if (user && (isProtected || path.startsWith('/api/'))) {
+    try {
+      const access = await getPlatformAccess(supabase,user.id);
+      if (access.mode !== 'full') {
+        const permittedApi = ['/api/viewing','/api/presence/heartbeat','/api/presence/key','/api/auth/login','/api/leads'];
+        if (path.startsWith('/api/') && !permittedApi.includes(path)) return finish(NextResponse.json({error:'Full access required'}, {status:403}));
+        if (isProtected && !['/dashboard','/course-content'].includes(path) && !(access.mode==='trial' && path.startsWith('/lesson/'))) return finish(NextResponse.redirect(new URL('/course-content',request.url)));
+      }
+    } catch { return finish(NextResponse.json({error:'Access verification unavailable'}, {status:503})); }
+  }
   return finish(response);
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/course-content/:path*', '/lesson/:path*', '/community/:path*', '/admin/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/course-content/:path*', '/lesson/:path*', '/community/:path*', '/admin/:path*', '/support/:path*', '/services/:path*', '/profile/:path*', '/guidelines/:path*', '/api/:path*', '/login'],
 };
 

@@ -1,5 +1,7 @@
 import { hiddenModuleIds } from '@/lib/moduleVisibility';
 import Link from 'next/link';
+import { getPlatformAccess } from '@/lib/trialAccess';
+import TrialDashboard from '@/components/TrialDashboard';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import StudentNav from '@/components/StudentNav';
@@ -44,6 +46,8 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
+  const access = await getPlatformAccess(supabase, user.id);
+  if (access.mode !== 'full') return <TrialDashboard access={access} userId={user.id} />;
 
   const { data: profile } = await supabase
     .from('profiles')

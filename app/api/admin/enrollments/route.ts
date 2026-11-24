@@ -1,3 +1,4 @@
+import { sameOrigin } from '@/lib/accountAccess';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -28,6 +29,7 @@ async function getIds(request: Request) {
 
 // Grant access
 export async function POST(request: Request) {
+  if(!sameOrigin(request)) return NextResponse.json({error:'Invalid origin'},{status:403});
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
 
@@ -38,9 +40,14 @@ export async function POST(request: Request) {
   if (!ids) return NextResponse.json({ error: 'بيانات التسجيل غير صالحة' }, { status: 400 });
 
   const adminClient = createAdminClient();
-  const { error } = await adminClient
-    .from('enrollments')
-    .insert({ student_id: ids.studentId, course_id: ids.courseId });
+  const {data:profile,error:profileError}=await adminClient.from('profiles').select('*').eq('id',ids.studentId).single();
+  if(profileError||!profile||profile.is_admin)return NextResponse.json({error:'Invalid student'},{status:400});
+  if(profile.access_mode==='trial') {
+    const {error}=await adminClient.rpc('upgrade_trial_student',{p_student:ids.studentId,p_course:ids.courseId});
+    if(error)return NextResponse.json({error:'تعذرت ترقية الحساب'},{status:409});
+    return NextResponse.json({ok:true,accessMode:'full'});
+  }
+  const { error } = await adminClient.from('enrollments').upsert({student_id:ids.studentId,course_id:ids.courseId},{onConflict:'student_id,course_id'});
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ ok: true });
@@ -48,6 +55,7 @@ export async function POST(request: Request) {
 
 // Remove access
 export async function DELETE(request: Request) {
+  if(!sameOrigin(request)) return NextResponse.json({error:'Invalid origin'},{status:403});
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
 

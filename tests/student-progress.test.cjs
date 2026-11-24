@@ -120,7 +120,7 @@ function adminPage({ authenticated = true, admin = true, progressError = false, 
     if (name === '@/lib/supabase/server') return { createClient: async () => client };
     if (name === '@/lib/supabase/admin') return { createAdminClient: () => {
       adminCalls++;
-      return { auth: { admin: { listUsers: async () => ({ data: { users: [{ id: 's', email: 'student@example.com', last_sign_in_at: recent }] } }) } } };
+      return { rpc: async()=>({data:false}), auth: { admin: { listUsers: async () => ({ data: { users: [{ id: 's', email: 'student@example.com', last_sign_in_at: recent }] } }) } } };
     } };
     if (name === '@/lib/moduleVisibility') return { hiddenModuleIds: async () => new Set() };
     if (name === '@/lib/studentProgress') return { buildStudentProgress };

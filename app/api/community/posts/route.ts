@@ -1,3 +1,4 @@
+import { getPlatformAccess } from '@/lib/trialAccess';
 import { notifyOwnerCommunityActivity } from '@/lib/ownerCommunityEmails';
 import { dispatchCommunityEmails } from '@/lib/communityEmails';
 import { NextResponse, after } from 'next/server';
@@ -32,6 +33,7 @@ async function getCurrentUser() {
   } = await supabase.auth.getUser();
 
   if (!user) return null;
+  if ((await getPlatformAccess(supabase,user.id)).mode !== 'full') return null;
 
   const { data: profile } = await supabase
     .from('profiles')

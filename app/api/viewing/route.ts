@@ -1,3 +1,4 @@
+import { getPlatformAccess, trialCanViewModule } from '@/lib/trialAccess';
 import { createHash, randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
@@ -17,11 +18,19 @@ export async function POST(request:Request){
     const body=await readJsonObject(request,2048);
     if(!body||!isUuid(body.lessonId)||!['start','heartbeat','stop'].includes(String(body.action)))return json({error:'طلب غير صالح'},400);
     const action=body.action as string;
+    const access=await getPlatformAccess(client,identity.user.id);
+    if(access.mode==='expired')return json({error:'انتهت الفترة التجريبية',code:'trial_expired'},403);
+    if(access.mode==='trial'){
+      const {data:scope,error:scopeError}=await createAdminClient().from('lessons').select('module_id').eq('id',body.lessonId).single();
+      if(scopeError||!scope||!trialCanViewModule(access,scope.module_id))return json({error:'الوصول الكامل مطلوب',code:'full_access_required'},403);
+    }
+    const lessonDb=access.mode==='trial'?createAdminClient():client;
     if(action!=='start'&&!isUuid(body.leaseId))return json({error:'جلسة غير صالحة'},400);
     let url:string|undefined;
     if(action==='start'){
-      // Use the authenticated client: enrollment RLS still applies before issuing a player.
-      const {data:lesson,error}=await client.from('lessons').select('id,module_id,video_id,video_provider').eq('id',body.lessonId).single();
+      // Full accounts use enrollment RLS; trials use the verified first-module
+      // scope above, and module RLS below rechecks enrollment before playback.
+      const {data:lesson,error}=await lessonDb.from('lessons').select('id,module_id,video_id,video_provider').eq('id',body.lessonId).single();
       if(error||!lesson?.video_id||!/^[a-zA-Z0-9_-]{1,128}$/.test(lesson.video_id))return json({error:'الدرس غير متاح'},403);
       const hidden=await hiddenModuleIds(client);
       const {data:module}=await client.from('modules').select('course_id').eq('id',lesson.module_id).single();
@@ -29,7 +38,7 @@ export async function POST(request:Request){
       const {data:modules,error:moduleError}=await client.from('modules').select('id').eq('course_id',module.course_id);
       const ids=(modules||[]).filter(m=>!hidden.has(m.id)).map(m=>m.id);
       const [lessons,progress]=await Promise.all([
-        client.from('lessons').select('id,module_id,position').in('module_id',ids).order('position'),
+        lessonDb.from('lessons').select('id,module_id,position').in('module_id',ids).order('position'),
         client.from('lesson_progress').select('lesson_id').eq('student_id',identity.user.id),
       ]);
       if(moduleError||lessons.error||progress.error)throw new Error('authorization');

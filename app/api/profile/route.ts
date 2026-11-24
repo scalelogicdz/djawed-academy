@@ -1,3 +1,4 @@
+import { getPlatformAccess } from '@/lib/trialAccess';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -34,6 +35,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'غير مصرح' }, { status: 401 });
   }
 
+  if ((await getPlatformAccess(supabase,user.id)).mode !== 'full') return NextResponse.json({error:'Full access required'},{status:403});
   const rate = checkRateLimit(`profile-update:${user.id}`, 20, 60_000);
   if (!rate.allowed) {
     return NextResponse.json(

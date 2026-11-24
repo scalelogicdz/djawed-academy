@@ -1,3 +1,4 @@
+import { getPlatformAccess } from '@/lib/trialAccess';
 import { NextResponse, after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { checkRateLimit, isUuid, readJsonObject } from '@/lib/security';
@@ -8,6 +9,7 @@ export async function GET() {
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if ((await getPlatformAccess(db,user.id)).mode !== 'full') return NextResponse.json({error:'Full access required'},{status:403});
   const [inbox, unread] = await Promise.all([
     db.rpc('community_notification_inbox').order('created_at', { ascending: false }).limit(30),
     db.rpc('community_notification_inbox', {}, { count: 'exact', head: true }).eq('is_read', false),
@@ -25,6 +27,7 @@ export async function PATCH(request: Request) {
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if ((await getPlatformAccess(db,user.id)).mode !== 'full') return NextResponse.json({error:'Full access required'},{status:403});
   const body = await readJsonObject(request, 2048);
   if (!body || (body.all !== true && (!isUuid(body.id) || !['legacy', 'community'].includes(String(body.source))))) return NextResponse.json({ error: 'Invalid notification' }, { status: 400 });
   const { error } = await db.rpc('mark_community_notifications_read', { notification_id: body.all === true ? null : body.id, notification_source: body.all === true ? null : body.source });

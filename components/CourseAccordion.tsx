@@ -14,6 +14,7 @@ export default function CourseAccordion({
   lockedIds,
   highlightedLessonId,
   defaultOpenModuleId,
+  trialLockedIds = [],
 }: {
   modules: ModuleRow[];
   lessons: LessonRow[];
@@ -21,6 +22,7 @@ export default function CourseAccordion({
   lockedIds: string[];
   highlightedLessonId: string | null;
   defaultOpenModuleId: string | null;
+  trialLockedIds?: string[];
 }) {
   const { language } = useLanguage();
   const [openModuleId, setOpenModuleId] = useState<string | null>(defaultOpenModuleId);
@@ -75,6 +77,7 @@ export default function CourseAccordion({
       {modules.map((module, moduleIndex) => {
         const isOpen = openModuleId === module.id;
         const moduleLessons = lessons.filter((lesson) => lesson.module_id === module.id);
+        const trialModuleLocked = moduleLessons.some(lesson => trialLockedIds.includes(lesson.id));
         const completedInModule = moduleLessons.filter((lesson) => completedSet.has(lesson.id)).length;
         const modulePct = moduleLessons.length > 0 ? Math.round((completedInModule / moduleLessons.length) * 100) : 0;
         const moduleDone = moduleLessons.length > 0 && completedInModule === moduleLessons.length;
@@ -104,7 +107,8 @@ export default function CourseAccordion({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <div className={`font-heading font-extrabold text-[17px] sm:text-[19px] leading-snug ${isOpen ? 'text-text' : 'text-[#F1F0EC]'}`}>{module.title}</div>
+                    <div className={`font-heading font-extrabold text-[17px] sm:text-[19px] leading-snug ${trialModuleLocked ? 'blur-[3px] select-none' : ''} ${isOpen ? 'text-text' : 'text-[#F1F0EC]'}`}>{module.title}</div>
+                    {trialModuleLocked && <span className="text-xs text-gold">🔒 وصول كامل</span>}
                     {moduleDone && (
                       <span className="inline-flex rounded-full border border-success/20 bg-success/[0.08] px-2 py-0.5 text-[10px] font-bold text-success">
                         {copy.complete}
@@ -162,6 +166,7 @@ export default function CourseAccordion({
                     {moduleLessons.map((lesson, lessonIndex) => {
                       const done = completedSet.has(lesson.id);
                       const locked = lockedSet.has(lesson.id);
+                      const trialLocked = trialLockedIds.includes(lesson.id);
                       const isHighlighted = lesson.id === highlightedLessonId;
 
                       const row = (
@@ -188,7 +193,7 @@ export default function CourseAccordion({
                               <img
                                 src={module.thumbnail_url}
                                 alt=""
-                                className="absolute inset-0 w-full h-full object-cover"
+                                className={`absolute inset-0 w-full h-full object-cover ${trialLocked ? 'blur-sm' : ''}`}
                               />
                             ) : null}
                             <div className="absolute inset-0 flex items-center justify-center bg-black/10">
@@ -219,7 +224,7 @@ export default function CourseAccordion({
                             <div className="flex flex-wrap items-center gap-2 mb-1">
                               <p
                                 className={`text-[13.5px] sm:text-[15px] leading-relaxed ${
-                                  isHighlighted ? 'font-bold text-gold' : done ? 'font-semibold text-text' : 'text-text'
+                                  trialLocked ? 'blur-[3px] select-none text-text' : isHighlighted ? 'font-bold text-gold' : done ? 'font-semibold text-text' : 'text-text'
                                 }`}
                               >
                                 {lesson.title}
@@ -232,7 +237,7 @@ export default function CourseAccordion({
                             </div>
 
                             <p className={`text-[11px] sm:text-[11.5px] ${locked ? 'text-muted2' : isHighlighted ? 'text-gold' : 'text-muted2'}`}>
-                              {locked ? copy.locked : isHighlighted ? copy.continueHere : done ? copy.rewatch : copy.ready}
+                              {trialLocked ? 'الوصول الكامل مطلوب لمشاهدة هذا الدرس' : locked ? copy.locked : isHighlighted ? copy.continueHere : done ? copy.rewatch : copy.ready}
                             </p>
                           </div>
 
@@ -249,7 +254,7 @@ export default function CourseAccordion({
                       );
 
                       return locked ? (
-                        <div key={lesson.id}>{row}</div>
+                        <div key={lesson.id} aria-disabled="true">{row}</div>
                       ) : (
                         <Link key={lesson.id} href={`/lesson/${lesson.id}`} className="block rounded-2xl">
                           {row}

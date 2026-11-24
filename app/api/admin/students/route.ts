@@ -1,3 +1,4 @@
+import { sameOrigin } from '@/lib/accountAccess';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -39,8 +40,9 @@ function cleanCourseIds(value: unknown) {
   return ids;
 }
 
-// Create a new student account (used right after you confirm BaridiMob/CCP payment)
+// Create a new full or explicitly selected trial student account.
 export async function POST(request: Request) {
+  if(!sameOrigin(request)) return NextResponse.json({error:'Invalid origin'},{status:403});
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
 
@@ -58,12 +60,18 @@ export async function POST(request: Request) {
   const email = cleanEmail(body.email);
   const password = typeof body.password === 'string' ? body.password : '';
   const courseIds = cleanCourseIds(body.courseIds);
+  const accessMode = body.accessMode ?? 'full';
+  if (typeof accessMode !== 'string' || !['full','trial'].includes(accessMode) || (accessMode==='trial' && courseIds?.length!==1)) return NextResponse.json({error:'اختر دورة واحدة للوصول التجريبي'},{status:400});
 
   if (!fullName || !displayName || !email || password.length < 6 || password.length > 128 || !courseIds) {
     return NextResponse.json({ error: 'بيانات الطالب غير صالحة' }, { status: 400 });
   }
 
   const adminClient = createAdminClient();
+  if (accessMode==='trial') {
+    const {data:ready,error:readyError}=await adminClient.rpc('trial_access_ready');
+    if(readyError||ready!==true)return NextResponse.json({error:'يلزم تفعيل إعدادات التجربة الآمنة في قاعدة البيانات أولاً'},{status:503});
+  }
 
   const { data: created, error: createError } = await adminClient.auth.admin.createUser({
     email,
@@ -76,6 +84,11 @@ export async function POST(request: Request) {
   }
 
   const studentId = created.user.id;
+  if(accessMode==='trial') {
+    const {data:expiresAt,error:trialError}=await adminClient.rpc('create_trial_student',{p_student:studentId,p_name:fullName,p_display:displayName,p_course:courseIds[0]});
+    if(trialError){await adminClient.auth.admin.deleteUser(studentId);return NextResponse.json({error:'تعذر إنشاء الوصول التجريبي بأمان'},{status:400});}
+    return NextResponse.json({ok:true,studentId,accessMode:'trial',expiresAt});
+  }
   const { error: profileError } = await adminClient.from('profiles').insert({
     id: studentId,
     full_name: fullName,
@@ -102,6 +115,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  if(!sameOrigin(request)) return NextResponse.json({error:'Invalid origin'},{status:403});
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
 
@@ -185,6 +199,7 @@ export async function PATCH(request: Request) {
 
 // Permanently delete a student account.
 export async function DELETE(request: Request) {
+  if(!sameOrigin(request)) return NextResponse.json({error:'Invalid origin'},{status:403});
   const admin = await assertAdmin();
   if (!admin) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
 

@@ -42,6 +42,7 @@ function setup({ admin = false, user = true, saveError = false, deliveryError = 
       };
     } };
   const api = load('app/api/community/posts/route.ts', {
+    '@/lib/trialAccess': { getPlatformAccess: async () => ({mode:'full'}) },
     'next/server': { NextResponse: { json: (body, options) => ({ body, status: options?.status ?? 200 }) }, after: fn => tasks.push(fn) },
     '@/lib/supabase/server': { createClient: async () => db },
     '@/lib/supabase/admin': { createAdminClient: () => db },

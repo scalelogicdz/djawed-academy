@@ -1,3 +1,6 @@
+import TrialNotice from '@/components/TrialNotice';
+import TrialDashboard from '@/components/TrialDashboard';
+import { getPlatformAccess } from '@/lib/trialAccess';
 import { hiddenModuleIds } from '@/lib/moduleVisibility';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -18,6 +21,8 @@ export default async function CourseContentPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
+  const access = await getPlatformAccess(supabase, user.id);
+  if (access.mode === 'expired') return <TrialDashboard access={access} userId={user.id} />;
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -34,7 +39,7 @@ export default async function CourseContentPage({
   if (!enrollment) {
     return (
       <>
-        <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
+        <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} trial={access.mode === 'trial'} />
         <section className="max-w-[900px] mx-auto px-5 sm:px-6 py-10 sm:py-14">
           <div className="card p-8 text-muted text-sm">
             <LocalizedText
@@ -77,7 +82,10 @@ export default async function CourseContentPage({
   const completedIds = new Set((progressRows ?? []).map((row) => row.lesson_id));
   const flatLessons = lessons ?? [];
   const lockedIds = computeLockedLessonIds(flatLessons, completedIds);
-  const nextLesson = flatLessons.find((lesson) => !completedIds.has(lesson.id)) ?? flatLessons[flatLessons.length - 1] ?? null;
+  const trialLockedIds = new Set(access.mode === 'trial' ? flatLessons.filter(lesson => lesson.module_id !== access.moduleId).map(lesson => lesson.id) : []);
+  trialLockedIds.forEach(id => lockedIds.add(id));
+  const accessibleLessons = flatLessons.filter(lesson => !trialLockedIds.has(lesson.id));
+  const nextLesson = accessibleLessons.find((lesson) => !completedIds.has(lesson.id)) ?? accessibleLessons[accessibleLessons.length - 1] ?? null;
 
   const requestedLesson = requestedLessonId
     ? flatLessons.find((lesson) => lesson.id === requestedLessonId) ?? null
@@ -93,8 +101,9 @@ export default async function CourseContentPage({
 
   return (
     <>
-      <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} />
+      <StudentNav isAdmin={profile?.is_admin} currentUserId={user.id} trial={access.mode === 'trial'} />
       <section className="max-w-[940px] mx-auto px-5 sm:px-6 py-8 sm:py-12">
+        {access.mode === 'trial' && <TrialNotice expiresAt={access.expiresAt} />}
         <div className="mb-7 sm:mb-9">
           <div className="eyebrow">
             <LocalizedText ar="محتوى الدورة" fr="Contenu du cours" en="Course content" />
@@ -171,6 +180,7 @@ export default async function CourseContentPage({
             lessons={flatLessons}
             completedIds={Array.from(completedIds)}
             lockedIds={Array.from(lockedIds)}
+            trialLockedIds={Array.from(trialLockedIds)}
             highlightedLessonId={highlightedLesson?.id ?? null}
             defaultOpenModuleId={defaultOpenModuleId}
           />

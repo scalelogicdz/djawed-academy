@@ -73,7 +73,7 @@ function LanguageSelector({ mobile = false }: { mobile?: boolean }) {
   );
 }
 
-export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boolean; currentUserId: string }) {
+export default function StudentNav({ isAdmin, currentUserId, trial = false }: { isAdmin?: boolean; currentUserId: string; trial?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -112,7 +112,9 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
         </Link>
 
         <div className="hidden md:flex md:order-2 items-center gap-1.5 flex-1 mx-4 overflow-x-auto">
-          {allLinks.map((l) => (
+          {allLinks.map((l) => trial && l.href !== '/dashboard' ? (
+            <span key={l.href} aria-disabled="true" className="text-muted2 text-sm px-4 py-2.5 opacity-50">🔒 {t(l.key)}</span>
+          ) : (
             <Link
               key={l.href}
               href={l.href}
@@ -147,7 +149,7 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
             )}
           </button>
 
-          {!isAdminArea && (
+          {!isAdminArea && !trial && (
             <Link
               href={profileHref}
               className={`w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/profile') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
@@ -158,16 +160,16 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
             </Link>
           )}
 
-          <Link
+          {!trial && <Link
             href="/community"
             className={`md:hidden w-9 h-9 rounded-full inline-flex items-center justify-center border transition ${pathname.startsWith('/community') ? 'border-gold/45 text-gold bg-gold/[0.08]' : 'border-white/[0.08] text-muted bg-white/[0.015] hover:text-gold hover:border-gold/30 hover:bg-gold/[0.04]'}`}
             aria-label={t('navCommunity')}
             title={t('navCommunity')}
           >
             <CommunityIcon />
-          </Link>
+          </Link>}
 
-          <NotificationBell currentUserId={currentUserId} />
+          {!trial && <NotificationBell currentUserId={currentUserId} />}
 
           <button
             onClick={handleLogout}
@@ -183,7 +185,9 @@ export default function StudentNav({ isAdmin, currentUserId }: { isAdmin?: boole
 
       {menuOpen && (
         <div className="md:hidden border-t border-white/[0.06] px-4 py-3 flex flex-col gap-1 bg-bg/98 shadow-[0_18px_30px_-24px_rgba(0,0,0,0.9)]">
-          {mobileLinks.map((l) => (
+          {mobileLinks.map((l) => trial && l.href !== '/dashboard' ? (
+            <span key={l.href} aria-disabled="true" className="text-muted2 text-sm px-4 py-3 opacity-50">🔒 {t(l.key)}</span>
+          ) : (
             <Link
               key={l.href}
               href={l.href}

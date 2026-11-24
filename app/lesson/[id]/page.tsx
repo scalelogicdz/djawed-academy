@@ -1,5 +1,8 @@
 import { hiddenModuleIds } from '@/lib/moduleVisibility';
 import Link from 'next/link';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { getPlatformAccess, trialCanViewModule } from '@/lib/trialAccess';
+import TrialNotice from '@/components/TrialNotice';
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import LessonBody from '@/components/LessonBody';
@@ -13,14 +16,18 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
+  const access = await getPlatformAccess(supabase, user.id);
+  if (access.mode === 'expired') redirect('/dashboard');
+  const lessonDb = access.mode === 'trial' ? createAdminClient() : supabase;
 
-  const { data: lesson } = await supabase
+  const { data: lesson } = await lessonDb
     .from('lessons')
     .select('id, title, video_id, video_provider, module_id, position')
     .eq('id', id)
     .single();
 
   if (!lesson) notFound();
+  if (!trialCanViewModule(access, lesson.module_id)) redirect('/course-content');
 
   const { data: currentModule } = await supabase
     .from('modules')
@@ -38,7 +45,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
   const allModules = (fetchedModules ?? []).filter(module => !hidden.has(module.id));
   if (!currentModule || hidden.has(currentModule.id)) notFound();
 
-  const { data: orderedLessons } = await supabase
+  const { data: orderedLessons } = await lessonDb
     .from('lessons')
     .select('id, title, module_id, position')
     .eq('module_id', lesson.module_id)
@@ -62,7 +69,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
   const moduleIndex = allModules.findIndex((module) => module.id === currentModule.id);
 
   let nextModuleLessonId: string | null = null;
-  if (moduleIndex >= 0 && lessonIndexInModule >= 0 && !nextLesson) {
+  if (access.mode === 'full' && moduleIndex >= 0 && lessonIndexInModule >= 0 && !nextLesson) {
     const laterModuleIds = allModules.slice(moduleIndex + 1).map((module) => module.id);
     if (laterModuleIds.length) {
       const { data: laterLessons } = await supabase
@@ -123,6 +130,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
+      {access.mode === 'trial' && <TrialNotice expiresAt={access.expiresAt} />}
       <LessonBody
         key={lesson.id}
         lesson={lesson}

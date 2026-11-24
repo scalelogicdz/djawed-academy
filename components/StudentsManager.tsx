@@ -6,17 +6,19 @@ import type { StudentProgressSummary } from '@/lib/studentProgress';
 import { ProgressBar, StudentProgressDetails, progressLabels, activityDate } from '@/components/StudentProgressView';
 import { BrowserConnectionBadge, useBrowserConnections } from '@/components/BrowserConnections';
 
-type Student = { id: string; full_name: string; display_name: string; email: string; created_at: string };
+type Student = { id: string; full_name: string; display_name: string; email: string; created_at: string; access_mode?: 'full' | 'trial'; trial_expires_at?: string | null };
 type Course = { id: string; title: string };
 type Enrollment = { student_id: string; course_id: string };
 
 export default function StudentsManager({
+  trialReady,
   initialStudents,
   courses,
   initialEnrollments,
   progressByStudent,
   progressError,
 }: {
+  trialReady: boolean;
   initialStudents: Student[];
   courses: Course[];
   initialEnrollments: Enrollment[];
@@ -53,6 +55,7 @@ export default function StudentsManager({
     email: '',
     password: '',
     courseIds: [] as string[],
+    accessMode: 'full' as 'full' | 'trial',
   });
 
   function isEnrolled(studentId: string, courseId: string) {
@@ -84,6 +87,17 @@ export default function StudentsManager({
     }
   }
 
+  async function upgradeTrial(studentId: string, courseId: string) {
+    if(savingEnrollment)return;
+    if(!window.confirm('تفعيل الوصول الكامل وإلغاء الحذف التلقائي لهذا الحساب؟'))return;
+    setSavingEnrollment(true);setEnrollmentError(null);
+    try {
+      const res=await fetch('/api/admin/enrollments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({studentId,courseId})});
+      if(!res.ok)throw new Error('Upgrade failed');
+      setStudents(current=>current.map(student=>student.id===studentId?{...student,access_mode:'full',trial_expires_at:null}:student));
+      router.refresh();
+    }catch{setEnrollmentError('تعذرت ترقية الحساب. حاول من جديد.');}finally{setSavingEnrollment(false);}
+  }
   function startEditingStudent(student: Student) {
     setEditingStudentId(student.id);
     setStudentEditError(null);
@@ -182,10 +196,10 @@ export default function StudentsManager({
     }
 
     setShowForm(false);
-    setForm({ fullName: '', displayName: '', email: '', password: '', courseIds: [] });
+    setForm({ fullName: '', displayName: '', email: '', password: '', courseIds: [], accessMode: 'full' });
     router.refresh();
     setStudents([
-      { id: data.studentId, full_name: form.fullName, display_name: form.displayName || form.fullName, email: form.email, created_at: new Date().toISOString() },
+      { id: data.studentId, full_name: form.fullName, display_name: form.displayName || form.fullName, email: form.email, created_at: new Date().toISOString(), access_mode: form.accessMode, trial_expires_at: data.expiresAt ?? null },
       ...students,
     ]);
     setEnrollments([
@@ -304,7 +318,7 @@ export default function StudentsManager({
                     onChange={() =>
                       setForm({
                         ...form,
-                        courseIds: checked ? form.courseIds.filter((id) => id !== c.id) : [...form.courseIds, c.id],
+                        courseIds: checked ? form.courseIds.filter((id) => id !== c.id) : form.accessMode==='trial' ? [c.id] : [...form.courseIds, c.id],
                       })
                     }
                   />
@@ -314,6 +328,14 @@ export default function StudentsManager({
             })}
           </div>
 
+          <fieldset className="mb-5"><legend className="text-xs text-muted mb-2">نوع الوصول</legend>
+            <div className="flex flex-wrap gap-2">{(['full','trial'] as const).map(mode => <button key={mode} type="button" aria-pressed={form.accessMode===mode}
+              disabled={mode==='trial' && !trialReady} onClick={() => setForm({...form,accessMode:mode,courseIds:mode==='trial'?form.courseIds.slice(0,1):form.courseIds})}
+              className={`px-4 py-2 rounded-lg border text-sm disabled:opacity-40 ${form.accessMode===mode?'border-gold bg-gold/10 text-gold':'border-border text-muted'}`}>
+              {mode==='full'?'وصول كامل':'تجربة 7 أيام'}</button>)}</div>
+            {!trialReady && <p className="text-xs text-muted mt-2">التجربة متاحة بعد تفعيل إعداداتها الآمنة في قاعدة البيانات.</p>}
+            {form.accessMode==='trial' && <p className="text-xs text-muted mt-2">الوحدة الأولى فقط. يُحذف الحساب تلقائياً بعد 7 أيام إلا إذا رقّيته إلى وصول كامل.</p>}
+          </fieldset>
           {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
           <button type="submit" disabled={saving} className="btn-primary">
@@ -347,14 +369,18 @@ export default function StudentsManager({
               <tr className="border-b border-border last:border-0">
                 <td className="p-4">
                   <div className="font-medium">{s.full_name}</div>
+                  {s.access_mode==='trial' && <div className="text-xs text-gold mt-2">تجربة 7 أيام
+                    {s.trial_expires_at && <p className="text-muted mt-1">حذف تلقائي: {new Date(s.trial_expires_at).toLocaleString('ar-DZ',{timeZone:'Africa/Algiers'})}</p>}
+                  </div>}
                   <div className="text-muted2 text-xs">{s.display_name}</div>
                   <div className="text-muted2 text-[11px] mt-1" dir="ltr">{s.email || '—'}</div>
                 </td>
                 {courses.map((c) => (
                   <td key={c.id} className="text-center p-4">
+                    {s.access_mode==='trial' && isEnrolled(s.id,c.id) && <button type="button" disabled={savingEnrollment} onClick={()=>upgradeTrial(s.id,c.id)} className="block text-xs rounded-lg border border-gold/30 text-gold px-3 py-2 mb-2 mx-auto">فعّل الوصول الكامل</button>}
                     <button
                       onClick={() => toggleEnrollment(s.id, c.id)}
-                      disabled={savingEnrollment}
+                      disabled={savingEnrollment || s.access_mode==='trial'}
                       aria-label={(isEnrolled(s.id, c.id) ? 'إلغاء الوصول إلى ' : 'منح الوصول إلى ') + c.title + ' للطالب ' + s.full_name}
                       className={`w-6 h-6 rounded-md border transition ${
                         isEnrolled(s.id, c.id) ? 'bg-gold border-gold text-white' : 'border-border'
