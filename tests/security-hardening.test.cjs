@@ -1,24 +1,15 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript'),crypto=require('node:crypto');
 function load(path,deps={},globals={}){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText,{exports,require:n=>deps[n]??require(n),process,Buffer,URL,Request,AbortSignal,console,Date,...globals});return exports;}
-test('password screening sends only a five-character hash prefix with padding, never password or complete hash',async()=>{
- const password='a private test passphrase 78!';const hash=crypto.createHash('sha1').update(password).digest('hex').toUpperCase();let call;
- const api=load('lib/passwordSecurity.ts',{}, {fetch:async(url,options)=>{call={url,options};return {ok:true,text:async()=>hash.slice(5)+':19\r\n'+'F'.repeat(35)+':0\r\n'};}});
- assert.ok(await api.validateNewPassword(password));assert.equal(call.url,'https://api.pwnedpasswords.com/range/'+hash.slice(0,5));
- assert.equal(call.options.headers['Add-Padding'],'true');assert.ok(!JSON.stringify(call).includes(password));assert.ok(!JSON.stringify(call).includes(hash));
+test('password policy accepts name-plus-123 passwords without contacting external services',async()=>{
+ let calls=0;
+ const api=load('lib/passwordSecurity.ts',{}, {fetch:async()=>{calls++;throw new Error('Unexpected external call');}});
+ for(const password of ['ali123','sofiane123','a'.repeat(128)])assert.equal(await api.validateNewPassword(password),null);
+ assert.ok(await api.validateNewPassword('abc12'));
+ assert.ok(await api.validateNewPassword('a'.repeat(129)));
+ assert.equal(calls,0);
 });
-test('password screening rejects short passwords before network and fails closed on provider error',async()=>{
- let calls=0;const api=load('lib/passwordSecurity.ts',{}, {fetch:async()=>{calls++;return {ok:false};}});
- assert.ok(await api.validateNewPassword('short'));assert.equal(calls,0);
- await assert.rejects(api.validateNewPassword('long private password'),/verification unavailable/);
- const invalid=load('lib/passwordSecurity.ts',{}, {fetch:async()=>({ok:true,text:async()=>'<html>failed</html>'})});
- await assert.rejects(invalid.validateNewPassword('long private password'),/Invalid password/);
-});
-test('password screening ignores padded zero-count entries and accepts an absent suffix',async()=>{
- const password='isolated test password!';const hash=crypto.createHash('sha1').update(password).digest('hex').toUpperCase();
- const api=load('lib/passwordSecurity.ts',{}, {fetch:async()=>({ok:true,text:async()=>hash.slice(5)+':0\r\n'+'A'.repeat(35)+':2'})});
- assert.equal(await api.validateNewPassword(password),null);
-});
+
 test('rate limiter stores only stable HMAC identifiers and never falls back to process memory',async()=>{
  const args=[];const api=load('lib/persistentRateLimit.ts',{'@/lib/supabase/admin':{createAdminClient:()=>({rpc:async(name,payload)=>{args.push(payload);return {data:{allowed:false,retry_after:42}};}})}},{process:{env:{SUPABASE_SERVICE_ROLE_KEY:'isolated-test-secret'}}});
  const r=await api.persistentRateLimit('login-account','person@example.com',8,600);assert.equal(r.allowed,false);assert.equal(r.retryAfterSeconds,42);

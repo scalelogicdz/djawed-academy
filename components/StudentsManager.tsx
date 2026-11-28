@@ -293,7 +293,7 @@ export default function StudentsManager({
               <label className="block text-xs text-muted mb-2">كلمة المرور المبدئية</label>
               <input
                 required
-                minLength={10}
+                minLength={6}
                 maxLength={128}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -481,7 +481,7 @@ export default function StudentsManager({
                         <input
                           type="text"
                           dir="ltr"
-                          minLength={10}
+                          minLength={6}
                           maxLength={128}
                           value={editForm.password}
                           onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}

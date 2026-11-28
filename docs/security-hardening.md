@@ -9,11 +9,10 @@ Login and lead-form throttles use shared atomic database counters, keyed by HMAC
 rather than raw IP addresses, email addresses or phone numbers. Unavailable
 security checks fail closed. Expired counters are removed daily.
 
-New or changed passwords submitted through the admin student API require 10–128
-characters and are checked against Pwned Passwords using the range protocol.
-Only the first five characters of a SHA-1 hash leave the server. This is app-level
-screening; Supabase's paid native leaked-password feature remains disabled on
-the free plan and direct provider password changes do not use this app check.
+New or changed passwords submitted through the admin student API require 6–128
+characters. At the platform owner's request, name-plus-123 passwords are
+accepted and external leaked-password screening is disabled. Native Supabase
+leaked-password protection remains disabled. Existing passwords are unchanged.
 
 The administrator must open `/admin-security`, scan the QR code in an
 authenticator app and confirm its six-digit code. Until enrollment is verified,
