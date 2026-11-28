@@ -1,3 +1,4 @@
+import { adminSecurityStatus } from '@/lib/adminSecurity';
 import { NextResponse, after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { checkRateLimit } from '@/lib/security';
@@ -9,7 +10,7 @@ async function allowed() {
   const { data: { user } } = await db.auth.getUser();
   if (!user) return null;
   const { data } = await db.from('profiles').select('is_admin').eq('id', user.id).single();
-  return data?.is_admin ? user : null;
+  return data?.is_admin && (await adminSecurityStatus(db)).satisfied ? user : null;
 }
 export async function GET() {
   if (!(await allowed())) return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });

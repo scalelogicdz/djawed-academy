@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { communityProfiles } from '@/lib/communityProfiles';
+import { getPlatformAccess } from '@/lib/trialAccess';
+import { isUuid } from '@/lib/security';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import StudentNav from '@/components/StudentNav';
@@ -26,22 +29,21 @@ function SocialLink({ href, label }: { href: string | null; label: string }) {
 
 export default async function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if(!isUuid(id))notFound();
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) redirect('/login');
+  if((await getPlatformAccess(supabase,user.id)).mode!=='full')redirect('/course-content');
 
-  const [{ data: viewer }, { data: profile }] = await Promise.all([
+  const [{ data: viewer }, profiles] = await Promise.all([
     supabase.from('profiles').select('is_admin').eq('id', user.id).single(),
-    supabase
-      .from('profiles')
-      .select('id, display_name, bio, instagram_url, facebook_url, tiktok_url, linkedin_url, is_admin')
-      .eq('id', id)
-      .single(),
+    communityProfiles(supabase,[id]),
   ]);
 
+  const profile=profiles[0];
   if (!profile) notFound();
 
   const isOwnProfile = user.id === profile.id;

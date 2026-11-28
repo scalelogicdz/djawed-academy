@@ -1,16 +1,22 @@
+import { persistentRateLimit } from '@/lib/persistentRateLimit';
+import { sameOrigin } from '@/lib/accountAccess';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { cookies } from 'next/headers';
 import { browserLabel, browserToken, DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS, tokenHash } from '@/lib/accountAccess';
 import {
-  checkRateLimit,
   cleanEmail,
   clientIp,
   readJsonObject,
 } from '@/lib/security';
 
 export async function POST(request: Request) {
+  if(!sameOrigin(request))return NextResponse.json({error:'Invalid origin'},{status:403});
+  try{
+    const ipRate=await persistentRateLimit('login-ip',clientIp(request),60,600);
+    if(!ipRate.allowed)return NextResponse.json({error:'محاولات كثيرة. حاول لاحقاً.'},{status:429,headers:{'Retry-After':String(ipRate.retryAfterSeconds)}});
+  }catch{return NextResponse.json({error:'تعذر التحقق الأمني. حاول بعد قليل.'},{status:503,headers:{'Retry-After':'30'}});}
   const body = await readJsonObject(request, 4 * 1024);
   if (!body) {
     return NextResponse.json({ error: 'بيانات الدخول غير صالحة' }, { status: 400 });
@@ -23,8 +29,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'بيانات الدخول غير صالحة' }, { status: 400 });
   }
 
-  const ip = clientIp(request);
-  const rate = checkRateLimit(`login:${ip}:${email}`, 8, 10 * 60_000);
+  let rate;
+  try{rate=await persistentRateLimit('login-account',email,8,600);}
+  catch{return NextResponse.json({error:'تعذر التحقق الأمني. حاول بعد قليل.'},{status:503,headers:{'Retry-After':'30'}});}
 
   if (!rate.allowed) {
     return NextResponse.json(

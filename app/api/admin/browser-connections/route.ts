@@ -1,3 +1,4 @@
+import { adminSecurityStatus } from '@/lib/adminSecurity';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { browserConnectionCounts } from '@/lib/browserConnections';
@@ -8,7 +9,7 @@ export async function GET(){
   const {data:{user}}=await client.auth.getUser();
   if(!user)return json({error:'غير مصرح'},401);
   const {data:profile}=await client.from('profiles').select('is_admin').eq('id',user.id).single();
-  if(!profile?.is_admin)return json({error:'غير مصرح'},403);
+  if(!profile?.is_admin || !(await adminSecurityStatus(client)).satisfied)return json({error:'غير مصرح'},403);
   try{return json({counts:await browserConnectionCounts()});}
   catch{return json({error:'تعذّر تحميل عدد المتصفحات. تحقق من إعداد قاعدة البيانات.'},503);}
 }

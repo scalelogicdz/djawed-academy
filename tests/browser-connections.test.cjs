@@ -1,6 +1,6 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
-function load(path,deps,globals={}){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText,{exports,require:n=>deps[n]??require(n),Request,URL,Buffer,AbortSignal,console,process,...globals});return exports;}
+function load(path,deps,globals={}){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText,{exports,require:n=>deps[n]??(n==='@/lib/adminSecurity'?{adminSecurityStatus:async()=>({satisfied:true})}:require(n)),Request,URL,Buffer,AbortSignal,console,process,...globals});return exports;}
 test('cumulative browser counts paginate all accounts and return numbers only',async()=>{
  const calls=[];const rows=Array.from({length:501},(_,i)=>({user_id:'user-'+i,browser_count:i+1}));
  const db={rpc(name){assert.equal(name,'browser_connection_counts');return {order(field){assert.equal(field,'user_id');return this;},range(a,b){calls.push([a,b]);return Promise.resolve({data:rows.slice(a,b+1)});}};}};
@@ -25,10 +25,11 @@ test('successful password login records the authenticated account; failed login 
  for(const valid of [false,true]){
   const calls=[];const client={auth:{signInWithPassword:async()=>({data:{user:valid?{id:'actual-student'}:null},error:valid?null:{message:'invalid'}})}};
   const m=load('app/api/auth/login/route.ts',{
+   '@/lib/persistentRateLimit':{persistentRateLimit:async()=>({allowed:true})},
    '@/lib/supabase/server':{createClient:async()=>client},
    '@/lib/supabase/admin':{createAdminClient:()=>({rpc:async(name,args)=>{calls.push(args);return {};}})},
    'next/headers':{cookies:async()=>({get:()=>({value:'opaque'}),set(){}})},
-   '@/lib/accountAccess':{browserToken:v=>v,tokenHash:()=> 'hash',browserLabel:()=> 'Chrome',DEVICE_COOKIE:'browser',DEVICE_COOKIE_OPTIONS:{}},
+   '@/lib/accountAccess':{sameOrigin:()=>true,browserToken:v=>v,tokenHash:()=> 'hash',browserLabel:()=> 'Chrome',DEVICE_COOKIE:'browser',DEVICE_COOKIE_OPTIONS:{}},
    '@/lib/security':{readJsonObject:r=>r.json(),cleanEmail:v=>v,clientIp:()=> 'test',checkRateLimit:()=>({allowed:true})},
   });
   const r=await m.POST(new Request('https://academy.example.com/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:'student@example.com',password:'secret',userId:'forged'})}));

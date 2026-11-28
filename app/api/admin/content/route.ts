@@ -1,3 +1,4 @@
+import { verifiedAdmin } from '@/lib/adminSecurity';
 import { NextResponse, after } from 'next/server';
 import { lessonEmailConfig, lessonEmailsReady, dispatchLessonEmails } from '@/lib/lessonEmails';
 
@@ -17,13 +18,7 @@ import {
 export const maxDuration = 60;
 
 async function assertAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
-  return profile?.is_admin ? user : null;
+  return verifiedAdmin(await createClient());
 }
 
 function rateLimited(adminId: string) {

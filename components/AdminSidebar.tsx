@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const items = [
+  { href: '/admin-security', label: 'حماية الحساب' },
   { href: '/admin', label: 'نظرة عامة', exact: true },
   { href: '/admin/students', label: 'إدارة الطلاب' },
   { href: '/admin/lessons', label: 'إدارة الدروس' },

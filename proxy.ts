@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { adminSecurityStatus } from '@/lib/adminSecurity';
 import { getPlatformAccess } from '@/lib/trialAccess';
 import { browserToken, DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS } from '@/lib/accountAccess';
 
@@ -63,6 +64,10 @@ export async function proxy(request: NextRequest) {
 
   if (user && (isProtected || path.startsWith('/api/'))) {
     try {
+      const adminStatus=await adminSecurityStatus(supabase);
+      if(adminStatus.is_admin&&!adminStatus.satisfied&&!['/admin-security','/api/auth/login','/api/leads'].includes(path)){
+        return finish(path.startsWith('/api/')?NextResponse.json({error:'mfa_required'},{status:403}):NextResponse.redirect(new URL('/admin-security',request.url)));
+      }
       const access = await getPlatformAccess(supabase,user.id);
       if (access.mode !== 'full') {
         const permittedApi = ['/api/viewing','/api/presence/heartbeat','/api/presence/key','/api/auth/login','/api/leads'];

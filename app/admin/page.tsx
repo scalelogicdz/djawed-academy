@@ -28,6 +28,7 @@ export default async function AdminOverview() {
 
   return (
     <section className="max-w-[1140px] mx-auto px-5 sm:px-6 py-10 sm:py-12">
+      <Link href="/admin-security" className="card block border-gold/25 p-4 mb-6 text-sm text-gold">حماية حساب الإدارة — إعداد تطبيق المصادقة أو التحقق منه</Link>
       <div className="mb-8">
         <div className="eyebrow">لوحة الإدارة</div>
         <h1 className="font-cairo font-extrabold text-[27px] sm:text-[31px] mb-2">نظرة عامة</h1>

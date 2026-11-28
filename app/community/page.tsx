@@ -1,3 +1,5 @@
+import { communityProfiles } from '@/lib/communityProfiles';
+import { getPlatformAccess } from '@/lib/trialAccess';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
@@ -11,6 +13,7 @@ export default async function CommunityPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
+  if((await getPlatformAccess(supabase,user.id)).mode!=='full')redirect('/course-content');
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -20,21 +23,23 @@ export default async function CommunityPage() {
 
   const { data: rawQuestions } = await supabase
     .from('questions')
-    .select('id, body, image_url, created_at, student_id, profiles(display_name, is_admin)')
+    .select('id, body, image_url, created_at, student_id')
     .order('created_at', { ascending: false });
 
   const { data: rawReplies } = await supabase
     .from('replies')
-    .select('id, body, created_at, question_id, student_id, profiles(display_name, is_admin)')
+    .select('id, body, created_at, question_id, student_id')
     .order('created_at', { ascending: true });
 
+  const memberProfiles=await communityProfiles(supabase,[...(rawQuestions??[]),...(rawReplies??[])].map(row=>row.student_id));
+  const byId=new Map(memberProfiles.map(profile=>[profile.id,profile]));
   const questions = (rawQuestions ?? []).map((q: any) => ({
     ...q,
-    profiles: Array.isArray(q.profiles) ? q.profiles[0] ?? null : q.profiles,
+    profiles: byId.get(q.student_id) ?? null,
   }));
   const replies = (rawReplies ?? []).map((r: any) => ({
     ...r,
-    profiles: Array.isArray(r.profiles) ? r.profiles[0] ?? null : r.profiles,
+    profiles: byId.get(r.student_id) ?? null,
   }));
 
   return (

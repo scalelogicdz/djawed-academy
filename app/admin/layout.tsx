@@ -1,3 +1,4 @@
+import { adminSecurityStatus } from '@/lib/adminSecurity';
 import { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -19,6 +20,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     .single();
 
   if (!profile?.is_admin) redirect('/dashboard');
+  if(!(await adminSecurityStatus(supabase)).satisfied)redirect('/admin-security');
 
   return (
     <>

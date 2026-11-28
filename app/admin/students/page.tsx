@@ -1,3 +1,4 @@
+import { adminSecurityStatus } from '@/lib/adminSecurity';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -34,6 +35,7 @@ export default async function AdminStudentsPage() {
   // parent layouts can execute concurrently with child pages.
   const { data: viewer } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
   if (!viewer?.is_admin) redirect('/dashboard');
+  if(!(await adminSecurityStatus(supabase)).satisfied)redirect('/admin-security');
   const adminClient = createAdminClient();
   const {data: trialReady} = await adminClient.rpc('trial_access_ready');
 

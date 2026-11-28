@@ -1,3 +1,4 @@
+import { adminSecurityStatus } from '@/lib/adminSecurity';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -18,7 +19,7 @@ export async function GET() {
     .eq('id', user.id)
     .single();
 
-  if (!profile?.is_admin) {
+  if (!profile?.is_admin || !(await adminSecurityStatus(supabase)).satisfied) {
     return NextResponse.json({ error: 'غير مصرح' }, { status: 403 });
   }
 

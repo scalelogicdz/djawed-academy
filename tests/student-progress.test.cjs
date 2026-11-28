@@ -116,6 +116,7 @@ function adminPage({ authenticated = true, admin = true, progressError = false, 
   };
   const StudentsManager = () => null;
   const page = load('app/admin/students/page.tsx', name => {
+    if(name==='@/lib/adminSecurity')return {adminSecurityStatus:async()=>({satisfied:true})};
     if (name === 'next/navigation') return { redirect: path => { throw new Error('REDIRECT:' + path); } };
     if (name === '@/lib/supabase/server') return { createClient: async () => client };
     if (name === '@/lib/supabase/admin') return { createAdminClient: () => {

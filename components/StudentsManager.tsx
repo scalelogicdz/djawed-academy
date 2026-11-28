@@ -293,6 +293,8 @@ export default function StudentsManager({
               <label className="block text-xs text-muted mb-2">كلمة المرور المبدئية</label>
               <input
                 required
+                minLength={10}
+                maxLength={128}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-3 text-[15px] focus:outline-none focus:border-gold"
@@ -479,6 +481,8 @@ export default function StudentsManager({
                         <input
                           type="text"
                           dir="ltr"
+                          minLength={10}
+                          maxLength={128}
                           value={editForm.password}
                           onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
                           placeholder="اتركها فارغة إذا لا تريد تغييرها"

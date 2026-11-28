@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { persistentRateLimit } from '@/lib/persistentRateLimit';
+import { clientIp, readJsonObject } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +23,13 @@ export async function POST(request: Request) {
 
   let body: Record<string, unknown>;
   try {
-    body = await request.json();
+    const rate=await persistentRateLimit('leads-ip',clientIp(request),10,600);
+    if(!rate.allowed)return NextResponse.json({error:'طلبات كثيرة. حاول بعد قليل.'},{status:429,headers:{'Retry-After':String(rate.retryAfterSeconds)}});
+  }catch{return NextResponse.json({error:'تعذر التحقق الأمني. حاول بعد قليل.'},{status:503,headers:{'Retry-After':'30'}});}
+  try {
+    const parsed=await readJsonObject(request,16*1024);
+    if(!parsed)return NextResponse.json({error:'invalid_json'},{status:400});
+    body = parsed;
   } catch {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
   }
@@ -47,6 +55,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_lead' }, { status: 400 });
   }
 
+  try{
+    const rate=await persistentRateLimit('leads-phone',payload.whatsapp.replace(/\D/g,''),3,3600);
+    if(!rate.allowed)return NextResponse.json({error:'وصلنا طلبك. حاول لاحقاً إذا احتجت إعادة إرساله.'},{status:429,headers:{'Retry-After':String(rate.retryAfterSeconds)}});
+    const global=await persistentRateLimit('leads-global','all',200,600);
+    if(!global.allowed)return NextResponse.json({error:'الخدمة مشغولة. حاول بعد قليل.'},{status:429,headers:{'Retry-After':String(global.retryAfterSeconds)}});
+  }catch{return NextResponse.json({error:'تعذر التحقق الأمني. حاول بعد قليل.'},{status:503,headers:{'Retry-After':'30'}});}
+
   const webhookUrl = process.env.GOOGLE_LEADS_WEBHOOK_URL;
   if (!webhookUrl) {
     return NextResponse.json({ error: 'crm_not_configured' }, { status: 500 });
@@ -59,6 +74,7 @@ export async function POST(request: Request) {
       body: JSON.stringify(payload),
       cache: 'no-store',
       redirect: 'follow',
+      signal: AbortSignal.timeout(10000),
     });
 
     const text = await response.text();
