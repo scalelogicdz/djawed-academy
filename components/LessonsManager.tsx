@@ -625,7 +625,22 @@ export default function LessonsManager({
             </div>
           )}
 
-         …186 tokens truncated…                        value={editLessonDraft.title}
+          {lessons
+            .filter((l) => l.module_id === m.id)
+            .sort((a, b) => a.position - b.position)
+            .map((l) => {
+              const lessonQuestions = quizQuestions.filter((q) => q.lesson_id === l.id);
+              return (
+                <div
+                  key={l.id}
+                  className={`border-b border-border last:border-0 transition ${draggingLessonId === l.id ? 'opacity-60 bg-gold/[0.03]' : ''}`}
+                  onDragOver={(e) => handleLessonDragOver(e, m.id, l.id)}
+                  onDrop={(e) => handleLessonDrop(e, m.id)}
+                >
+                  {editingLessonId === l.id ? (
+                    <div className="py-4 space-y-3">
+                      <input
+                        value={editLessonDraft.title}
                         onChange={(e) => setEditLessonDraft({ ...editLessonDraft, title: e.target.value })}
                         placeholder="عنوان الدرس"
                         className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
