@@ -6,16 +6,17 @@ const ts = require('typescript');
 const logoExports = {};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/emailLogoV1.ts','utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: logoExports });
 const source = ts.transpileModule(fs.readFileSync('lib/lessonEmails.ts','utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
-function setup({ enrolled = true, providerOk = true, recordFails = false, configured = true, legacy = false, imageTemplate = false, textTemplate = false } = {}) {
+function setup({ enrolled = true, providerOk = true, recordFails = false, configured = true, legacy = false, imageTemplate = false, textTemplate = false, kind = null, trial = false, hidden = false } = {}) {
   const updates = [], calls = [];
   const job = { first_attempt_at: legacy ? '2026-10-06T14:40:00Z' : imageTemplate ? '2026-10-06T15:00:00Z' : textTemplate ? '2026-10-06T15:23:00Z' : '2026-10-06T16:00:00Z', id:'delivery-1',lesson_id:'lesson-1',student_id:'student-1',recipient:'student@example.com',payload:{from:'Djawed Logic <lessons@example.com>',title:'<img src=x> & درس',url:'https://academy.example.com/lesson/lesson-1'} };
+  if(kind){job.payload={...job.payload,template_version:2,kind,module_title:'وحدة <الاستهداف>'};if(kind==='module'){job.lesson_id=null;job.module_id='module-1';}}
   let claimed = false;
   const db = {
     rpc: async () => ({data: claimed ? [] : (claimed=true,[job]),error:null}),
     from(table) {
       const q = {select(){return q},eq(){return q},limit:async()=>({error:null}),
-        single:async()=>({data:table==='lessons'?{module_id:'module-1'}:{course_id:'course-1'}}),
-        maybeSingle:async()=>({data:enrolled?{id:'enrollment-1'}:null,error:null}),
+        single:async()=>({data:table==='lessons'?{module_id:'module-1'}:table==='profiles'?{access_mode:trial?'trial':'full'}:{course_id:'course-1'}}),
+        maybeSingle:async()=>({data:table==='site_content'?{content:{hidden}}:enrolled?{id:'enrollment-1'}:null,error:null}),
         update(value){return {eq:async()=>{updates.push(value);return {error:recordFails&&value.status==='sent'?{}:null}}}}};
       return q;
     }
@@ -83,4 +84,25 @@ test('text-only template stays unchanged for retries',async()=>{
  const body=JSON.parse(calls[0].body);
  assert.match(body.html,/<h2>/);assert.doesNotMatch(body.html,/<img /);
  assert.equal(body.attachments,undefined);
+});
+
+test('new lesson notification includes escaped lesson and module names with only the platform link',async()=>{
+ const {api,calls}=setup({kind:'lesson'});await api.dispatchLessonEmails();
+ const body=JSON.parse(calls[0].body);
+ assert.match(body.subject,/وحدة <الاستهداف>/);assert.match(body.html,/وحدة &lt;الاستهداف&gt;/);
+ assert.match(body.html,/&lt;img src=x&gt;/);assert.doesNotMatch(body.html,/\/lesson\//);
+ assert.equal(body.attachments.length,1);
+});
+test('module notification sends without a lesson and retries keep the same body and key',async()=>{
+ const first=setup({kind:'module',recordFails:true});await first.api.dispatchLessonEmails();
+ const retry=setup({kind:'module'});await retry.api.dispatchLessonEmails();
+ assert.match(JSON.parse(first.calls[0].body).subject,/وحدة جديدة/);
+ assert.equal(first.calls[0].body,retry.calls[0].body);
+ assert.equal(first.calls[0].headers['Idempotency-Key'],retry.calls[0].headers['Idempotency-Key']);
+});
+test('trial and hidden module notifications are held without contacting email provider',async()=>{
+ for(const options of [{kind:'module',trial:true},{kind:'lesson',hidden:true}]){
+  const {api,calls,updates}=setup(options);await api.dispatchLessonEmails();
+  assert.equal(calls.length,0);assert.equal(updates[0].status,'held');
+ }
 });

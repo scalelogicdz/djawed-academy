@@ -74,6 +74,9 @@ export default function LessonsManager({
   const [quizQuestions, setQuizQuestions] = useState(initialQuizQuestions);
   const [selectedCourse, setSelectedCourse] = useState(courses[0]?.id ?? '');
   const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [notifyModuleStudents,setNotifyModuleStudents]=useState(emailNotificationsAvailable);
+  const [savingNewModule,setSavingNewModule]=useState(false);
+  const moduleSaveLock=useRef(false);
   const [lessonForms, setLessonForms] = useState<Record<string, boolean>>({});
   const [lessonDraft, setLessonDraft] = useState(emptyLessonDraft);
   const [notifyStudents, setNotifyStudents] = useState(emailNotificationsAvailable);
@@ -130,23 +133,21 @@ export default function LessonsManager({
   const [orderMessage, setOrderMessage] = useState('');
 
   async function addModule() {
-    if (!newModuleTitle.trim() || !selectedCourse) return;
-    const res = await fetch('/api/admin/content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'module',
-        courseId: selectedCourse,
-        title: newModuleTitle.trim(),
-        position: modules.filter((m) => m.course_id === selectedCourse).length,
-      }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setModules([...modules, data.module]);
-      setNewModuleTitle('');
+    if (!newModuleTitle.trim() || !selectedCourse || moduleSaveLock.current) return;
+    moduleSaveLock.current=true;setSavingNewModule(true);setEmailMessage('');
+    try {
+      const res=await fetch('/api/admin/content',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({type:'module',courseId:selectedCourse,title:newModuleTitle.trim(),
+          notifyStudents:notifyModuleStudents,position:modules.filter(m=>m.course_id===selectedCourse).length}),
+      });
+      const data=await res.json();
+      if(!res.ok){setEmailMessage(data.error||'تعذر حفظ الوحدة.');return;}
+      setModules(current=>[...current,data.module]);setNewModuleTitle('');
+      setEmailMessage(data.notificationsQueued?'تم حفظ الوحدة وإضافة إشعارات الطلاب إلى قائمة الإرسال.':'تم حفظ الوحدة بدون إرسال إشعارات.');
       router.refresh();
-    }
+    }catch{setEmailMessage('تعذر الاتصال. تحقق من القائمة قبل إعادة المحاولة.');}
+    finally{moduleSaveLock.current=false;setSavingNewModule(false);}
   }
 
   function startEditingModule(m: ModuleRow) {
@@ -489,20 +490,24 @@ export default function LessonsManager({
         ))}
       </div>
 
-      <div className="card p-5 mb-7 flex gap-3">
+      <div className="card p-5 mb-7"><div className="flex gap-3">
         <input
           value={newModuleTitle}
           onChange={(e) => setNewModuleTitle(e.target.value)}
           placeholder="اسم الوحدة الجديدة (مثال: الوحدة 3: التحسين)"
           className="flex-1 bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"
         />
-        <button className="btn-primary !py-2.5" onClick={addModule}>
+        <button disabled={savingNewModule} className="btn-primary !py-2.5 disabled:opacity-50" onClick={addModule}>
           + إضافة وحدة
-        </button>
+        </button></div>
+        <label className="flex items-center gap-2 text-sm text-muted mt-3">
+          <input type="checkbox" checked={notifyModuleStudents} disabled={!emailNotificationsAvailable||savingNewModule} onChange={e=>setNotifyModuleStudents(e.target.checked)} className="accent-[#075EDC]" />
+          إشعار طلاب هذه الدورة بالبريد عند إضافة الوحدة
+        </label>
       </div>
 
       <div className="mb-5 rounded-xl border border-border p-4 text-sm" role="status">
-        {!emailNotificationsAvailable ? <p className="text-muted">إشعارات الدروس بالبريد غير مفعلة بعد — يلزم إعداد خدمة البريد وقاعدة البيانات.</p> : <>
+        {!emailNotificationsAvailable ? <p className="text-muted">إشعارات الوحدات والدروس بالبريد غير مفعلة بعد — يلزم إعداد خدمة البريد وقاعدة البيانات.</p> : <>
           <p>إشعارات البريد: {emailStats?.sent ?? 0} تم قبولها للإرسال · {(emailStats?.pending ?? 0) + (emailStats?.sending ?? 0)} قيد المعالجة · {emailStats?.failed ?? 0} تحتاج إعادة محاولة</p>
           {!!emailStats?.held && <p className="text-muted mt-2">{emailStats.held} إشعارات معلقة للمراجعة لتجنب الإرسال المكرر أو بسبب إزالة الوصول.</p>}
           {!!emailStats && ((emailStats.pending ?? 0) + (emailStats.failed ?? 0) > 0) && <button onClick={retryEmails} disabled={retryingEmails} className="btn-ghost mt-2 !py-2 !px-4 text-xs">{retryingEmails ? 'جارٍ البدء...' : 'معالجة الإشعارات المتبقية'}</button>}
@@ -620,22 +625,7 @@ export default function LessonsManager({
             </div>
           )}
 
-          {lessons
-            .filter((l) => l.module_id === m.id)
-            .sort((a, b) => a.position - b.position)
-            .map((l) => {
-              const lessonQuestions = quizQuestions.filter((q) => q.lesson_id === l.id);
-              return (
-                <div
-                  key={l.id}
-                  className={`border-b border-border last:border-0 transition ${draggingLessonId === l.id ? 'opacity-60 bg-gold/[0.03]' : ''}`}
-                  onDragOver={(e) => handleLessonDragOver(e, m.id, l.id)}
-                  onDrop={(e) => handleLessonDrop(e, m.id)}
-                >
-                  {editingLessonId === l.id ? (
-                    <div className="py-4 space-y-3">
-                      <input
-                        value={editLessonDraft.title}
+         …186 tokens truncated…                        value={editLessonDraft.title}
                         onChange={(e) => setEditLessonDraft({ ...editLessonDraft, title: e.target.value })}
                         placeholder="عنوان الدرس"
                         className="w-full bg-white/[0.02] border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-gold"

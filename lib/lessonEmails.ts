@@ -15,7 +15,7 @@ export function lessonEmailConfig() {
 
 export async function lessonEmailsReady() {
   if (!lessonEmailConfig()) return false;
-  const { error } = await createAdminClient().from('lesson_email_jobs').select('id').limit(1);
+  const { error } = await createAdminClient().from('lesson_email_jobs').select('id,module_id').limit(1);
   return !error;
 }
 
@@ -67,6 +67,20 @@ export function lessonEmailMessage(title: string, lessonUrl: string) {
   };
 }
 
+// Version is stored in the payload so retries never change an attempted body.
+export function contentEmailMessage(payload: {kind:string;title:string;module_title:string;url:string}) {
+  const platformUrl = new URL(payload.url).origin;
+  const isModule = payload.kind === 'module';
+  const heading = isModule ? 'وحدة جديدة على المنصّة' : 'درس جديد على المنصّة';
+  const detail = isModule ? `تمت إضافة وحدة جديدة: ${payload.title}` : `أضفنا الدرس «${payload.title}» في الوحدة «${payload.module_title}»`;
+  return {
+    subject: isModule ? `وحدة جديدة في Djawed Logic: ${payload.title}` : `درس جديد في وحدة ${payload.module_title}: ${payload.title}`,
+    text: `${detail}\n\n${platformUrl}`,
+    html: `<div dir="rtl" lang="ar" style="font-family:Arial,sans-serif;line-height:1.8;color:#102347"><h2>${heading}</h2><p>${escapeEmailHtml(detail)}</p><p style="margin:16px 0"><img src="cid:djawed-logic-logo-v1" alt="Djawed Logic" width="84" height="96" style="display:block;max-width:100%;height:auto;border:0"></p><a href="${escapeEmailHtml(platformUrl)}" dir="ltr" style="font-size:16px;color:#0A66FF;text-decoration:underline">${escapeEmailHtml(platformUrl)}</a></div>`,
+    attachments: [{ filename: 'djawed-logic-logo.png', content: EMAIL_LOGO_V1, content_type: 'image/png', content_id: 'djawed-logic-logo-v1' }],
+  };
+}
+
 export async function lessonEmailStats() {
   const db = createAdminClient();
   const counts = await Promise.all(['pending', 'sending', 'sent', 'failed', 'held'].map(async (status) => {
@@ -91,17 +105,27 @@ export async function dispatchLessonEmails() {
     if (!job) break;
     try {
       // Do not notify a student whose course access was removed after publication.
-      const { data: lesson } = await db.from('lessons').select('module_id').eq('id', job.lesson_id).single();
-      const { data: module } = await db.from('modules').select('course_id').eq('id', lesson?.module_id).single();
+      let moduleId = job.module_id;
+      if (job.lesson_id) {
+        const { data: lesson, error } = await db.from('lessons').select('module_id').eq('id', job.lesson_id).single();
+        if(error)throw new Error('Lesson lookup failed');
+        moduleId=lesson?.module_id;
+      }
+      const { data: module, error: moduleError } = await db.from('modules').select('course_id').eq('id', moduleId).single();
+      if(moduleError)throw new Error('Module lookup failed');
+      const { data: visibility, error: visibilityError } = await db.from('site_content').select('content').eq('key','module-visibility:'+moduleId).maybeSingle();
+      if(visibilityError)throw new Error('Visibility lookup failed');
       const { data: enrollment, error: enrollmentError } = await db.from('enrollments').select('id').eq('student_id', job.student_id).eq('course_id', module?.course_id).maybeSingle();
       if (enrollmentError) throw new Error('Enrollment lookup failed');
-      const {data:recipient,error:recipientError}=await db.from('profiles').select('*').eq('id',job.student_id).single();
+      const {data:recipient,error:recipientError}=await db.from('profiles').select('access_mode').eq('id',job.student_id).single();
       if(recipientError)throw new Error('Recipient lookup failed');
-      if (!enrollment || recipient?.access_mode==='trial') {
+      if (!module || !enrollment || recipient?.access_mode!=='full' || visibility?.content?.hidden===true) {
         await db.from('lesson_email_jobs').update({ status: 'held', locked_until: null }).eq('id', job.id);
         continue;
       }
-      const message = job.first_attempt_at && job.first_attempt_at < PLATFORM_EMAIL_CUTOVER
+      const message = job.payload.template_version === 2
+        ? contentEmailMessage(job.payload)
+        : job.first_attempt_at && job.first_attempt_at < PLATFORM_EMAIL_CUTOVER
         ? legacyLessonEmailMessage(job.payload.title, job.payload.url)
         : job.first_attempt_at && job.first_attempt_at < TEXT_EMAIL_CUTOVER
           ? imageLessonEmailMessage(job.payload.title, job.payload.url)

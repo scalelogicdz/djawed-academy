@@ -77,20 +77,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'بيانات الوحدة غير صالحة' }, { status: 400 });
     }
 
-    const { data, error } = await adminClient
-      .from('modules')
-      .insert({
-        course_id: courseId,
-        title,
-        description,
-        thumbnail_url: thumbnailUrl,
-        position,
-      })
-      .select()
-      .single();
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-    return NextResponse.json({ ok: true, module: data });
+    const notify = body.notifyStudents === true;
+    const config = lessonEmailConfig();
+    if (notify && (!config || !(await lessonEmailsReady()))) {
+      return NextResponse.json({error:'إشعارات البريد غير متاحة حالياً. ألغِ خيار الإشعار أو أعد المحاولة.'},{status:503});
+    }
+    const module = {course_id:courseId,title,description,thumbnail_url:thumbnailUrl,position};
+    const {data,error} = notify && config
+      ? await adminClient.rpc('create_module_with_emails',{module,email_from:config.from,platform_url:config.url})
+      : await adminClient.from('modules').insert(module).select().single();
+    if(error)return NextResponse.json({error:error.message},{status:400});
+    if(notify)after(async()=>{try{await dispatchLessonEmails();}catch{console.error('Content email queue requires retry');}});
+    return NextResponse.json({ok:true,module:data,notificationsQueued:notify});
   }
 
   if (body.type === 'lesson') {
